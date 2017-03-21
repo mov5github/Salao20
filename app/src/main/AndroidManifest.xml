@@ -27,29 +27,24 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
         <activity
             android:name=".activitys.LoginActivity"
-            android:configChanges="orientation|screenSize">
-        </activity>
-
+            android:configChanges="orientation|screenSize" />
         <activity
             android:name=".activitys.SignUpActivity"
-            android:configChanges="orientation|screenSize">
-        </activity>
-
+            android:configChanges="orientation|screenSize" />
         <activity
             android:name=".activitys.ErroActivity"
-            android:configChanges="orientation|screenSize">
-        </activity>
+            android:configChanges="orientation|screenSize" />
 
         <!-- SERVICES -->
         <service
             android:name=".intentServices.SincronizarBancosIntentService"
             android:enabled="true"
-            android:exported="false">
-        </service>
+            android:exported="false" />
 
+        <activity android:name=".activitys.CadastroInicialActivity" />
+        <activity android:name=".activitys.HomeActivity"></activity>
     </application>
 
 </manifest>

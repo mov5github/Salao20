@@ -18,9 +18,13 @@ public class VerificarCadastroInicialBDAsyncTask extends AsyncTask<CadastroInici
     private Context context;
     private LoginActivity loginActivity;
 
+    //CONTROLE
+    private boolean cadastroInicialCompleto;
+
     public VerificarCadastroInicialBDAsyncTask(Context context, LoginActivity loginActivity) {
         this.context = context;
         this.loginActivity = loginActivity;
+        this.cadastroInicialCompleto = false;
     }
 
     @Override
@@ -39,6 +43,9 @@ public class VerificarCadastroInicialBDAsyncTask extends AsyncTask<CadastroInici
                     return true;
                 }
             }else {
+                if (this.cadastroInicialDAO.buscarCadastroInicialPorUID(params[0].getUid()).getNivelUsuario() != null && this.cadastroInicialDAO.buscarCadastroInicialPorUID(params[0].getUid()).getNivelUsuario() == 3.0){
+                    this.cadastroInicialCompleto = true;
+                }
                 return false;
             }
         }
@@ -54,7 +61,11 @@ public class VerificarCadastroInicialBDAsyncTask extends AsyncTask<CadastroInici
                 this.cadastroInicialDAO.fechar();
                 this.cadastroInicialDAO = null;
             }
-            loginActivity.irSplashScreen(novoUsuario);
+            if (this.cadastroInicialCompleto){
+                loginActivity.irHome();
+            }else {
+                loginActivity.irSplashScreen(novoUsuario);
+            }
         }
     }
 

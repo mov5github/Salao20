@@ -109,6 +109,18 @@ public abstract class CommonActivity extends AppCompatActivity{
         finish();
     }
 
+    protected void callConfiguracaoIncialActivity(){
+        Intent intent = new Intent(this, CadastroInicialActivity.class);
+        startActivity(intent);
+        finish();
+    }
+
+    protected void callHomeActivity(){
+        Intent intent = new Intent(this, HomeActivity.class);
+        startActivity(intent);
+        finish();
+    }
+
     /*public void callLoginActivity() {
         Intent intent = new Intent(this, LoginActivity.class);
         startActivity(intent);

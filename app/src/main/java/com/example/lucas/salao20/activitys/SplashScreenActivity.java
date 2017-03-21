@@ -1,6 +1,9 @@
 package com.example.lucas.salao20.activitys;
 
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.annotation.NonNull;
@@ -22,6 +25,7 @@ import com.google.firebase.crash.FirebaseCrash;
 
 public class SplashScreenActivity extends CommonActivity implements GoogleApiClient.OnConnectionFailedListener{
     static String INTENT_SERVICE_SINCRONIZAR_BANCOS = "com.example.lucas.salao20.intentservice.sincronizarbancos";
+    static String BRODCAST_RECEIVER_BANCOS_SINCRONIZADOS = "com.example.lucas.salao20.brodcastreceiver.bancossincronizados";
 
     //VIEWS
     private ImageView splashLogoMov5;
@@ -36,8 +40,13 @@ public class SplashScreenActivity extends CommonActivity implements GoogleApiCli
     //  FIREBASE AUTH
     private FirebaseAuth mAuth;
 
+    //BRODCASTRECEIVER
+    private BroadcastReceiver broadcastReceiverBancosSincronizados;
+
     //CONTROLES
     private boolean splashIniciada;
+    private boolean novoUsuario;
+    private boolean bancosSincronizados;
     static boolean splashScreenActivityAtiva;
 
     //CADASTROS INICIAL CRONTROLE
@@ -57,6 +66,7 @@ public class SplashScreenActivity extends CommonActivity implements GoogleApiCli
         initViews();
         initControles();
         initHandler();
+        initBrodcastReceiver();
         verifyLogged();
     }
 
@@ -82,7 +92,7 @@ public class SplashScreenActivity extends CommonActivity implements GoogleApiCli
         Log.i("script","onDestroy() SplashScreenActivity");
         splashScreenActivityAtiva = false;
         handlerUIThread.removeCallbacksAndMessages(null);
-
+        unregisterReceiver(this.broadcastReceiverBancosSincronizados);
     }
 
     @Override
@@ -117,10 +127,26 @@ public class SplashScreenActivity extends CommonActivity implements GoogleApiCli
 
     private void initControles(){
         this.splashIniciada = false;
+        this.novoUsuario = false;
+        this.bancosSincronizados = false;
     }
 
     private void initHandler(){
         this.handlerUIThread = new Handler();
+    }
+
+    private void initBrodcastReceiver(){
+        this.broadcastReceiverBancosSincronizados = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                bancosSincronizados = true;
+                if (!novoUsuario){
+                    callConfiguracaoIncialActivity();
+                }
+            }
+        };
+        IntentFilter intentFilter = new IntentFilter(BRODCAST_RECEIVER_BANCOS_SINCRONIZADOS);
+        registerReceiver(this.broadcastReceiverBancosSincronizados, intentFilter);
     }
 
     private void verifyLogged(){
@@ -171,6 +197,7 @@ public class SplashScreenActivity extends CommonActivity implements GoogleApiCli
             });
 
             if (novoUsuario){
+                this.novoUsuario = true;
                 this.splashLogoMov5.setVisibility(View.VISIBLE);
                 this.splashLogoMov5.startAnimation(animation1);
 
@@ -202,6 +229,7 @@ public class SplashScreenActivity extends CommonActivity implements GoogleApiCli
                     }
                 },(maxTempoVerificacao));
             }else {
+                this.novoUsuario = false;
                 splashLogoSalao20.setVisibility(View.VISIBLE);
                 splashLogoSalao20.startAnimation(animation1);
 
@@ -222,7 +250,12 @@ public class SplashScreenActivity extends CommonActivity implements GoogleApiCli
     }
 
     private void direcionarUsuario(){
-        showToast("direcionar usuario");
+        //showToast("direcionar usuario");
+        if (this.bancosSincronizados){
+            callConfiguracaoIncialActivity();
+        }else {
+            callErroActivity("tempo limite splash screen");
+        }
     }
 
     //GETTERS
@@ -232,5 +265,9 @@ public class SplashScreenActivity extends CommonActivity implements GoogleApiCli
 
     public static String getIntentServiceSincronizarBancos() {
         return INTENT_SERVICE_SINCRONIZAR_BANCOS;
+    }
+
+    public static String getBrodcastReceiverBancosSincronizados() {
+        return BRODCAST_RECEIVER_BANCOS_SINCRONIZADOS;
     }
 }

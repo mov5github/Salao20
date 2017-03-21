@@ -44,6 +44,7 @@ public class LoginActivity extends CommonActivity implements GoogleApiClient.OnC
     //CONTROLE
     private boolean fabProcessando;
 
+
     //ASYNCTASK
     private VerificarCadastroInicialBDAsyncTask VerificarCadastroInicialBDAsyncTask;
 
@@ -269,6 +270,10 @@ public class LoginActivity extends CommonActivity implements GoogleApiClient.OnC
             startActivity(intent);
             finish();
         }
+    }
+
+    public  void irHome(){
+        callHomeActivity();
     }
 
 

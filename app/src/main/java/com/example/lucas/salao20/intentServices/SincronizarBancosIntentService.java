@@ -7,6 +7,7 @@ import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.util.Log;
 
+import com.example.lucas.salao20.activitys.SplashScreenActivity;
 import com.example.lucas.salao20.dao.CadastroInicialDAO;
 import com.example.lucas.salao20.dao.DatabaseHelper;
 import com.example.lucas.salao20.dao.model.CadastroInicial;
@@ -23,8 +24,6 @@ import java.util.Map;
  */
 
 public class SincronizarBancosIntentService extends IntentService{
-    static boolean intentServiceWait;
-
     private boolean ativo;
     private boolean stopAll;
     private Context mContext;
@@ -36,15 +35,9 @@ public class SincronizarBancosIntentService extends IntentService{
     private CadastroInicial cadastroInicialBD;
     private CadastroInicial cadastroInicialBDCloud;
 
-
-
-    //CONTROLE
-    private boolean encontrado;
-    private boolean salvo;
-
     //THREAD
-    private final ThreadBuscarCadastroInicialFirebase threadBuscarCadastroInicialFirebase = new ThreadBuscarCadastroInicialFirebase();
-    private final ThreadSalvarCadastroInicialFirebase threadSalvarCadastroInicialFirebase = new ThreadSalvarCadastroInicialFirebase();
+    private ThreadBuscarCadastroInicialFirebase threadBuscarCadastroInicialFirebase;
+    private ThreadSalvarCadastroInicialFirebase threadSalvarCadastroInicialFirebase;
 
     //DAO
     private CadastroInicialDAO cadastroInicialDAO;
@@ -56,9 +49,30 @@ public class SincronizarBancosIntentService extends IntentService{
         this.stopAll = false;
         this.mContext = this;
         this.uid = "";
-        this.encontrado = false;
-        this.salvo = false;
-        intentServiceWait = false;
+    }
+
+    @Override
+    public int onStartCommand(@Nullable Intent intent, int flags, int startId) {
+        if (intent.getExtras() != null) {
+            Bundle bundle = intent.getExtras();
+            if (bundle.get("uid") != null){
+                this.uid = bundle.getString("uid");
+            }
+            if (bundle.containsKey("desligar") && bundle.getInt("desligar") == 1){
+                this.stopAll = true;
+                if (this.threadBuscarCadastroInicialFirebase != null){
+                    this.threadBuscarCadastroInicialFirebase.interrupt();
+                    this.threadBuscarCadastroInicialFirebase = null;
+                }
+                if (this.threadSalvarCadastroInicialFirebase != null){
+                    this.threadSalvarCadastroInicialFirebase.interrupt();
+                    this.threadSalvarCadastroInicialFirebase = null;
+                }
+            }else {
+                this.stopAll = false;
+            }
+        }
+        return super.onStartCommand(intent, flags, startId);
     }
 
     @Override
@@ -66,34 +80,26 @@ public class SincronizarBancosIntentService extends IntentService{
         Log.i("script","onHandleIntent");
         if (this.ativo && !this.stopAll){
             initCadastroIniciais();
+            this.threadBuscarCadastroInicialFirebase = new ThreadBuscarCadastroInicialFirebase();
             this.threadBuscarCadastroInicialFirebase.start();
-        }
-
-        while (this.ativo && !this.stopAll && !this.encontrado){
-            synchronized(this.threadBuscarCadastroInicialFirebase) {
-                Log.i("script", "onHandleIntent waiting buscar firebase");
-                try {
-                    intentServiceWait = true;
-                    this.threadBuscarCadastroInicialFirebase.wait();
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
+            try {
+                this.threadBuscarCadastroInicialFirebase.join();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
             }
-            intentServiceWait = false;
-            Log.i("script","onHandleIntent firebase buscar respondeu");
         }
-        //TODO destruir threadBuscarCadastroInicialFirebase
-        Log.i("script","onHandleIntent firebase buscar encontrado");
 
         //busca o cadastro inicial no Bd e BdCloud
-        if (this.cadastroInicialDAO == null){
-            this.cadastroInicialDAO = new CadastroInicialDAO(this);
-        }
-        this.cadastroInicialBD = this.cadastroInicialDAO.buscarCadastroInicialPorUID(this.uid);
-        this.cadastroInicialBDCloud = this.cadastroInicialDAO.buscarCadastroInicialPorUIDCloud(this.uid);
-        if (this.cadastroInicialBDCloud == null && this.ativo && !this.stopAll){
-            this.cadastroInicialBDCloud = new CadastroInicial();
-            this.cadastroInicialBDCloud.setUid(this.uid);
+        if (this.ativo && !this.stopAll){
+            if (this.cadastroInicialDAO == null){
+                this.cadastroInicialDAO = new CadastroInicialDAO(this);
+            }
+            this.cadastroInicialBD = this.cadastroInicialDAO.buscarCadastroInicialPorUID(this.uid);
+            this.cadastroInicialBDCloud = this.cadastroInicialDAO.buscarCadastroInicialPorUIDCloud(this.uid);
+            if (this.cadastroInicialBDCloud == null && this.ativo && !this.stopAll){
+                this.cadastroInicialBDCloud = new CadastroInicial();
+                this.cadastroInicialBDCloud.setUid(this.uid);
+            }
         }
 
         //sincroniza bdFirebase com bdCloud
@@ -112,24 +118,15 @@ public class SincronizarBancosIntentService extends IntentService{
         //sincroniza bd com bdFirebase
         if ((this.cadastroInicialBDCloud.getVersao() == null || this.cadastroInicialBD.getVersao() > this.cadastroInicialBDCloud.getVersao()) && this.ativo && !this.stopAll){
             if (this.ativo && !this.stopAll){
+                this.threadSalvarCadastroInicialFirebase = new ThreadSalvarCadastroInicialFirebase();
                 this.threadSalvarCadastroInicialFirebase.start();
-                // TODO passar este bloco para dentro do while abaixo eapos testar estado apos cancelamento da thread
-            }
-            while (this.ativo && !this.stopAll && !this.salvo){
-                synchronized(this.threadSalvarCadastroInicialFirebase) {
-                    Log.i("script", "onHandleIntent waiting salvar firebase");
-                    try {
-                        intentServiceWait = true;
-                        this.threadSalvarCadastroInicialFirebase.wait();
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
+                try {
+                    this.threadSalvarCadastroInicialFirebase.join();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
                 }
-                intentServiceWait = false;
-                Log.i("script","onHandleIntent firebase salvar respondeu");
             }
-            Log.i("script","onHandleIntent firebase salvar salvo");
-            //TODO destruir threadSalvarCadastroInicialFirebase
+
 
             if (this.cadastroInicialBDCloud.get_id() != null && this.ativo && !this.stopAll){
                 int id = this.cadastroInicialBDCloud.get_id();
@@ -157,28 +154,33 @@ public class SincronizarBancosIntentService extends IntentService{
             }
         }
 
-
-    }
-
-    @Override
-    public int onStartCommand(@Nullable Intent intent, int flags, int startId) {
-        if (intent.getExtras() != null) {
-            Bundle bundle = intent.getExtras();
-            if (bundle.get("uid") != null){
-                this.uid = bundle.getString("uid");
-            }
-            int desligar = bundle.getInt("desligar");
-            if (desligar == 1){
-                this.stopAll = true;
-            }
+        if (this.threadBuscarCadastroInicialFirebase != null){
+            this.threadBuscarCadastroInicialFirebase.interrupt();
+            this.threadBuscarCadastroInicialFirebase = null;
         }
-        return super.onStartCommand(intent, flags, startId);
+        if (this.threadSalvarCadastroInicialFirebase != null){
+            this.threadSalvarCadastroInicialFirebase.interrupt();
+            this.threadSalvarCadastroInicialFirebase = null;
+        }
+
+        if (this.ativo && !this.stopAll && SplashScreenActivity.isSplashScreenActivityAtiva()){
+            sendBroadcast(new Intent(SplashScreenActivity.getBrodcastReceiverBancosSincronizados()));
+        }
+
+        stopSelf();
     }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
-        //TODO
+        if (this.threadBuscarCadastroInicialFirebase != null){
+            this.threadBuscarCadastroInicialFirebase.interrupt();
+            this.threadBuscarCadastroInicialFirebase = null;
+        }
+        if (this.threadSalvarCadastroInicialFirebase != null){
+            this.threadSalvarCadastroInicialFirebase.interrupt();
+            this.threadSalvarCadastroInicialFirebase = null;
+        }
     }
 
     private void initCadastroIniciais(){
@@ -205,23 +207,26 @@ public class SincronizarBancosIntentService extends IntentService{
         public void run(){
             Log.i("script","ThreadBuscarCadastroInicialFirebase");
             initFirebase();
-            this.firebaseCadastroInicial.addValueEventListener(this.vELCadastroInicial);
+            this.firebaseCadastroInicial.addListenerForSingleValueEvent(this.vELCadastroInicial);
+            boolean msgExibida = false;
+            while (!isInterrupted() && !stopAll){
+                if (!msgExibida){
+                    msgExibida = true;
+                    Log.i("script","ThreadBuscarCadastroInicialFirebase aguardando resposta firebase ...");
+                }
+            }
+            threadBuscarCadastroInicialFirebase.interrupt();
         }
 
         @Override
         public void interrupt() {
             super.interrupt();
-            if (intentServiceWait){
-                synchronized (threadBuscarCadastroInicialFirebase){
-                    threadBuscarCadastroInicialFirebase.notify();
-                }
-            }
+            this.firebaseCadastroInicial.removeEventListener(this.vELCadastroInicial);
         }
 
         private void initFirebase(){
             if (this.firebaseCadastroInicial == null){
                 this.firebaseCadastroInicial = LibraryClass.getFirebase().child("users").child(uid).child(DatabaseHelper.CadastroInicial.TABELA);
-                //this.firebaseCadastroInicial = LibraryClass.getFirebase().child("users").child("1").child(DatabaseHelper.CadastroInicial.TABELA);
             }
             if (this.vELCadastroInicial == null){
                 this.vELCadastroInicial = new ValueEventListener() {
@@ -230,46 +235,32 @@ public class SincronizarBancosIntentService extends IntentService{
                         Map<String, Object> map = (Map<String, Object>) dataSnapshot.getValue();
                         if (map == null || map.size() == 0){
                             Log.i("script","vELCadastroInicial dataSnapshot == null");
-                            encontrado = false;
-                            if (intentServiceWait){
-                                synchronized (threadBuscarCadastroInicialFirebase){
-                                    threadBuscarCadastroInicialFirebase.notify();
-                                }
-                            }
+                            threadBuscarCadastroInicialFirebase.interrupt();
                         }else {
                             Log.i("script","vELCadastroInicial dataSnapshot != null");
-                            encontrado = true;
                             if (map.containsKey(DatabaseHelper.CadastroInicial.VERSAO)){
-                                cadastroInicialFirebase.setVersao((Integer) map.get(DatabaseHelper.CadastroInicial.VERSAO));
+                                cadastroInicialFirebase.setVersao(Integer.valueOf(map.get(DatabaseHelper.CadastroInicial.VERSAO).toString()));
                             }
                             if (map.containsKey(DatabaseHelper.CadastroInicial.DATA_MODIFICACAO)){
                                 cadastroInicialFirebase.setDataModificalao((String) map.get(DatabaseHelper.CadastroInicial.DATA_MODIFICACAO));
                             }
                             if (map.containsKey(DatabaseHelper.CadastroInicial.NIVEL_USUARIO)){
-                                cadastroInicialFirebase.setNivelUsuario((Double) map.get(DatabaseHelper.CadastroInicial.NIVEL_USUARIO));
+                                cadastroInicialFirebase.setNivelUsuario(Double.valueOf(map.get(DatabaseHelper.CadastroInicial.NIVEL_USUARIO).toString()));
                             }
                             if (map.containsKey(DatabaseHelper.CadastroInicial.TIPO_USUARIO)){
                                 cadastroInicialFirebase.setTipoUsuario((String) map.get(DatabaseHelper.CadastroInicial.TIPO_USUARIO));
                             }
                             if (map.containsKey(DatabaseHelper.CadastroInicial.CODIGO_UNICO)){
-                                cadastroInicialFirebase.setCodigoUnico((Integer) map.get(DatabaseHelper.CadastroInicial.CODIGO_UNICO));
+                                cadastroInicialFirebase.setCodigoUnico(Integer.valueOf(map.get(DatabaseHelper.CadastroInicial.CODIGO_UNICO).toString()));
                             }
-                            if (intentServiceWait){
-                                synchronized (threadBuscarCadastroInicialFirebase){
-                                    threadBuscarCadastroInicialFirebase.notify();
-                                }
-                            }
+                            threadBuscarCadastroInicialFirebase.interrupt();
                         }
                     }
 
                     @Override
                     public void onCancelled(DatabaseError databaseError) {
                         Log.i("script","vELCadastroInicial onCancelled");
-                        if (intentServiceWait){
-                            synchronized (threadBuscarCadastroInicialFirebase){
-                                threadBuscarCadastroInicialFirebase.notify();
-                            }
-                        }
+                        threadBuscarCadastroInicialFirebase.interrupt();
                     }
                 };
             }
@@ -280,9 +271,38 @@ public class SincronizarBancosIntentService extends IntentService{
         private DatabaseReference firebaseCadastroInicial;
         private DatabaseReference.CompletionListener completionListenerCadastroInicial;
 
+        //CONTROLE
+        private boolean salvo;
+        private boolean aguardando;
+
         @Override
         public void run(){
             Log.i("script","ThreadSalvarCadastroInicialFirebase");
+            initFirebase();
+            this.salvo = false;
+
+            while (!isInterrupted() && !stopAll && !salvo){
+                this.aguardando = true;
+                salvarNoFirebase(this.completionListenerCadastroInicial);
+
+                boolean msgExibida = false;
+                while (!isInterrupted() && !stopAll && this.aguardando){
+                    if (!msgExibida){
+                        msgExibida = true;
+                        Log.i("script","ThreadSalvarCadastroInicialFirebase aguardando resposta firebase ...");
+                    }
+                }
+            }
+
+            threadSalvarCadastroInicialFirebase.interrupt();
+        }
+
+        @Override
+        public void interrupt() {
+            super.interrupt();
+        }
+
+        private void initFirebase(){
             if (this.completionListenerCadastroInicial == null){
                 this.completionListenerCadastroInicial = new DatabaseReference.CompletionListener() {
                     @Override
@@ -290,40 +310,21 @@ public class SincronizarBancosIntentService extends IntentService{
                         if (databaseError != null){
                             Log.i("script","completionListenerCadastroInicial cadastroInicial nao foi salvo");
                             salvo = false;
-                            if (intentServiceWait){
-                                synchronized (threadSalvarCadastroInicialFirebase){
-                                    threadSalvarCadastroInicialFirebase.notify();
-                                }
-                            }
+                            aguardando = false;
                         }else{
                             Log.i("script","completionListenerCadastroInicial cadastroInicial foi salvo");
                             salvo = true;
-                            if (intentServiceWait){
-                                synchronized (threadSalvarCadastroInicialFirebase){
-                                    threadSalvarCadastroInicialFirebase.notify();
-                                }
-                            }
+                            aguardando = false;
+                            threadSalvarCadastroInicialFirebase.interrupt();
                         }
                     }
                 };
-            }
-            salvarNoFirebase();
-        }
-
-        @Override
-        public void interrupt() {
-            super.interrupt();
-            if (intentServiceWait){
-                synchronized (threadSalvarCadastroInicialFirebase){
-                    threadSalvarCadastroInicialFirebase.notify();
-                }
             }
         }
 
         private void salvarNoFirebase(DatabaseReference.CompletionListener... completionListener){
             if (this.firebaseCadastroInicial == null){
                 this.firebaseCadastroInicial = LibraryClass.getFirebase().child("users").child(uid).child(DatabaseHelper.CadastroInicial.TABELA);
-                //this.firebaseCadastroInicial = LibraryClass.getFirebase().child("users").child("1").child(DatabaseHelper.CadastroInicial.TABELA);
             }
             if( completionListener.length == 0 ){
                 if (cadastroInicialBD.getVersao() != null && (cadastroInicialBDCloud.getVersao() == null || cadastroInicialBD.getVersao() > cadastroInicialBDCloud.getVersao())){
@@ -338,7 +339,7 @@ public class SincronizarBancosIntentService extends IntentService{
                 if (cadastroInicialBD.getTipoUsuario() != null && (cadastroInicialBDCloud.getTipoUsuario() == null || !cadastroInicialBD.getTipoUsuario().equals(cadastroInicialBDCloud.getTipoUsuario()))){
                     firebaseCadastroInicial.child(DatabaseHelper.CadastroInicial.TIPO_USUARIO).setValue(cadastroInicialBD.getTipoUsuario());
                 }
-                if (cadastroInicialBD.getCodigoUnico() != null && (cadastroInicialBDCloud.getCodigoUnico() == null || !cadastroInicialBD.getCodigoUnico().equals(cadastroInicialBDCloud.getCodigoUnico()))){
+                if (cadastroInicialBD.getCodigoUnico() != null && cadastroInicialBD.getCodigoUnico() != 0 && (cadastroInicialBDCloud.getCodigoUnico() == null || !cadastroInicialBD.getCodigoUnico().equals(cadastroInicialBDCloud.getCodigoUnico()))){
                     firebaseCadastroInicial.child(DatabaseHelper.CadastroInicial.CODIGO_UNICO).setValue(cadastroInicialBD.getCodigoUnico());
                 }
             }
@@ -355,7 +356,7 @@ public class SincronizarBancosIntentService extends IntentService{
                 if (cadastroInicialBD.getTipoUsuario() != null && (cadastroInicialBDCloud.getTipoUsuario() == null || !cadastroInicialBD.getTipoUsuario().equals(cadastroInicialBDCloud.getTipoUsuario()))){
                     firebaseCadastroInicial.child(DatabaseHelper.CadastroInicial.TIPO_USUARIO).setValue(cadastroInicialBD.getTipoUsuario(), completionListener[0]);
                 }
-                if (cadastroInicialBD.getCodigoUnico() != null && (cadastroInicialBDCloud.getCodigoUnico() == null || !cadastroInicialBD.getCodigoUnico().equals(cadastroInicialBDCloud.getCodigoUnico()))){
+                if (cadastroInicialBD.getCodigoUnico() != null && cadastroInicialBD.getCodigoUnico() != 0 && (cadastroInicialBDCloud.getCodigoUnico() == null || !cadastroInicialBD.getCodigoUnico().equals(cadastroInicialBDCloud.getCodigoUnico()))){
                     firebaseCadastroInicial.child(DatabaseHelper.CadastroInicial.CODIGO_UNICO).setValue(cadastroInicialBD.getCodigoUnico(), completionListener[0]);
                 }
             }
