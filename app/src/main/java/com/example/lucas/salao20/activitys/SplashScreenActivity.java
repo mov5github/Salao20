@@ -16,6 +16,7 @@ import android.widget.TextView;
 
 
 import com.example.lucas.salao20.R;
+import com.example.lucas.salao20.dao.DatabaseHelper;
 import com.example.lucas.salao20.dao.model.CadastroInicial;
 import com.example.lucas.salao20.intentServices.SincronizarBancosIntentService;
 import com.google.android.gms.common.ConnectionResult;
@@ -50,9 +51,7 @@ public class SplashScreenActivity extends CommonActivity implements GoogleApiCli
     static boolean splashScreenActivityAtiva;
 
     //CADASTROS INICIAL CRONTROLE
-    static CadastroInicial cadastroInicialFirebase;
     static CadastroInicial cadastroInicialBD;
-    static CadastroInicial cadastroInicialBDCloud;
 
 
 
@@ -91,7 +90,16 @@ public class SplashScreenActivity extends CommonActivity implements GoogleApiCli
         super.onDestroy();
         Log.i("script","onDestroy() SplashScreenActivity");
         splashScreenActivityAtiva = false;
+
+        //CENCELA SINCRONIZARBANCOSINTENTSERVICE
+        Intent intent = new Intent(getApplicationContext(), SincronizarBancosIntentService.class);
+        Bundle bundle = new Bundle();
+        bundle.putInt("desligar",1);
+        intent.putExtras(bundle);
+        startService(intent);
+
         handlerUIThread.removeCallbacksAndMessages(null);
+
         unregisterReceiver(this.broadcastReceiverBancosSincronizados);
     }
 
@@ -141,7 +149,19 @@ public class SplashScreenActivity extends CommonActivity implements GoogleApiCli
             public void onReceive(Context context, Intent intent) {
                 bancosSincronizados = true;
                 if (!novoUsuario){
-                    callConfiguracaoIncialActivity();
+                    if (cadastroInicialBD == null || cadastroInicialBD.getNivelUsuario() == null || (cadastroInicialBD.getNivelUsuario() > 1.0 && (cadastroInicialBD.getTipoUsuario() == null || cadastroInicialBD.getTipoUsuario().isEmpty())) || (cadastroInicialBD.getNivelUsuario() >= 2.1 && (cadastroInicialBD.getCodigoUnico() == null || cadastroInicialBD.getCodigoUnico() == 0)) ){
+                        callErroActivity("broadcastReceiverBancosSincronizados cadastroInicialBd == null");
+                    }else {
+                        Bundle bundle = new Bundle();
+                        bundle.putDouble(DatabaseHelper.CadastroInicial.NIVEL_USUARIO,cadastroInicialBD.getNivelUsuario());
+                        if (cadastroInicialBD.getNivelUsuario() > 1.0){
+                            bundle.putString(DatabaseHelper.CadastroInicial.TIPO_USUARIO,cadastroInicialBD.getTipoUsuario());
+                        }
+                        if (cadastroInicialBD.getNivelUsuario() >= 2.1){
+                            bundle.putInt(DatabaseHelper.CadastroInicial.CODIGO_UNICO,cadastroInicialBD.getCodigoUnico());
+                        }
+                        callConfiguracaoIncialActivity(bundle);
+                    }
                 }
             }
         };
@@ -189,7 +209,7 @@ public class SplashScreenActivity extends CommonActivity implements GoogleApiCli
                     Intent intent = new Intent(getApplicationContext(), SincronizarBancosIntentService.class);
                     Bundle bundle = new Bundle();
                     if (mAuth.getCurrentUser().getUid() != null && !mAuth.getCurrentUser().getUid().isEmpty()){
-                        bundle.putString("uid",mAuth.getCurrentUser().getUid());
+                        bundle.putString(DatabaseHelper.CadastroInicial.UID, mAuth.getCurrentUser().getUid());
                     }
                     intent.putExtras(bundle);
                     startService(intent);
@@ -250,15 +270,26 @@ public class SplashScreenActivity extends CommonActivity implements GoogleApiCli
     }
 
     private void direcionarUsuario(){
-        //showToast("direcionar usuario");
         if (this.bancosSincronizados){
-            callConfiguracaoIncialActivity();
+            if (cadastroInicialBD == null || cadastroInicialBD.getNivelUsuario() == null || (cadastroInicialBD.getNivelUsuario() > 1.0 && (cadastroInicialBD.getTipoUsuario() == null || cadastroInicialBD.getTipoUsuario().isEmpty())) || (cadastroInicialBD.getNivelUsuario() >= 2.1 && (cadastroInicialBD.getCodigoUnico() == null || cadastroInicialBD.getCodigoUnico() == 0)) ){
+                callErroActivity("direcionarUsuario cadastroInicialBd == null");
+            }else {
+                Bundle bundle = new Bundle();
+                bundle.putDouble(DatabaseHelper.CadastroInicial.NIVEL_USUARIO,cadastroInicialBD.getNivelUsuario());
+                if (cadastroInicialBD.getNivelUsuario() > 1.0){
+                    bundle.putString(DatabaseHelper.CadastroInicial.TIPO_USUARIO,cadastroInicialBD.getTipoUsuario());
+                }
+                if (cadastroInicialBD.getNivelUsuario() >= 2.1){
+                    bundle.putInt(DatabaseHelper.CadastroInicial.CODIGO_UNICO,cadastroInicialBD.getCodigoUnico());
+                }
+                callConfiguracaoIncialActivity(bundle);
+            }
         }else {
             callErroActivity("tempo limite splash screen");
         }
     }
 
-    //GETTERS
+    //GETTERS SETTERS
     public static boolean isSplashScreenActivityAtiva() {
         return splashScreenActivityAtiva;
     }
@@ -269,5 +300,9 @@ public class SplashScreenActivity extends CommonActivity implements GoogleApiCli
 
     public static String getBrodcastReceiverBancosSincronizados() {
         return BRODCAST_RECEIVER_BANCOS_SINCRONIZADOS;
+    }
+
+    public static void setCadastroInicialBD(CadastroInicial cadastroInicialBD) {
+        SplashScreenActivity.cadastroInicialBD = cadastroInicialBD;
     }
 }

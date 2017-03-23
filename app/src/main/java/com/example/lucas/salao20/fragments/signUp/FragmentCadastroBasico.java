@@ -1,4 +1,4 @@
-package com.example.lucas.salao20.fragments;
+package com.example.lucas.salao20.fragments.signUp;
 
 
 import android.os.Bundle;

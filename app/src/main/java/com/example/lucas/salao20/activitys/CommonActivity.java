@@ -109,8 +109,11 @@ public abstract class CommonActivity extends AppCompatActivity{
         finish();
     }
 
-    protected void callConfiguracaoIncialActivity(){
+    protected void callConfiguracaoIncialActivity(Bundle bundle){
         Intent intent = new Intent(this, CadastroInicialActivity.class);
+        if (bundle != null){
+            intent.putExtras(bundle);
+        }
         startActivity(intent);
         finish();
     }

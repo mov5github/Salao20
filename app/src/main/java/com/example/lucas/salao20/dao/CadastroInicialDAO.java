@@ -129,7 +129,7 @@ public class CadastroInicialDAO {
         if (cadastroInicial.getVersao() == null){
             cadastroInicial.setVersao(1);
         }else {
-            cadastroInicial.setVersao(cadastroInicial.getVersao()+1);
+            cadastroInicial.setVersao(cadastroInicial.getVersao() + 1);
         }
         values.put(DatabaseHelper.CadastroInicial.VERSAO, cadastroInicial.getVersao());
 
@@ -163,7 +163,7 @@ public class CadastroInicialDAO {
         if (cadastroInicial.getVersao() == null){
             cadastroInicial.setVersao(1);
         }else {
-            cadastroInicial.setVersao(cadastroInicial.getVersao()+1);
+            cadastroInicial.setVersao(cadastroInicial.getVersao() + 1);
         }
         values.put(DatabaseHelper.CadastroInicial.VERSAO, cadastroInicial.getVersao());
 

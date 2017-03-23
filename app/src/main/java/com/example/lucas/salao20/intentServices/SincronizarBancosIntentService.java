@@ -26,7 +26,6 @@ import java.util.Map;
 public class SincronizarBancosIntentService extends IntentService{
     private boolean ativo;
     private boolean stopAll;
-    private Context mContext;
 
     private String uid;
 
@@ -47,7 +46,6 @@ public class SincronizarBancosIntentService extends IntentService{
         super("SincronizarBancosIntentService");
         this.ativo = true;
         this.stopAll = false;
-        this.mContext = this;
         this.uid = "";
     }
 
@@ -59,7 +57,9 @@ public class SincronizarBancosIntentService extends IntentService{
                 this.uid = bundle.getString("uid");
             }
             if (bundle.containsKey("desligar") && bundle.getInt("desligar") == 1){
+                initCadastroIniciais();
                 this.stopAll = true;
+                this.ativo = false;
                 if (this.threadBuscarCadastroInicialFirebase != null){
                     this.threadBuscarCadastroInicialFirebase.interrupt();
                     this.threadBuscarCadastroInicialFirebase = null;
@@ -68,8 +68,13 @@ public class SincronizarBancosIntentService extends IntentService{
                     this.threadSalvarCadastroInicialFirebase.interrupt();
                     this.threadSalvarCadastroInicialFirebase = null;
                 }
+                if (this.cadastroInicialDAO != null){
+                    this.cadastroInicialDAO.fechar();
+                    this.cadastroInicialDAO = null;
+                }
             }else {
                 this.stopAll = false;
+                this.ativo = true;
             }
         }
         return super.onStartCommand(intent, flags, startId);
@@ -164,6 +169,7 @@ public class SincronizarBancosIntentService extends IntentService{
         }
 
         if (this.ativo && !this.stopAll && SplashScreenActivity.isSplashScreenActivityAtiva()){
+            SplashScreenActivity.setCadastroInicialBD(this.cadastroInicialBD);
             sendBroadcast(new Intent(SplashScreenActivity.getBrodcastReceiverBancosSincronizados()));
         }
 
@@ -180,6 +186,10 @@ public class SincronizarBancosIntentService extends IntentService{
         if (this.threadSalvarCadastroInicialFirebase != null){
             this.threadSalvarCadastroInicialFirebase.interrupt();
             this.threadSalvarCadastroInicialFirebase = null;
+        }
+        if (this.cadastroInicialDAO != null){
+            this.cadastroInicialDAO.fechar();
+            this.cadastroInicialDAO = null;
         }
     }
 
@@ -215,7 +225,10 @@ public class SincronizarBancosIntentService extends IntentService{
                     Log.i("script","ThreadBuscarCadastroInicialFirebase aguardando resposta firebase ...");
                 }
             }
-            threadBuscarCadastroInicialFirebase.interrupt();
+            if (threadBuscarCadastroInicialFirebase != null){
+                threadBuscarCadastroInicialFirebase.interrupt();
+                threadBuscarCadastroInicialFirebase = null;
+            }
         }
 
         @Override
@@ -235,7 +248,10 @@ public class SincronizarBancosIntentService extends IntentService{
                         Map<String, Object> map = (Map<String, Object>) dataSnapshot.getValue();
                         if (map == null || map.size() == 0){
                             Log.i("script","vELCadastroInicial dataSnapshot == null");
-                            threadBuscarCadastroInicialFirebase.interrupt();
+                            if (threadBuscarCadastroInicialFirebase != null){
+                                threadBuscarCadastroInicialFirebase.interrupt();
+                                threadBuscarCadastroInicialFirebase = null;
+                            }
                         }else {
                             Log.i("script","vELCadastroInicial dataSnapshot != null");
                             if (map.containsKey(DatabaseHelper.CadastroInicial.VERSAO)){
@@ -253,14 +269,20 @@ public class SincronizarBancosIntentService extends IntentService{
                             if (map.containsKey(DatabaseHelper.CadastroInicial.CODIGO_UNICO)){
                                 cadastroInicialFirebase.setCodigoUnico(Integer.valueOf(map.get(DatabaseHelper.CadastroInicial.CODIGO_UNICO).toString()));
                             }
-                            threadBuscarCadastroInicialFirebase.interrupt();
+                            if (threadBuscarCadastroInicialFirebase != null){
+                                threadBuscarCadastroInicialFirebase.interrupt();
+                                threadBuscarCadastroInicialFirebase = null;
+                            }
                         }
                     }
 
                     @Override
                     public void onCancelled(DatabaseError databaseError) {
                         Log.i("script","vELCadastroInicial onCancelled");
-                        threadBuscarCadastroInicialFirebase.interrupt();
+                        if (threadBuscarCadastroInicialFirebase != null){
+                            threadBuscarCadastroInicialFirebase.interrupt();
+                            threadBuscarCadastroInicialFirebase = null;
+                        }
                     }
                 };
             }
@@ -294,7 +316,10 @@ public class SincronizarBancosIntentService extends IntentService{
                 }
             }
 
-            threadSalvarCadastroInicialFirebase.interrupt();
+            if (threadSalvarCadastroInicialFirebase != null){
+                threadSalvarCadastroInicialFirebase.interrupt();
+                threadSalvarCadastroInicialFirebase = null;
+            }
         }
 
         @Override
@@ -315,7 +340,10 @@ public class SincronizarBancosIntentService extends IntentService{
                             Log.i("script","completionListenerCadastroInicial cadastroInicial foi salvo");
                             salvo = true;
                             aguardando = false;
-                            threadSalvarCadastroInicialFirebase.interrupt();
+                            if (threadSalvarCadastroInicialFirebase != null){
+                                threadSalvarCadastroInicialFirebase.interrupt();
+                                threadSalvarCadastroInicialFirebase = null;
+                            }
                         }
                     }
                 };

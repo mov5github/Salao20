@@ -1,6 +1,5 @@
 package com.example.lucas.salao20.activitys;
 
-import android.app.Activity;
 import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
@@ -21,8 +20,7 @@ import android.widget.Toast;
 
 import com.example.lucas.salao20.R;
 import com.example.lucas.salao20.domain.User;
-import com.example.lucas.salao20.domain.util.LibraryClass;
-import com.example.lucas.salao20.fragments.FragmentCadastroBasico;
+import com.example.lucas.salao20.fragments.signUp.FragmentCadastroBasico;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.Task;

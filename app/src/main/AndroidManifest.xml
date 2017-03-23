@@ -36,6 +36,12 @@
         <activity
             android:name=".activitys.ErroActivity"
             android:configChanges="orientation|screenSize" />
+        <activity
+            android:name=".activitys.CadastroInicialActivity"
+            android:configChanges="orientation|screenSize" />
+        <activity
+            android:name=".activitys.HomeActivity"
+            android:configChanges="orientation|screenSize" />
 
         <!-- SERVICES -->
         <service
@@ -43,8 +49,11 @@
             android:enabled="true"
             android:exported="false" />
 
-        <activity android:name=".activitys.CadastroInicialActivity" />
-        <activity android:name=".activitys.HomeActivity"></activity>
+        <service
+            android:name=".intentServices.AtualizarCadastroInicialIntentService"
+            android:enabled="true"
+            android:exported="false" />
+
     </application>
 
 </manifest>
