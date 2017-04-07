@@ -33,7 +33,7 @@ import com.example.lucas.salao20.slidingTabLayout.SlidingTabLayout;
 import com.google.firebase.auth.FirebaseAuth;
 
 public class CadastroInicialActivity extends AppCompatActivity {
-    static String INTENT_SERVICE_ATUALIZAR_CADASTRO_INICIAL = "com.example.lucas.salao20.intentservice.atualizarcadastroinicial";
+    public static final String ACTIVITY_CADASTRO_INICIAL = "activity.cadastro.inicial";
     static String BRODCAST_RECEIVER_ATUALIZAR_CADASTRO_INICIAL = "com.example.lucas.salao20.brodcastreceiver.cadastroinicialatualizado";
 
     private Toolbar mToolbar;
@@ -97,6 +97,7 @@ public class CadastroInicialActivity extends AppCompatActivity {
             if (cadastroInicialBD.getNivelUsuario() != 1.0){
                 if (cadastroInicialBD.getTipoUsuario().equals("salão")){
                     sincronizacaoConfiguracaoInicialRequerida = true;
+
                 }
             }
         }
@@ -108,7 +109,7 @@ public class CadastroInicialActivity extends AppCompatActivity {
         Log.i("script","CadastroInicialActivity() onDestroy()");
         cadastroInicialActivityAtiva = false;
 
-        //CENCELA ATUALIZARBANCOSINTENTSERVICE
+        //CANCELA ATUALIZARBANCOSINTENTSERVICE
         Intent intent = new Intent(getApplicationContext(), AtualizarCadastroInicialIntentService.class);
         Bundle bundle = new Bundle();
         bundle.putInt("desligar",1);
@@ -130,6 +131,10 @@ public class CadastroInicialActivity extends AppCompatActivity {
         switch (id){
             case R.id.action_ajuda:
                 Toast.makeText(this,String.valueOf(id), Toast.LENGTH_SHORT).show();
+                break;
+            case R.id.action_logout:
+                mAuth.signOut();
+                callLoginActivity();
                 break;
         }
         return super.onOptionsItemSelected(item);
@@ -354,10 +359,6 @@ public class CadastroInicialActivity extends AppCompatActivity {
     //GETTERS SETTERS
     public static boolean isCadastroInicialActivityAtiva() {
         return cadastroInicialActivityAtiva;
-    }
-
-    public static String getIntentServiceAtualizarCadastroInicial() {
-        return INTENT_SERVICE_ATUALIZAR_CADASTRO_INICIAL;
     }
 
     public static String getBrodcastReceiverAtualizarCadastroInicial() {

@@ -12,6 +12,8 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.lucas.salao20.R;
+import com.example.lucas.salao20.dao.model.Funcionamento;
+import com.example.lucas.salao20.enumeradores.DiasENUM;
 import com.example.lucas.salao20.geral.FuncionamentoSalao;
 
 /**
@@ -164,48 +166,55 @@ public class FragmentFuncionamento extends Fragment{
 
     public FuncionamentoSalao criarFuncionamentoSalao(){
         FuncionamentoSalao funcionamentoSalao = new FuncionamentoSalao();
+        Funcionamento funcionamento = new Funcionamento();
 
-        if (this.abreSegunda.getText() != null && !this.abreSegunda.getText().toString().isEmpty() && !this.abreSegunda.getText().toString().equals("--:--")){
-            funcionamentoSalao.setAbreSegunda(this.abreSegunda.getText().toString());
+        if (this.abreSegunda.getText() != null && !this.abreSegunda.getText().toString().isEmpty() && !this.abreSegunda.getText().toString().equals("--:--") && this.fechaSegunda.getText() != null && !this.fechaSegunda.getText().toString().isEmpty() && !this.fechaSegunda.getText().toString().equals("--:--")){
+            funcionamento.setDia(DiasENUM.SEGUNDA);
+            funcionamento.setAbre(this.abreSegunda.getText().toString());
+            funcionamento.setFecha(this.fechaSegunda.getText().toString());
+            funcionamentoSalao.addFuncionamento(funcionamento);
         }
-        if (this.fechaSegunda.getText() != null && !this.fechaSegunda.getText().toString().isEmpty() && !this.fechaSegunda.getText().toString().equals("--:--")){
-            funcionamentoSalao.setFechaSegunda(this.fechaSegunda.getText().toString());
+
+        if (this.abreTerca.getText() != null && !this.abreTerca.getText().toString().isEmpty() && !this.abreTerca.getText().toString().equals("--:--") && this.fechaTerca.getText() != null && !this.fechaTerca.getText().toString().isEmpty() && !this.fechaTerca.getText().toString().equals("--:--")){
+            funcionamento = new Funcionamento();
+            funcionamento.setAbre(this.abreTerca.getText().toString());
+            funcionamento.setFecha(this.fechaTerca.getText().toString());
+            funcionamentoSalao.addFuncionamento(funcionamento);
         }
-        if (this.abreTerca.getText() != null && !this.abreTerca.getText().toString().isEmpty() && !this.abreTerca.getText().toString().equals("--:--")){
-            funcionamentoSalao.setAbreTerca(this.abreTerca.getText().toString());
+
+        if (this.abreQuarta.getText() != null && !this.abreQuarta.getText().toString().isEmpty() && !this.abreQuarta.getText().toString().equals("--:--") && this.fechaQuarta.getText() != null && !this.fechaQuarta.getText().toString().isEmpty() && !this.fechaQuarta.getText().toString().equals("--:--")){
+            funcionamento = new Funcionamento();
+            funcionamento.setAbre(this.abreQuarta.getText().toString());
+            funcionamento.setFecha(this.fechaQuarta.getText().toString());
+            funcionamentoSalao.addFuncionamento(funcionamento);
         }
-        if (this.fechaTerca.getText() != null && !this.fechaTerca.getText().toString().isEmpty() && !this.fechaTerca.getText().toString().equals("--:--")){
-            funcionamentoSalao.setFechaTerca(this.fechaTerca.getText().toString());
+
+        if (this.abreQuinta.getText() != null && !this.abreQuinta.getText().toString().isEmpty() && !this.abreQuinta.getText().toString().equals("--:--") && this.fechaQuinta.getText() != null && !this.fechaQuinta.getText().toString().isEmpty() && !this.fechaQuinta.getText().toString().equals("--:--")){
+            funcionamento = new Funcionamento();
+            funcionamento.setAbre(this.abreQuinta.getText().toString());
+            funcionamento.setFecha(this.fechaQuinta.getText().toString());
+            funcionamentoSalao.addFuncionamento(funcionamento);
         }
-        if (this.abreQuarta.getText() != null && !this.abreQuarta.getText().toString().isEmpty() && !this.abreQuarta.getText().toString().equals("--:--")){
-            funcionamentoSalao.setAbreQuarta(this.abreQuarta.getText().toString());
+
+        if (this.abreSexta.getText() != null && !this.abreSexta.getText().toString().isEmpty() && !this.abreSexta.getText().toString().equals("--:--") && this.fechaSexta.getText() != null && !this.fechaSexta.getText().toString().isEmpty() && !this.fechaSexta.getText().toString().equals("--:--")){
+            funcionamento = new Funcionamento();
+            funcionamento.setAbre(this.abreSexta.getText().toString());
+            funcionamento.setFecha(this.fechaSexta.getText().toString());
+            funcionamentoSalao.addFuncionamento(funcionamento);
         }
-        if (this.fechaQuarta.getText() != null && !this.fechaQuarta.getText().toString().isEmpty() && !this.fechaQuarta.getText().toString().equals("--:--")){
-            funcionamentoSalao.setFechaQuarta(this.fechaQuarta.getText().toString());
+
+        if (this.abreSabado.getText() != null && !this.abreSabado.getText().toString().isEmpty() && !this.abreSabado.getText().toString().equals("--:--") && this.fechaSabado.getText() != null && !this.fechaSabado.getText().toString().isEmpty() && !this.fechaSabado.getText().toString().equals("--:--")){
+            funcionamento = new Funcionamento();
+            funcionamento.setAbre(this.abreSabado.getText().toString());
+            funcionamento.setFecha(this.fechaSabado.getText().toString());
+            funcionamentoSalao.addFuncionamento(funcionamento);
         }
-        if (this.abreQuinta.getText() != null && !this.abreQuinta.getText().toString().isEmpty() && !this.abreQuinta.getText().toString().equals("--:--")){
-            funcionamentoSalao.setAbreQuinta(this.abreQuinta.getText().toString());
-        }
-        if (this.fechaQuinta.getText() != null && !this.fechaQuinta.getText().toString().isEmpty() && !this.fechaQuinta.getText().toString().equals("--:--")){
-            funcionamentoSalao.setFechaQuinta(this.fechaQuinta.getText().toString());
-        }
-        if (this.abreSexta.getText() != null && !this.abreSexta.getText().toString().isEmpty() && !this.abreSexta.getText().toString().equals("--:--")){
-            funcionamentoSalao.setAbreSexta(this.abreSexta.getText().toString());
-        }
-        if (this.fechaSexta.getText() != null && !this.fechaSexta.getText().toString().isEmpty() && !this.fechaSexta.getText().toString().equals("--:--")){
-            funcionamentoSalao.setFechaSexta(this.fechaSexta.getText().toString());
-        }
-        if (this.abreSabado.getText() != null && !this.abreSabado.getText().toString().isEmpty() && !this.abreSabado.getText().toString().equals("--:--")){
-            funcionamentoSalao.setAbreSabado(this.abreSabado.getText().toString());
-        }
-        if (this.fechaSabado.getText() != null && !this.fechaSabado.getText().toString().isEmpty() && !this.fechaSabado.getText().toString().equals("--:--")){
-            funcionamentoSalao.setFechaSabado(this.fechaSabado.getText().toString());
-        }
-        if (this.abreDomingo.getText() != null && !this.abreDomingo.getText().toString().isEmpty() && !this.abreDomingo.getText().toString().equals("--:--")){
-            funcionamentoSalao.setAbreDomingo(this.abreDomingo.getText().toString());
-        }
-        if (this.fechaDomingo.getText() != null && !this.fechaDomingo.getText().toString().isEmpty() && !this.fechaDomingo.getText().toString().equals("--:--")){
-            funcionamentoSalao.setFechaDomingo(this.fechaDomingo.getText().toString());
+
+        if (this.abreDomingo.getText() != null && !this.abreDomingo.getText().toString().isEmpty() && !this.abreDomingo.getText().toString().equals("--:--") && this.fechaDomingo.getText() != null && !this.fechaDomingo.getText().toString().isEmpty() && !this.fechaDomingo.getText().toString().equals("--:--")){
+            funcionamento = new Funcionamento();
+            funcionamento.setAbre(this.abreDomingo.getText().toString());
+            funcionamento.setFecha(this.fechaDomingo.getText().toString());
+            funcionamentoSalao.addFuncionamento(funcionamento);
         }
 
         return funcionamentoSalao;

@@ -276,9 +276,6 @@ public class LoginActivity extends CommonActivity implements GoogleApiClient.OnC
         callHomeActivity();
     }
 
-
-
-
     //TEXT LINK
     public void callSignUp(View view) {
         Log.i("script","callSignUp()");

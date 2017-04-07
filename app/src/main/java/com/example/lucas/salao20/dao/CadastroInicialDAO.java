@@ -51,69 +51,6 @@ public class CadastroInicialDAO {
         return cadastrosIniciais;
     }
 
-    public long salvarCadastroInicialNaoVersionando(CadastroInicial cadastroInicial){
-        ContentValues values = new ContentValues();
-        values.put(DatabaseHelper.CadastroInicial.NIVEL_USUARIO, cadastroInicial.getNivelUsuario());
-        if (cadastroInicial.getTipoUsuario() != null && !cadastroInicial.getTipoUsuario().isEmpty()){
-            values.put(DatabaseHelper.CadastroInicial.TIPO_USUARIO, cadastroInicial.getTipoUsuario());
-        }
-
-        if (cadastroInicial.getCodigoUnico() != null && !cadastroInicial.getCodigoUnico().toString().isEmpty()){
-            values.put(DatabaseHelper.CadastroInicial.CODIGO_UNICO, cadastroInicial.getCodigoUnico());
-        }
-        values.put(DatabaseHelper.CadastroInicial.UID, cadastroInicial.getUid());
-
-        if (cadastroInicial.getVersao() != null){
-            values.put(DatabaseHelper.CadastroInicial.VERSAO, cadastroInicial.getVersao());
-        }
-
-        cadastroInicial.setDataModificalao(getDateTime());
-        values.put(DatabaseHelper.CadastroInicial.DATA_MODIFICACAO, cadastroInicial.getDataModificalao());
-
-        if(cadastroInicial.get_id() != null){
-            long retorno = this.database.update(DatabaseHelper.CadastroInicial.TABELA, values,
-                    "_id = ?", new String[]{cadastroInicial.get_id().toString()});
-            if (retorno < 1){
-                return -1;
-            }else {
-                return retorno;
-            }
-        }else {
-            return getDatabase().insert(DatabaseHelper.CadastroInicial.TABELA, null, values);
-        }
-    }
-    public long salvarCadastroInicialCloudNaoVersionando(CadastroInicial cadastroInicial){
-        ContentValues values = new ContentValues();
-        values.put(DatabaseHelper.CadastroInicial.NIVEL_USUARIO, cadastroInicial.getNivelUsuario());
-        if (cadastroInicial.getTipoUsuario() != null && !cadastroInicial.getTipoUsuario().isEmpty()){
-            values.put(DatabaseHelper.CadastroInicial.TIPO_USUARIO, cadastroInicial.getTipoUsuario());
-        }
-
-        if (cadastroInicial.getCodigoUnico() != null && !cadastroInicial.getCodigoUnico().toString().isEmpty()){
-            values.put(DatabaseHelper.CadastroInicial.CODIGO_UNICO, cadastroInicial.getCodigoUnico());
-        }
-        values.put(DatabaseHelper.CadastroInicial.UID, cadastroInicial.getUid());
-
-        if (cadastroInicial.getVersao() != null){
-            values.put(DatabaseHelper.CadastroInicial.VERSAO, cadastroInicial.getVersao());
-        }
-
-        cadastroInicial.setDataModificalao(getDateTime());
-        values.put(DatabaseHelper.CadastroInicial.DATA_MODIFICACAO, cadastroInicial.getDataModificalao());
-
-        if(cadastroInicial.get_id() != null){
-            long retorno = this.database.update(DatabaseHelper.CadastroInicial.TABELA_CLOUD, values,
-                    "_id = ?", new String[]{cadastroInicial.get_id().toString()});
-            if (retorno < 1){
-                return -1;
-            }else {
-                return retorno;
-            }
-        }else {
-            return getDatabase().insert(DatabaseHelper.CadastroInicial.TABELA_CLOUD, null, values);
-        }
-    }
-
     public long salvarCadastroInicial(CadastroInicial cadastroInicial){
         ContentValues values = new ContentValues();
         values.put(DatabaseHelper.CadastroInicial.NIVEL_USUARIO, cadastroInicial.getNivelUsuario());
@@ -125,16 +62,6 @@ public class CadastroInicialDAO {
             values.put(DatabaseHelper.CadastroInicial.CODIGO_UNICO, cadastroInicial.getCodigoUnico());
         }
         values.put(DatabaseHelper.CadastroInicial.UID, cadastroInicial.getUid());
-
-        if (cadastroInicial.getVersao() == null){
-            cadastroInicial.setVersao(1);
-        }else {
-            cadastroInicial.setVersao(cadastroInicial.getVersao() + 1);
-        }
-        values.put(DatabaseHelper.CadastroInicial.VERSAO, cadastroInicial.getVersao());
-
-        cadastroInicial.setDataModificalao(getDateTime());
-        values.put(DatabaseHelper.CadastroInicial.DATA_MODIFICACAO, cadastroInicial.getDataModificalao());
 
         if(cadastroInicial.get_id() != null){
             long retorno = this.database.update(DatabaseHelper.CadastroInicial.TABELA, values,
@@ -159,16 +86,6 @@ public class CadastroInicialDAO {
             values.put(DatabaseHelper.CadastroInicial.CODIGO_UNICO, cadastroInicial.getCodigoUnico());
         }
         values.put(DatabaseHelper.CadastroInicial.UID, cadastroInicial.getUid());
-
-        if (cadastroInicial.getVersao() == null){
-            cadastroInicial.setVersao(1);
-        }else {
-            cadastroInicial.setVersao(cadastroInicial.getVersao() + 1);
-        }
-        values.put(DatabaseHelper.CadastroInicial.VERSAO, cadastroInicial.getVersao());
-
-        cadastroInicial.setDataModificalao(getDateTime());
-        values.put(DatabaseHelper.CadastroInicial.DATA_MODIFICACAO, cadastroInicial.getDataModificalao());
 
         if(cadastroInicial.get_id() != null){
             long retorno = this.database.update(DatabaseHelper.CadastroInicial.TABELA_CLOUD, values,
@@ -273,9 +190,7 @@ public class CadastroInicialDAO {
                 cursor.getDouble(cursor.getColumnIndex(DatabaseHelper.CadastroInicial.NIVEL_USUARIO)),
                 cursor.getString(cursor.getColumnIndex(DatabaseHelper.CadastroInicial.TIPO_USUARIO)),
                 cursor.getInt(cursor.getColumnIndex(DatabaseHelper.CadastroInicial.CODIGO_UNICO)),
-                cursor.getString(cursor.getColumnIndex(DatabaseHelper.CadastroInicial.UID)),
-                cursor.getInt(cursor.getColumnIndex(DatabaseHelper.CadastroInicial.VERSAO)),
-                cursor.getString(cursor.getColumnIndex(DatabaseHelper.CadastroInicial.DATA_MODIFICACAO))
+                cursor.getString(cursor.getColumnIndex(DatabaseHelper.CadastroInicial.UID))
         );
         return model;
     }

@@ -49,11 +49,6 @@
             android:enabled="true"
             android:exported="false" />
 
-        <service
-            android:name=".intentServices.AtualizarCadastroInicialIntentService"
-            android:enabled="true"
-            android:exported="false" />
-
     </application>
 
 </manifest>

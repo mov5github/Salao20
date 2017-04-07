@@ -10,20 +10,17 @@ public class CadastroInicial {
     private String tipoUsuario;
     private Integer codigoUnico;
     private String uid;
-    private Integer versao;
-    private String dataModificalao;
+
 
     public CadastroInicial() {
     }
 
-    public CadastroInicial(Integer _id, Double nivelUsuario, String tipoUsuario, Integer codigoUnico, String uid, Integer versao, String dataModificalao) {
+    public CadastroInicial(Integer _id, Double nivelUsuario, String tipoUsuario, Integer codigoUnico, String uid) {
         this._id = _id;
         this.nivelUsuario = nivelUsuario;
         this.tipoUsuario = tipoUsuario;
         this.codigoUnico = codigoUnico;
         this.uid = uid;
-        this.versao = versao;
-        this.dataModificalao = dataModificalao;
     }
 
     //GETTERS AND SETTERS
@@ -62,17 +59,4 @@ public class CadastroInicial {
         this.uid = uid;
     }
 
-    public Integer getVersao() {
-        return versao;
-    }
-    public void setVersao(Integer versao) {
-        this.versao = versao;
-    }
-
-    public String getDataModificalao() {
-        return dataModificalao;
-    }
-    public void setDataModificalao(String dataModificalao) {
-        this.dataModificalao = dataModificalao;
-    }
 }

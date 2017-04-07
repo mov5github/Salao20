@@ -53,11 +53,11 @@ public class DatabaseHelper extends SQLiteOpenHelper{
 
         //TABELA DE CADASTRO INICIAL
         db.execSQL("create table cadastroinicial(_id integer primary key autoincrement, "
-                +"nivelusuario real not null, tipousuario text, codigounico integer, uid text not null, versao integer not null, datamodificacao text not null)");
+                +"nivelusuario real not null, tipousuario text, codigounico integer, uid text not null)");
 
         //TABELA DE CADASTRO INICIAL CLOUD
         db.execSQL("create table cadastroinicialcloud(_id integer primary key autoincrement, "
-                +"nivelusuario real not null, tipousuario text, codigounico integer, uid text not null, versao integer not null, datamodificacao text not null)");
+                +"nivelusuario real not null, tipousuario text, codigounico integer, uid text not null)");
     }
 
     @Override
@@ -100,7 +100,6 @@ public class DatabaseHelper extends SQLiteOpenHelper{
         public static  final String DESCRICAO = "descricao";
 
         public static  final String[] COLUNAS = new String[]{_ID, NOME, ICONE, DURACAO, PRECO, DESCRICAO};
-
     }
 
     public static class Cabeleireiro{
@@ -112,7 +111,6 @@ public class DatabaseHelper extends SQLiteOpenHelper{
         public static  final String CODIGO_UNICO = "codigounico";
 
         public static  final String[] COLUNAS = new String[]{_ID, NOME, FOTO, CODIGO_UNICO};
-
     }
 
     public static class CadastroInicial{
@@ -123,11 +121,7 @@ public class DatabaseHelper extends SQLiteOpenHelper{
         public static  final String TIPO_USUARIO = "tipousuario";
         public static  final String CODIGO_UNICO = "codigounico";
         public static  final String UID = "uid";
-        public static  final String VERSAO = "versao";
-        public static  final String DATA_MODIFICACAO = "datamodificacao";
 
-
-        public static  final String[] COLUNAS = new String[]{_ID, NIVEL_USUARIO, TIPO_USUARIO, CODIGO_UNICO, UID, VERSAO, DATA_MODIFICACAO};
-
+        public static  final String[] COLUNAS = new String[]{_ID, NIVEL_USUARIO, TIPO_USUARIO, CODIGO_UNICO, UID};
     }
 }
