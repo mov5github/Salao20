@@ -7,11 +7,11 @@ import android.support.annotation.Nullable;
 import android.util.Log;
 
 import com.example.lucas.salao20.activitys.SplashScreenActivity;
-import com.example.lucas.salao20.dao.CadastroInicialDAO;
+import com.example.lucas.salao20.dao.CadastroBasicoDAO;
 import com.example.lucas.salao20.dao.DatabaseHelper;
 import com.example.lucas.salao20.dao.FuncionamentoDAO;
 import com.example.lucas.salao20.dao.VersaoDAO;
-import com.example.lucas.salao20.dao.model.CadastroInicial;
+import com.example.lucas.salao20.dao.model.CadastroBasico;
 import com.example.lucas.salao20.dao.model.Funcionamento;
 import com.example.lucas.salao20.dao.model.Versao;
 import com.example.lucas.salao20.domain.util.LibraryClass;
@@ -40,9 +40,9 @@ public class SincronizarBancosIntentService extends IntentService{
     private String uid;
 
     //CADASTROS INICIAIS
-    private CadastroInicial cadastroInicialFirebase;
-    private CadastroInicial cadastroInicialBD;
-    private CadastroInicial cadastroInicialBDCloud;
+    private CadastroBasico cadastroBasicoFirebase;
+    private CadastroBasico cadastroBasicoBD;
+    private CadastroBasico cadastroBasicoBDCloud;
 
     //THREAD
     private ThreadBuscarCadastroInicialFirebase threadBuscarCadastroInicialFirebase;
@@ -52,7 +52,7 @@ public class SincronizarBancosIntentService extends IntentService{
     private ThreadSalvarFuncionamentoFirebase threadSalvarFuncionamentoFirebase;
 
     //DAO
-    private CadastroInicialDAO cadastroInicialDAO;
+    private CadastroBasicoDAO cadastroBasicoDAO;
     private VersaoDAO versaoDAO;
     private FuncionamentoDAO funcionamentoDAO;
 
@@ -226,14 +226,14 @@ public class SincronizarBancosIntentService extends IntentService{
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
-                if (this.cadastroInicialDAO == null){
-                    this.cadastroInicialDAO = new CadastroInicialDAO(this);
+                if (this.cadastroBasicoDAO == null){
+                    this.cadastroBasicoDAO = new CadastroBasicoDAO(this);
                 }
                 if (this.versaoDAO == null){
                     this.versaoDAO = new VersaoDAO(this);
                 }
 
-                if(this.cadastroInicialFirebase == null){
+                if(this.cadastroBasicoFirebase == null){
                     //TODO erro ao obter cadastro inicial firebase
                 }else {
                     inicializaEstadoCadastroInicialBD ("Firebase");
@@ -242,11 +242,11 @@ public class SincronizarBancosIntentService extends IntentService{
                 }
 
             }else if (this.versaoCadastroInicialBD.getVersao() > this.versaoCadastroInicialFirebase.getVersao()){//atualiza o firebase e BDCloud com os valores de BD
-                if (this.cadastroInicialBD == null){
-                    this.cadastroInicialBD = new CadastroInicial();
+                if (this.cadastroBasicoBD == null){
+                    this.cadastroBasicoBD = new CadastroBasico();
                 }
-                if (this.cadastroInicialBDCloud == null){
-                    this.cadastroInicialBDCloud = new CadastroInicial();
+                if (this.cadastroBasicoBDCloud == null){
+                    this.cadastroBasicoBDCloud = new CadastroBasico();
                 }
                 this.threadSalvarCadastroInicialFirebase = new ThreadSalvarCadastroInicialFirebase();
                 this.threadSalvarCadastroInicialFirebase.start();
@@ -255,8 +255,8 @@ public class SincronizarBancosIntentService extends IntentService{
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
-                if (this.cadastroInicialDAO == null){
-                    this.cadastroInicialDAO = new CadastroInicialDAO(this);
+                if (this.cadastroBasicoDAO == null){
+                    this.cadastroBasicoDAO = new CadastroBasicoDAO(this);
                 }
                 if (this.versaoDAO == null){
                     this.versaoDAO = new VersaoDAO(this);
@@ -266,11 +266,11 @@ public class SincronizarBancosIntentService extends IntentService{
 
             }else {
                 if (this.versaoCadastroInicialBDCloud.getVersao() < this.versaoCadastroInicialFirebase.getVersao() || (this.versaoCadastroInicialBDCloud.getVersao().equals(this.versaoCadastroInicialFirebase.getVersao()) && !this.versaoCadastroInicialBDCloud.getDataModificacao().equals(this.versaoCadastroInicialFirebase.getDataModificacao())) || !this.versaoCadastroInicialBD.getDataModificacao().equals(this.versaoCadastroInicialFirebase.getDataModificacao())){
-                    if (this.cadastroInicialBD == null){
-                        this.cadastroInicialBD = new CadastroInicial();
+                    if (this.cadastroBasicoBD == null){
+                        this.cadastroBasicoBD = new CadastroBasico();
                     }
-                    if (this.cadastroInicialBDCloud == null){
-                        this.cadastroInicialBDCloud = new CadastroInicial();
+                    if (this.cadastroBasicoBDCloud == null){
+                        this.cadastroBasicoBDCloud = new CadastroBasico();
                     }
                     this.threadBuscarCadastroInicialFirebase = new ThreadBuscarCadastroInicialFirebase();
                     this.threadBuscarCadastroInicialFirebase.start();
@@ -279,14 +279,14 @@ public class SincronizarBancosIntentService extends IntentService{
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
-                    if (this.cadastroInicialDAO == null){
-                        this.cadastroInicialDAO = new CadastroInicialDAO(this);
+                    if (this.cadastroBasicoDAO == null){
+                        this.cadastroBasicoDAO = new CadastroBasicoDAO(this);
                     }
                     if (this.versaoDAO == null){
                         this.versaoDAO = new VersaoDAO(this);
                     }
 
-                    if(this.cadastroInicialFirebase == null){
+                    if(this.cadastroBasicoFirebase == null){
                         //TODO erro ao obter cadastro inicial firebase
                     }else {
                         inicializaEstadoCadastroInicialBD ("Firebase");
@@ -300,8 +300,8 @@ public class SincronizarBancosIntentService extends IntentService{
 
 
         if (this.ativo && !this.stopAll){
-            if (this.cadastroInicialBD.getTipoUsuario() != null && !this.cadastroInicialBD.getTipoUsuario().isEmpty()){
-                switch (this.cadastroInicialBD.getTipoUsuario()){
+            if (this.cadastroBasicoBD.getTipoUsuario() != null && !this.cadastroBasicoBD.getTipoUsuario().isEmpty()){
+                switch (this.cadastroBasicoBD.getTipoUsuario()){
                     case TipoUsuarioENUM.CLIENTE:
                         //TODO
                         break;
@@ -322,7 +322,7 @@ public class SincronizarBancosIntentService extends IntentService{
                         }
 
                         //verifica a nescessidade de sincronizar funcioanmento salao
-                        if (this.versaoFuncionamentoBD.getVersao() > this.versaoFuncionamentoFirebase.getVersao() && this.cadastroInicialBD.getCodigoUnico() != 0){
+                        if (this.versaoFuncionamentoBD.getVersao() > this.versaoFuncionamentoFirebase.getVersao() && this.cadastroBasicoBD.getCodigoUnico() != 0){
                             this.threadSalvarFuncionamentoFirebase = new ThreadSalvarFuncionamentoFirebase();
                             this.threadSalvarFuncionamentoFirebase.start();
                             try {
@@ -333,7 +333,7 @@ public class SincronizarBancosIntentService extends IntentService{
 
                             inicializaEstadoFuncionamentoSalaoBDCloud("BD");
 
-                        }else if (this.versaoFuncionamentoBD.getVersao() < this.versaoFuncionamentoFirebase.getVersao() && this.cadastroInicialBD.getCodigoUnico() != 0){
+                        }else if (this.versaoFuncionamentoBD.getVersao() < this.versaoFuncionamentoFirebase.getVersao() && this.cadastroBasicoBD.getCodigoUnico() != 0){
                             this.threadBuscarFuncionamentoSalaoFirebase = new ThreadBuscarFuncionamentoSalaoFirebase();
                             this.threadBuscarFuncionamentoSalaoFirebase.start();
                             try {
@@ -358,7 +358,7 @@ public class SincronizarBancosIntentService extends IntentService{
                             }
 
                         }else {
-                            if ((this.versaoFuncionamentoBDCLoud.getVersao() < this.versaoFuncionamentoFirebase.getVersao() || (this.versaoFuncionamentoBDCLoud.getVersao().equals(this.versaoFuncionamentoFirebase.getVersao()) && !this.versaoFuncionamentoBDCLoud.getDataModificacao().equals(this.versaoFuncionamentoFirebase.getDataModificacao()))) && this.cadastroInicialBD.getCodigoUnico() != 0){
+                            if ((this.versaoFuncionamentoBDCLoud.getVersao() < this.versaoFuncionamentoFirebase.getVersao() || (this.versaoFuncionamentoBDCLoud.getVersao().equals(this.versaoFuncionamentoFirebase.getVersao()) && !this.versaoFuncionamentoBDCLoud.getDataModificacao().equals(this.versaoFuncionamentoFirebase.getDataModificacao()))) && this.cadastroBasicoBD.getCodigoUnico() != 0){
                                 this.threadBuscarFuncionamentoSalaoFirebase = new ThreadBuscarFuncionamentoSalaoFirebase();
                                 this.threadBuscarFuncionamentoSalaoFirebase.start();
                                 try {
@@ -420,7 +420,7 @@ public class SincronizarBancosIntentService extends IntentService{
 
         //dispara resultado da sincronizaçao
         if (this.ativo && !this.stopAll && SplashScreenActivity.isSplashScreenActivityAtiva()){
-            SplashScreenActivity.setCadastroInicialBD(this.cadastroInicialBD);
+            SplashScreenActivity.setCadastroBasicoBD(this.cadastroBasicoBD);
             sendBroadcast(new Intent(SplashScreenActivity.getBrodcastReceiverBancosSincronizados()));
         }
 
@@ -477,9 +477,9 @@ public class SincronizarBancosIntentService extends IntentService{
             this.threadSalvarFuncionamentoFirebase.interrupt();
             this.threadSalvarFuncionamentoFirebase = null;
         }
-        if (this.cadastroInicialDAO != null){
-            this.cadastroInicialDAO.fechar();
-            this.cadastroInicialDAO = null;
+        if (this.cadastroBasicoDAO != null){
+            this.cadastroBasicoDAO.fechar();
+            this.cadastroBasicoDAO = null;
         }
         if (this.versaoDAO != null){
             this.versaoDAO.fechar();
@@ -489,38 +489,38 @@ public class SincronizarBancosIntentService extends IntentService{
 
     private void inicializaEstadoCadastroInicialBD (String bdEspelho){
         Versao versao = new Versao();
-        CadastroInicial cadastroInicial = new CadastroInicial();
+        CadastroBasico cadastroBasico = new CadastroBasico();
         switch (bdEspelho){
             case "BDCloud":
                 versao = this.versaoCadastroInicialBDCloud;
-                cadastroInicial = this.cadastroInicialBDCloud;
+                cadastroBasico = this.cadastroBasicoBDCloud;
                 break;
             case "Firebase":
                 versao = this.versaoCadastroInicialFirebase;
-                cadastroInicial = this.cadastroInicialFirebase;
+                cadastroBasico = this.cadastroBasicoFirebase;
                 break;
             default:
                 break;
         }
 
-        this.cadastroInicialBD = this.cadastroInicialDAO.buscarCadastroInicialPorUID(this.uid);
-        if (this.cadastroInicialBD != null){
-            this.cadastroInicialBD.setTipoUsuario(cadastroInicial.getTipoUsuario());
-            this.cadastroInicialBD.setNivelUsuario(cadastroInicial.getNivelUsuario());
-            this.cadastroInicialBD.setCodigoUnico(cadastroInicial.getCodigoUnico());
+        this.cadastroBasicoBD = this.cadastroBasicoDAO.buscarCadastroInicialPorUID(this.uid);
+        if (this.cadastroBasicoBD != null){
+            this.cadastroBasicoBD.setTipoUsuario(cadastroBasico.getTipoUsuario());
+            this.cadastroBasicoBD.setNivelUsuario(cadastroBasico.getNivelUsuario());
+            this.cadastroBasicoBD.setCodigoUnico(cadastroBasico.getCodigoUnico());
             long result = -1;
             while (this.ativo && !this.stopAll && result == -1){
-                result = this.cadastroInicialDAO.salvarCadastroInicial(this.cadastroInicialBD);
+                result = this.cadastroBasicoDAO.salvarCadastroInicial(this.cadastroBasicoBD);
             }
         }else {
-            this.cadastroInicialBD = new CadastroInicial();
-            this.cadastroInicialBD.setUid(this.uid);
-            this.cadastroInicialBD.setTipoUsuario(cadastroInicial.getTipoUsuario());
-            this.cadastroInicialBD.setNivelUsuario(cadastroInicial.getNivelUsuario());
-            this.cadastroInicialBD.setCodigoUnico(cadastroInicial.getCodigoUnico());
+            this.cadastroBasicoBD = new CadastroBasico();
+            this.cadastroBasicoBD.setUid(this.uid);
+            this.cadastroBasicoBD.setTipoUsuario(cadastroBasico.getTipoUsuario());
+            this.cadastroBasicoBD.setNivelUsuario(cadastroBasico.getNivelUsuario());
+            this.cadastroBasicoBD.setCodigoUnico(cadastroBasico.getCodigoUnico());
             long result = -1;
             while (this.ativo && !this.stopAll && result == -1){
-                result = this.cadastroInicialDAO.salvarCadastroInicial(this.cadastroInicialBD);
+                result = this.cadastroBasicoDAO.salvarCadastroInicial(this.cadastroBasicoBD);
             }
         }
 
@@ -533,44 +533,44 @@ public class SincronizarBancosIntentService extends IntentService{
         this.versaoCadastroInicialBD.setIdentificacaoTabela(DatabaseHelper.CadastroInicial.TABELA);
         long result = -1;
         while (this.ativo && !this.stopAll && result == -1){
-            result = this.versaoDAO.salvarVersao(versao);
+            result = this.versaoDAO.salvarAtualizarVersao(versao);
         }
     }
 
     private void inicializaEstadoCadastroInicialBDCloud(String bdEspelho){
         Versao versao = new Versao();
-        CadastroInicial cadastroInicial = new CadastroInicial();
+        CadastroBasico cadastroBasico = new CadastroBasico();
         switch (bdEspelho){
             case "BD":
                 versao = this.versaoCadastroInicialBD;
-                cadastroInicial = this.cadastroInicialBD;
+                cadastroBasico = this.cadastroBasicoBD;
                 break;
             case "Firebase":
                 versao = this.versaoCadastroInicialFirebase;
-                cadastroInicial = this.cadastroInicialFirebase;
+                cadastroBasico = this.cadastroBasicoFirebase;
                 break;
             default:
                 break;
         }
 
-        this.cadastroInicialBDCloud = this.cadastroInicialDAO.buscarCadastroInicialPorUIDCloud(this.uid);
-        if (this.cadastroInicialBDCloud != null){
-            this.cadastroInicialBDCloud.setTipoUsuario(cadastroInicial.getTipoUsuario());
-            this.cadastroInicialBDCloud.setNivelUsuario(cadastroInicial.getNivelUsuario());
-            this.cadastroInicialBDCloud.setCodigoUnico(cadastroInicial.getCodigoUnico());
+        this.cadastroBasicoBDCloud = this.cadastroBasicoDAO.buscarCadastroInicialPorUIDCloud(this.uid);
+        if (this.cadastroBasicoBDCloud != null){
+            this.cadastroBasicoBDCloud.setTipoUsuario(cadastroBasico.getTipoUsuario());
+            this.cadastroBasicoBDCloud.setNivelUsuario(cadastroBasico.getNivelUsuario());
+            this.cadastroBasicoBDCloud.setCodigoUnico(cadastroBasico.getCodigoUnico());
             long result = -1;
             while (this.ativo && !this.stopAll && result == -1){
-                result = this.cadastroInicialDAO.salvarCadastroInicialCloud(this.cadastroInicialBDCloud);
+                result = this.cadastroBasicoDAO.salvarCadastroInicialCloud(this.cadastroBasicoBDCloud);
             }
         }else {
-            this.cadastroInicialBDCloud = new CadastroInicial();
-            this.cadastroInicialBDCloud.setUid(this.uid);
-            this.cadastroInicialBDCloud.setTipoUsuario(cadastroInicial.getTipoUsuario());
-            this.cadastroInicialBDCloud.setNivelUsuario(cadastroInicial.getNivelUsuario());
-            this.cadastroInicialBDCloud.setCodigoUnico(cadastroInicial.getCodigoUnico());
+            this.cadastroBasicoBDCloud = new CadastroBasico();
+            this.cadastroBasicoBDCloud.setUid(this.uid);
+            this.cadastroBasicoBDCloud.setTipoUsuario(cadastroBasico.getTipoUsuario());
+            this.cadastroBasicoBDCloud.setNivelUsuario(cadastroBasico.getNivelUsuario());
+            this.cadastroBasicoBDCloud.setCodigoUnico(cadastroBasico.getCodigoUnico());
             long result = -1;
             while (this.ativo && !this.stopAll && result == -1){
-                result = this.cadastroInicialDAO.salvarCadastroInicialCloud(this.cadastroInicialBDCloud);
+                result = this.cadastroBasicoDAO.salvarCadastroInicialCloud(this.cadastroBasicoBDCloud);
             }
         }
 
@@ -583,7 +583,7 @@ public class SincronizarBancosIntentService extends IntentService{
         this.versaoCadastroInicialBDCloud.setIdentificacaoTabela(DatabaseHelper.CadastroInicial.TABELA);
         long result = -1;
         while (this.ativo && !this.stopAll && result == -1){
-            result = this.versaoDAO.salvarVersaoCloud(versao);
+            result = this.versaoDAO.salvarAtualizarVersaoCloud(versao);
         }
     }
 
@@ -627,7 +627,7 @@ public class SincronizarBancosIntentService extends IntentService{
         this.versaoFuncionamentoBD.setUid(this.uid);
         long result = -1;
         while (this.ativo && !this.stopAll && result == -1){
-            result = this.versaoDAO.salvarVersao(this.versaoFuncionamentoBD);
+            result = this.versaoDAO.salvarAtualizarVersao(this.versaoFuncionamentoBD);
         }
     }
 
@@ -671,25 +671,25 @@ public class SincronizarBancosIntentService extends IntentService{
         this.versaoFuncionamentoBDCLoud.setUid(this.uid);
         long result = -1;
         while (this.ativo && !this.stopAll && result == -1){
-            result = this.versaoDAO.salvarVersaoCloud(this.versaoFuncionamentoBDCLoud);
+            result = this.versaoDAO.salvarAtualizarVersaoCloud(this.versaoFuncionamentoBDCLoud);
         }
 
     }
 
     //INITS
     private void initCadastroIniciais(){
-        if (this.cadastroInicialFirebase == null){
-            this.cadastroInicialFirebase = new CadastroInicial();
+        if (this.cadastroBasicoFirebase == null){
+            this.cadastroBasicoFirebase = new CadastroBasico();
         }
-        if (this.cadastroInicialBD == null){
-            this.cadastroInicialBD = new CadastroInicial();
+        if (this.cadastroBasicoBD == null){
+            this.cadastroBasicoBD = new CadastroBasico();
         }
-        if (this.cadastroInicialBDCloud == null){
-            this.cadastroInicialBDCloud = new CadastroInicial();
+        if (this.cadastroBasicoBDCloud == null){
+            this.cadastroBasicoBDCloud = new CadastroBasico();
         }
-        this.cadastroInicialFirebase.setUid(this.uid);
-        this.cadastroInicialBD.setUid(this.uid);
-        this.cadastroInicialBDCloud.setUid(this.uid);
+        this.cadastroBasicoFirebase.setUid(this.uid);
+        this.cadastroBasicoBD.setUid(this.uid);
+        this.cadastroBasicoBDCloud.setUid(this.uid);
     }
 
     //THREADS
@@ -733,7 +733,7 @@ public class SincronizarBancosIntentService extends IntentService{
                         Map<String, Object> map = (Map<String, Object>) dataSnapshot.getValue();
                         if (map == null || map.size() == 0){
                             Log.i("script","vELCadastroinicial dataSnapshot == null");
-                            cadastroInicialFirebase = null;
+                            cadastroBasicoFirebase = null;
                             if (threadBuscarCadastroInicialFirebase != null){
                                 threadBuscarCadastroInicialFirebase.interrupt();
                                 threadBuscarCadastroInicialFirebase = null;
@@ -741,13 +741,13 @@ public class SincronizarBancosIntentService extends IntentService{
                         }else {
                             Log.i("script","vELCadastroinicial dataSnapshot != null");
                             if (map.containsKey(DatabaseHelper.CadastroInicial.NIVEL_USUARIO)){
-                                cadastroInicialFirebase.setNivelUsuario(Double.valueOf(map.get(DatabaseHelper.CadastroInicial.NIVEL_USUARIO).toString()));
+                                cadastroBasicoFirebase.setNivelUsuario(Double.valueOf(map.get(DatabaseHelper.CadastroInicial.NIVEL_USUARIO).toString()));
                             }
                             if (map.containsKey(DatabaseHelper.CadastroInicial.TIPO_USUARIO)){
-                                cadastroInicialFirebase.setTipoUsuario((String) map.get(DatabaseHelper.CadastroInicial.TIPO_USUARIO));
+                                cadastroBasicoFirebase.setTipoUsuario((String) map.get(DatabaseHelper.CadastroInicial.TIPO_USUARIO));
                             }
                             if (map.containsKey(DatabaseHelper.CadastroInicial.CODIGO_UNICO)){
-                                cadastroInicialFirebase.setCodigoUnico(Integer.valueOf(map.get(DatabaseHelper.CadastroInicial.CODIGO_UNICO).toString()));
+                                cadastroBasicoFirebase.setCodigoUnico(Integer.valueOf(map.get(DatabaseHelper.CadastroInicial.CODIGO_UNICO).toString()));
                             }
                             if (threadBuscarCadastroInicialFirebase != null){
                                 threadBuscarCadastroInicialFirebase.interrupt();
@@ -759,7 +759,7 @@ public class SincronizarBancosIntentService extends IntentService{
                     @Override
                     public void onCancelled(DatabaseError databaseError) {
                         Log.i("script","vELVersoes onCancelled");
-                        cadastroInicialFirebase = null;
+                        cadastroBasicoFirebase = null;
                         if (threadBuscarCadastroInicialFirebase != null){
                             threadBuscarCadastroInicialFirebase.interrupt();
                             threadBuscarCadastroInicialFirebase = null;
@@ -872,40 +872,40 @@ public class SincronizarBancosIntentService extends IntentService{
                 this.firebaseCadastroInicial = LibraryClass.getFirebase().child("users").child(uid).child(DatabaseHelper.CadastroInicial.TABELA);
             }
             if( completionListener.length == 0 ){
-                if (cadastroInicialBD.getNivelUsuario() != null && (cadastroInicialBDCloud == null || cadastroInicialBDCloud.getNivelUsuario() == null || !cadastroInicialBD.getNivelUsuario().equals(cadastroInicialBDCloud.getNivelUsuario()))){
-                    firebaseCadastroInicial.child(DatabaseHelper.CadastroInicial.NIVEL_USUARIO).setValue(cadastroInicialBD.getNivelUsuario());
+                if (cadastroBasicoBD.getNivelUsuario() != null && (cadastroBasicoBDCloud == null || cadastroBasicoBDCloud.getNivelUsuario() == null || !cadastroBasicoBD.getNivelUsuario().equals(cadastroBasicoBDCloud.getNivelUsuario()))){
+                    firebaseCadastroInicial.child(DatabaseHelper.CadastroInicial.NIVEL_USUARIO).setValue(cadastroBasicoBD.getNivelUsuario());
                 }else {
                     this.numDadosCadastroInicialSalvos++;
                     this.numRespostasCadastroInicial++;
                 }
-                if (cadastroInicialBD.getTipoUsuario() != null && (cadastroInicialBDCloud == null || cadastroInicialBDCloud.getTipoUsuario() == null || !cadastroInicialBD.getTipoUsuario().equals(cadastroInicialBDCloud.getTipoUsuario()))){
-                    firebaseCadastroInicial.child(DatabaseHelper.CadastroInicial.TIPO_USUARIO).setValue(cadastroInicialBD.getTipoUsuario());
+                if (cadastroBasicoBD.getTipoUsuario() != null && (cadastroBasicoBDCloud == null || cadastroBasicoBDCloud.getTipoUsuario() == null || !cadastroBasicoBD.getTipoUsuario().equals(cadastroBasicoBDCloud.getTipoUsuario()))){
+                    firebaseCadastroInicial.child(DatabaseHelper.CadastroInicial.TIPO_USUARIO).setValue(cadastroBasicoBD.getTipoUsuario());
                 }else {
                     this.numDadosCadastroInicialSalvos++;
                     this.numRespostasCadastroInicial++;
                 }
-                if (cadastroInicialBD.getCodigoUnico() != null && cadastroInicialBD.getCodigoUnico() != 0 && (cadastroInicialBDCloud == null ||cadastroInicialBDCloud.getCodigoUnico() == null || !cadastroInicialBD.getCodigoUnico().equals(cadastroInicialBDCloud.getCodigoUnico()))){
-                    firebaseCadastroInicial.child(DatabaseHelper.CadastroInicial.CODIGO_UNICO).setValue(cadastroInicialBD.getCodigoUnico());
+                if (cadastroBasicoBD.getCodigoUnico() != null && cadastroBasicoBD.getCodigoUnico() != 0 && (cadastroBasicoBDCloud == null || cadastroBasicoBDCloud.getCodigoUnico() == null || !cadastroBasicoBD.getCodigoUnico().equals(cadastroBasicoBDCloud.getCodigoUnico()))){
+                    firebaseCadastroInicial.child(DatabaseHelper.CadastroInicial.CODIGO_UNICO).setValue(cadastroBasicoBD.getCodigoUnico());
                 }else {
                     this.numDadosCadastroInicialSalvos++;
                     this.numRespostasCadastroInicial++;
                 }
             }
             else{
-                if (cadastroInicialBD.getNivelUsuario() != null && (cadastroInicialBDCloud == null || cadastroInicialBDCloud.getNivelUsuario() == null || !cadastroInicialBD.getNivelUsuario().equals(cadastroInicialBDCloud.getNivelUsuario()))){
-                    firebaseCadastroInicial.child(DatabaseHelper.CadastroInicial.NIVEL_USUARIO).setValue(cadastroInicialBD.getNivelUsuario(), completionListener[0]);
+                if (cadastroBasicoBD.getNivelUsuario() != null && (cadastroBasicoBDCloud == null || cadastroBasicoBDCloud.getNivelUsuario() == null || !cadastroBasicoBD.getNivelUsuario().equals(cadastroBasicoBDCloud.getNivelUsuario()))){
+                    firebaseCadastroInicial.child(DatabaseHelper.CadastroInicial.NIVEL_USUARIO).setValue(cadastroBasicoBD.getNivelUsuario(), completionListener[0]);
                 }else {
                     this.numDadosCadastroInicialSalvos++;
                     this.numRespostasCadastroInicial++;
                 }
-                if (cadastroInicialBD.getTipoUsuario() != null && (cadastroInicialBDCloud == null || cadastroInicialBDCloud.getTipoUsuario() == null || !cadastroInicialBD.getTipoUsuario().equals(cadastroInicialBDCloud.getTipoUsuario()))){
-                    firebaseCadastroInicial.child(DatabaseHelper.CadastroInicial.TIPO_USUARIO).setValue(cadastroInicialBD.getTipoUsuario(), completionListener[0]);
+                if (cadastroBasicoBD.getTipoUsuario() != null && (cadastroBasicoBDCloud == null || cadastroBasicoBDCloud.getTipoUsuario() == null || !cadastroBasicoBD.getTipoUsuario().equals(cadastroBasicoBDCloud.getTipoUsuario()))){
+                    firebaseCadastroInicial.child(DatabaseHelper.CadastroInicial.TIPO_USUARIO).setValue(cadastroBasicoBD.getTipoUsuario(), completionListener[0]);
                 }else {
                     this.numDadosCadastroInicialSalvos++;
                     this.numRespostasCadastroInicial++;
                 }
-                if (cadastroInicialBD.getCodigoUnico() != null && cadastroInicialBD.getCodigoUnico() != 0 && (cadastroInicialBDCloud == null || cadastroInicialBDCloud.getCodigoUnico() == null || !cadastroInicialBD.getCodigoUnico().equals(cadastroInicialBDCloud.getCodigoUnico()))){
-                    firebaseCadastroInicial.child(DatabaseHelper.CadastroInicial.CODIGO_UNICO).setValue(cadastroInicialBD.getCodigoUnico(), completionListener[0]);
+                if (cadastroBasicoBD.getCodigoUnico() != null && cadastroBasicoBD.getCodigoUnico() != 0 && (cadastroBasicoBDCloud == null || cadastroBasicoBDCloud.getCodigoUnico() == null || !cadastroBasicoBD.getCodigoUnico().equals(cadastroBasicoBDCloud.getCodigoUnico()))){
+                    firebaseCadastroInicial.child(DatabaseHelper.CadastroInicial.CODIGO_UNICO).setValue(cadastroBasicoBD.getCodigoUnico(), completionListener[0]);
                 }else {
                     this.numDadosCadastroInicialSalvos++;
                     this.numRespostasCadastroInicial++;
@@ -1104,25 +1104,25 @@ public class SincronizarBancosIntentService extends IntentService{
 
         private void initFirebase(){
             if (this.firebaseFuncionamentoSalaoSegunda == null){
-                this.firebaseFuncionamentoSalaoSegunda = LibraryClass.getFirebase().child("salões").child(cadastroInicialBD.getCodigoUnico().toString()).child(DatabaseHelper.Funcionamento.TABELA).child(DiasENUM.SEGUNDA);
+                this.firebaseFuncionamentoSalaoSegunda = LibraryClass.getFirebase().child("salões").child(cadastroBasicoBD.getCodigoUnico().toString()).child(DatabaseHelper.Funcionamento.TABELA).child(DiasENUM.SEGUNDA);
             }
             if (this.firebaseFuncionamentoSalaoTerca == null){
-                this.firebaseFuncionamentoSalaoTerca = LibraryClass.getFirebase().child("salões").child(cadastroInicialBD.getCodigoUnico().toString()).child(DatabaseHelper.Funcionamento.TABELA).child(DiasENUM.TERCA);
+                this.firebaseFuncionamentoSalaoTerca = LibraryClass.getFirebase().child("salões").child(cadastroBasicoBD.getCodigoUnico().toString()).child(DatabaseHelper.Funcionamento.TABELA).child(DiasENUM.TERCA);
             }
             if (this.firebaseFuncionamentoSalaoQuarta == null){
-                this.firebaseFuncionamentoSalaoQuarta = LibraryClass.getFirebase().child("salões").child(cadastroInicialBD.getCodigoUnico().toString()).child(DatabaseHelper.Funcionamento.TABELA).child(DiasENUM.QUARTA);
+                this.firebaseFuncionamentoSalaoQuarta = LibraryClass.getFirebase().child("salões").child(cadastroBasicoBD.getCodigoUnico().toString()).child(DatabaseHelper.Funcionamento.TABELA).child(DiasENUM.QUARTA);
             }
             if (this.firebaseFuncionamentoSalaoQuinta == null){
-                this.firebaseFuncionamentoSalaoQuinta = LibraryClass.getFirebase().child("salões").child(cadastroInicialBD.getCodigoUnico().toString()).child(DatabaseHelper.Funcionamento.TABELA).child(DiasENUM.QUINTA);
+                this.firebaseFuncionamentoSalaoQuinta = LibraryClass.getFirebase().child("salões").child(cadastroBasicoBD.getCodigoUnico().toString()).child(DatabaseHelper.Funcionamento.TABELA).child(DiasENUM.QUINTA);
             }
             if (this.firebaseFuncionamentoSalaoSexta == null){
-                this.firebaseFuncionamentoSalaoSexta = LibraryClass.getFirebase().child("salões").child(cadastroInicialBD.getCodigoUnico().toString()).child(DatabaseHelper.Funcionamento.TABELA).child(DiasENUM.SEXTA);
+                this.firebaseFuncionamentoSalaoSexta = LibraryClass.getFirebase().child("salões").child(cadastroBasicoBD.getCodigoUnico().toString()).child(DatabaseHelper.Funcionamento.TABELA).child(DiasENUM.SEXTA);
             }
             if (this.firebaseFuncionamentoSalaoSabado == null){
-                this.firebaseFuncionamentoSalaoSabado = LibraryClass.getFirebase().child("salões").child(cadastroInicialBD.getCodigoUnico().toString()).child(DatabaseHelper.Funcionamento.TABELA).child(DiasENUM.SABADO);
+                this.firebaseFuncionamentoSalaoSabado = LibraryClass.getFirebase().child("salões").child(cadastroBasicoBD.getCodigoUnico().toString()).child(DatabaseHelper.Funcionamento.TABELA).child(DiasENUM.SABADO);
             }
             if (this.firebaseFuncionamentoSalaoDomingo == null){
-                this.firebaseFuncionamentoSalaoDomingo = LibraryClass.getFirebase().child("salões").child(cadastroInicialBD.getCodigoUnico().toString()).child(DatabaseHelper.Funcionamento.TABELA).child(DiasENUM.DOMINGO);
+                this.firebaseFuncionamentoSalaoDomingo = LibraryClass.getFirebase().child("salões").child(cadastroBasicoBD.getCodigoUnico().toString()).child(DatabaseHelper.Funcionamento.TABELA).child(DiasENUM.DOMINGO);
             }
             if (this.vELFuncionamentoSalaoSegunda == null){
                 this.vELFuncionamentoSalaoSegunda = new ValueEventListener() {
@@ -1699,7 +1699,7 @@ public class SincronizarBancosIntentService extends IntentService{
 
         private void salvarFuncionamentoSegundaNoFirebase(DatabaseReference.CompletionListener... completionListener){
             if (this.firebaseFuncionamentoSalaoSegunda == null){
-                this.firebaseFuncionamentoSalaoSegunda = LibraryClass.getFirebase().child("salões").child(cadastroInicialBD.getCodigoUnico().toString()).child(DatabaseHelper.Funcionamento.TABELA).child(DiasENUM.SEGUNDA);
+                this.firebaseFuncionamentoSalaoSegunda = LibraryClass.getFirebase().child("salões").child(cadastroBasicoBD.getCodigoUnico().toString()).child(DatabaseHelper.Funcionamento.TABELA).child(DiasENUM.SEGUNDA);
             }
 
             if( completionListener.length == 0 ){
@@ -1734,7 +1734,7 @@ public class SincronizarBancosIntentService extends IntentService{
 
         private void salvarFuncionamentoTercaNoFirebase(DatabaseReference.CompletionListener... completionListener){
             if (this.firebaseFuncionamentoSalaoTerca == null){
-                this.firebaseFuncionamentoSalaoTerca = LibraryClass.getFirebase().child("salões").child(cadastroInicialBD.getCodigoUnico().toString()).child(DatabaseHelper.Funcionamento.TABELA).child(DiasENUM.TERCA);
+                this.firebaseFuncionamentoSalaoTerca = LibraryClass.getFirebase().child("salões").child(cadastroBasicoBD.getCodigoUnico().toString()).child(DatabaseHelper.Funcionamento.TABELA).child(DiasENUM.TERCA);
             }
 
             if( completionListener.length == 0 ){
@@ -1769,7 +1769,7 @@ public class SincronizarBancosIntentService extends IntentService{
 
         private void salvarFuncionamentoQuartaNoFirebase(DatabaseReference.CompletionListener... completionListener){
             if (this.firebaseFuncionamentoSalaoQuarta == null){
-                this.firebaseFuncionamentoSalaoQuarta = LibraryClass.getFirebase().child("salões").child(cadastroInicialBD.getCodigoUnico().toString()).child(DatabaseHelper.Funcionamento.TABELA).child(DiasENUM.QUARTA);
+                this.firebaseFuncionamentoSalaoQuarta = LibraryClass.getFirebase().child("salões").child(cadastroBasicoBD.getCodigoUnico().toString()).child(DatabaseHelper.Funcionamento.TABELA).child(DiasENUM.QUARTA);
             }
 
             if( completionListener.length == 0 ){
@@ -1804,7 +1804,7 @@ public class SincronizarBancosIntentService extends IntentService{
 
         private void salvarFuncionamentoQuintaNoFirebase(DatabaseReference.CompletionListener... completionListener){
             if (this.firebaseFuncionamentoSalaoQuinta == null){
-                this.firebaseFuncionamentoSalaoQuinta = LibraryClass.getFirebase().child("salões").child(cadastroInicialBD.getCodigoUnico().toString()).child(DatabaseHelper.Funcionamento.TABELA).child(DiasENUM.QUINTA);
+                this.firebaseFuncionamentoSalaoQuinta = LibraryClass.getFirebase().child("salões").child(cadastroBasicoBD.getCodigoUnico().toString()).child(DatabaseHelper.Funcionamento.TABELA).child(DiasENUM.QUINTA);
             }
 
             if( completionListener.length == 0 ){
@@ -1839,7 +1839,7 @@ public class SincronizarBancosIntentService extends IntentService{
 
         private void salvarFuncionamentoSextaNoFirebase(DatabaseReference.CompletionListener... completionListener){
             if (this.firebaseFuncionamentoSalaoSexta == null){
-                this.firebaseFuncionamentoSalaoSexta = LibraryClass.getFirebase().child("salões").child(cadastroInicialBD.getCodigoUnico().toString()).child(DatabaseHelper.Funcionamento.TABELA).child(DiasENUM.SEXTA);
+                this.firebaseFuncionamentoSalaoSexta = LibraryClass.getFirebase().child("salões").child(cadastroBasicoBD.getCodigoUnico().toString()).child(DatabaseHelper.Funcionamento.TABELA).child(DiasENUM.SEXTA);
             }
 
             if( completionListener.length == 0 ){
@@ -1874,7 +1874,7 @@ public class SincronizarBancosIntentService extends IntentService{
 
         private void salvarFuncionamentoSabadoNoFirebase(DatabaseReference.CompletionListener... completionListener){
             if (this.firebaseFuncionamentoSalaoSabado == null){
-                this.firebaseFuncionamentoSalaoSabado = LibraryClass.getFirebase().child("salões").child(cadastroInicialBD.getCodigoUnico().toString()).child(DatabaseHelper.Funcionamento.TABELA).child(DiasENUM.SABADO);
+                this.firebaseFuncionamentoSalaoSabado = LibraryClass.getFirebase().child("salões").child(cadastroBasicoBD.getCodigoUnico().toString()).child(DatabaseHelper.Funcionamento.TABELA).child(DiasENUM.SABADO);
             }
 
             if( completionListener.length == 0 ){
@@ -1909,7 +1909,7 @@ public class SincronizarBancosIntentService extends IntentService{
 
         private void salvarFuncionamentoDomingoNoFirebase(DatabaseReference.CompletionListener... completionListener){
             if (this.firebaseFuncionamentoSalaoDomingo == null){
-                this.firebaseFuncionamentoSalaoDomingo = LibraryClass.getFirebase().child("salões").child(cadastroInicialBD.getCodigoUnico().toString()).child(DatabaseHelper.Funcionamento.TABELA).child(DiasENUM.DOMINGO);
+                this.firebaseFuncionamentoSalaoDomingo = LibraryClass.getFirebase().child("salões").child(cadastroBasicoBD.getCodigoUnico().toString()).child(DatabaseHelper.Funcionamento.TABELA).child(DiasENUM.DOMINGO);
             }
 
             if( completionListener.length == 0 ){

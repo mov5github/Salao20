@@ -7,11 +7,10 @@ import android.support.annotation.Nullable;
 import android.util.Log;
 
 import com.example.lucas.salao20.activitys.CadastroInicialActivity;
-import com.example.lucas.salao20.activitys.SplashScreenActivity;
-import com.example.lucas.salao20.dao.CadastroInicialDAO;
+import com.example.lucas.salao20.dao.CadastroBasicoDAO;
 import com.example.lucas.salao20.dao.DatabaseHelper;
 import com.example.lucas.salao20.dao.VersaoDAO;
-import com.example.lucas.salao20.dao.model.CadastroInicial;
+import com.example.lucas.salao20.dao.model.CadastroBasico;
 import com.example.lucas.salao20.dao.model.Versao;
 import com.example.lucas.salao20.domain.util.LibraryClass;
 import com.google.firebase.database.DatabaseError;
@@ -35,10 +34,10 @@ public class AtualizarCadastroInicialIntentService extends IntentService {
     private String uid;
 
     //CADASTROS INICIAIS
-    private CadastroInicial cadastroInicialBD;
+    private CadastroBasico cadastroBasicoBD;
 
     //DAO
-    private CadastroInicialDAO cadastroInicialDAO;
+    private CadastroBasicoDAO cadastroBasicoDAO;
     private VersaoDAO versaoDAO;
 
     //VERSOES
@@ -69,9 +68,9 @@ public class AtualizarCadastroInicialIntentService extends IntentService {
                     this.threadSalvarCadastroInicialFirebase.interrupt();
                     this.threadSalvarCadastroInicialFirebase = null;
                 }
-                if (this.cadastroInicialDAO != null){
-                    this.cadastroInicialDAO.fechar();
-                    this.cadastroInicialDAO = null;
+                if (this.cadastroBasicoDAO != null){
+                    this.cadastroBasicoDAO.fechar();
+                    this.cadastroBasicoDAO = null;
                 }
             }else {
                 this.stopAll = false;
@@ -136,19 +135,19 @@ public class AtualizarCadastroInicialIntentService extends IntentService {
 
         //inicia cadastro inicialBD
         if (this.ativo && !this.stopAll){
-            this.cadastroInicialBD = this.cadastroInicialDAO.buscarCadastroInicialPorUID(this.uid);
-            if (this.cadastroInicialBD == null){
-                this.cadastroInicialBD = new CadastroInicial();
+            this.cadastroBasicoBD = this.cadastroBasicoDAO.buscarCadastroInicialPorUID(this.uid);
+            if (this.cadastroBasicoBD == null){
+                this.cadastroBasicoBD = new CadastroBasico();
             }
             if (this.bundle != null){
                 if (bundle.containsKey(DatabaseHelper.CadastroInicial.NIVEL_USUARIO)){
-                    this.cadastroInicialBD.setNivelUsuario(bundle.getDouble(DatabaseHelper.CadastroInicial.NIVEL_USUARIO));
+                    this.cadastroBasicoBD.setNivelUsuario(bundle.getDouble(DatabaseHelper.CadastroInicial.NIVEL_USUARIO));
                 }
                 if (bundle.containsKey(DatabaseHelper.CadastroInicial.TIPO_USUARIO)){
-                    this.cadastroInicialBD.setTipoUsuario(bundle.getString(DatabaseHelper.CadastroInicial.TIPO_USUARIO));
+                    this.cadastroBasicoBD.setTipoUsuario(bundle.getString(DatabaseHelper.CadastroInicial.TIPO_USUARIO));
                 }
                 if (bundle.containsKey(DatabaseHelper.CadastroInicial.CODIGO_UNICO)){
-                    this.cadastroInicialBD.setCodigoUnico(bundle.getInt(DatabaseHelper.CadastroInicial.CODIGO_UNICO));
+                    this.cadastroBasicoBD.setCodigoUnico(bundle.getInt(DatabaseHelper.CadastroInicial.CODIGO_UNICO));
                 }
             }
         }
@@ -157,7 +156,7 @@ public class AtualizarCadastroInicialIntentService extends IntentService {
         if (this.ativo && !this.stopAll){
             long result = -1;
             while (this.ativo && !this.stopAll && result == -1){
-                result = this.cadastroInicialDAO.salvarCadastroInicial(this.cadastroInicialBD);
+                result = this.cadastroBasicoDAO.salvarCadastroInicial(this.cadastroBasicoBD);
             }
 
             this.versaoCadastroInicialBD.setIdentificacaoTabela(DatabaseHelper.CadastroInicial.TABELA);
@@ -165,7 +164,7 @@ public class AtualizarCadastroInicialIntentService extends IntentService {
             this.versaoCadastroInicialBD.setDataModificacao(getDateTime());
             result = -1;
             while (this.ativo && !this.stopAll && result == -1){
-                result = this.versaoDAO.salvarVersao(this.versaoCadastroInicialBD);
+                result = this.versaoDAO.salvarAtualizarVersao(this.versaoCadastroInicialBD);
             }
         }
 
@@ -193,7 +192,7 @@ public class AtualizarCadastroInicialIntentService extends IntentService {
             switch (this.activityOrigem){
                 case CadastroInicialActivity.ACTIVITY_CADASTRO_INICIAL:
                     if (this.ativo && !this.stopAll && CadastroInicialActivity.isCadastroInicialActivityAtiva()){
-                        CadastroInicialActivity.setCadastroInicialBD(this.cadastroInicialBD);
+                        CadastroInicialActivity.setCadastroBasicoBD(this.cadastroBasicoBD);
                         sendBroadcast(new Intent(CadastroInicialActivity.getBrodcastReceiverAtualizarCadastroInicial()));
                     }
                     break;
@@ -214,24 +213,24 @@ public class AtualizarCadastroInicialIntentService extends IntentService {
     //AUXILIARES
     private void atualizaEstadoCadastroInicialBDCloud(){
 
-        CadastroInicial cadastroInicialBDCloud = this.cadastroInicialDAO.buscarCadastroInicialPorUIDCloud(this.uid);
-        if (cadastroInicialBDCloud != null){
-            cadastroInicialBDCloud.setTipoUsuario(this.cadastroInicialBD.getTipoUsuario());
-            cadastroInicialBDCloud.setNivelUsuario(this.cadastroInicialBD.getNivelUsuario());
-            cadastroInicialBDCloud.setCodigoUnico(this.cadastroInicialBD.getCodigoUnico());
+        CadastroBasico cadastroBasicoBDCloud = this.cadastroBasicoDAO.buscarCadastroInicialPorUIDCloud(this.uid);
+        if (cadastroBasicoBDCloud != null){
+            cadastroBasicoBDCloud.setTipoUsuario(this.cadastroBasicoBD.getTipoUsuario());
+            cadastroBasicoBDCloud.setNivelUsuario(this.cadastroBasicoBD.getNivelUsuario());
+            cadastroBasicoBDCloud.setCodigoUnico(this.cadastroBasicoBD.getCodigoUnico());
             long result = -1;
             while (this.ativo && !this.stopAll && result == -1){
-                result = this.cadastroInicialDAO.salvarCadastroInicialCloud(cadastroInicialBDCloud);
+                result = this.cadastroBasicoDAO.salvarCadastroInicialCloud(cadastroBasicoBDCloud);
             }
         }else {
-            cadastroInicialBDCloud = new CadastroInicial();
-            cadastroInicialBDCloud.setUid(this.uid);
-            cadastroInicialBDCloud.setTipoUsuario(this.cadastroInicialBD.getTipoUsuario());
-            cadastroInicialBDCloud.setNivelUsuario(this.cadastroInicialBD.getNivelUsuario());
-            cadastroInicialBDCloud.setCodigoUnico(this.cadastroInicialBD.getCodigoUnico());
+            cadastroBasicoBDCloud = new CadastroBasico();
+            cadastroBasicoBDCloud.setUid(this.uid);
+            cadastroBasicoBDCloud.setTipoUsuario(this.cadastroBasicoBD.getTipoUsuario());
+            cadastroBasicoBDCloud.setNivelUsuario(this.cadastroBasicoBD.getNivelUsuario());
+            cadastroBasicoBDCloud.setCodigoUnico(this.cadastroBasicoBD.getCodigoUnico());
             long result = -1;
             while (this.ativo && !this.stopAll && result == -1){
-                result = this.cadastroInicialDAO.salvarCadastroInicialCloud(cadastroInicialBDCloud);
+                result = this.cadastroBasicoDAO.salvarCadastroInicialCloud(cadastroBasicoBDCloud);
             }
         }
 
@@ -240,7 +239,7 @@ public class AtualizarCadastroInicialIntentService extends IntentService {
         this.versaoCadastroInicialBDCloud.setIdentificacaoTabela(DatabaseHelper.CadastroInicial.TABELA);
         long result = -1;
         while (this.ativo && !this.stopAll && result == -1){
-            result = this.versaoDAO.salvarVersaoCloud(this.versaoCadastroInicialBDCloud);
+            result = this.versaoDAO.salvarAtualizarVersaoCloud(this.versaoCadastroInicialBDCloud);
         }
     }
 
@@ -249,9 +248,9 @@ public class AtualizarCadastroInicialIntentService extends IntentService {
             this.threadSalvarCadastroInicialFirebase.interrupt();
             this.threadSalvarCadastroInicialFirebase = null;
         }
-        if (this.cadastroInicialDAO != null){
-            this.cadastroInicialDAO.fechar();
-            this.cadastroInicialDAO = null;
+        if (this.cadastroBasicoDAO != null){
+            this.cadastroBasicoDAO.fechar();
+            this.cadastroBasicoDAO = null;
         }
         if (this.versaoDAO != null){
             this.versaoDAO.fechar();
@@ -368,40 +367,40 @@ public class AtualizarCadastroInicialIntentService extends IntentService {
                 this.firebaseCadastroInicial = LibraryClass.getFirebase().child("users").child(uid).child(DatabaseHelper.CadastroInicial.TABELA);
             }
             if( completionListener.length == 0 ){
-                if (cadastroInicialBD.getNivelUsuario() != null){
-                    firebaseCadastroInicial.child(DatabaseHelper.CadastroInicial.NIVEL_USUARIO).setValue(cadastroInicialBD.getNivelUsuario());
+                if (cadastroBasicoBD.getNivelUsuario() != null){
+                    firebaseCadastroInicial.child(DatabaseHelper.CadastroInicial.NIVEL_USUARIO).setValue(cadastroBasicoBD.getNivelUsuario());
                 }else {
                     this.numDadosCadastroInicialSalvos++;
                     this.numRespostasCadastroInicial++;
                 }
-                if (cadastroInicialBD.getTipoUsuario() != null && !cadastroInicialBD.getTipoUsuario().isEmpty()){
-                    firebaseCadastroInicial.child(DatabaseHelper.CadastroInicial.TIPO_USUARIO).setValue(cadastroInicialBD.getTipoUsuario());
+                if (cadastroBasicoBD.getTipoUsuario() != null && !cadastroBasicoBD.getTipoUsuario().isEmpty()){
+                    firebaseCadastroInicial.child(DatabaseHelper.CadastroInicial.TIPO_USUARIO).setValue(cadastroBasicoBD.getTipoUsuario());
                 }else {
                     this.numDadosCadastroInicialSalvos++;
                     this.numRespostasCadastroInicial++;
                 }
-                if (cadastroInicialBD.getCodigoUnico() != null && cadastroInicialBD.getCodigoUnico() != 0){
-                    firebaseCadastroInicial.child(DatabaseHelper.CadastroInicial.CODIGO_UNICO).setValue(cadastroInicialBD.getCodigoUnico());
+                if (cadastroBasicoBD.getCodigoUnico() != null && cadastroBasicoBD.getCodigoUnico() != 0){
+                    firebaseCadastroInicial.child(DatabaseHelper.CadastroInicial.CODIGO_UNICO).setValue(cadastroBasicoBD.getCodigoUnico());
                 }else {
                     this.numDadosCadastroInicialSalvos++;
                     this.numRespostasCadastroInicial++;
                 }
             }
             else{
-                if (cadastroInicialBD.getNivelUsuario() != null){
-                    firebaseCadastroInicial.child(DatabaseHelper.CadastroInicial.NIVEL_USUARIO).setValue(cadastroInicialBD.getNivelUsuario(), completionListener[0]);
+                if (cadastroBasicoBD.getNivelUsuario() != null){
+                    firebaseCadastroInicial.child(DatabaseHelper.CadastroInicial.NIVEL_USUARIO).setValue(cadastroBasicoBD.getNivelUsuario(), completionListener[0]);
                 }else {
                     this.numDadosCadastroInicialSalvos++;
                     this.numRespostasCadastroInicial++;
                 }
-                if (cadastroInicialBD.getTipoUsuario() != null && !cadastroInicialBD.getTipoUsuario().isEmpty()){
-                    firebaseCadastroInicial.child(DatabaseHelper.CadastroInicial.TIPO_USUARIO).setValue(cadastroInicialBD.getTipoUsuario(), completionListener[0]);
+                if (cadastroBasicoBD.getTipoUsuario() != null && !cadastroBasicoBD.getTipoUsuario().isEmpty()){
+                    firebaseCadastroInicial.child(DatabaseHelper.CadastroInicial.TIPO_USUARIO).setValue(cadastroBasicoBD.getTipoUsuario(), completionListener[0]);
                 }else {
                     this.numDadosCadastroInicialSalvos++;
                     this.numRespostasCadastroInicial++;
                 }
-                if (cadastroInicialBD.getCodigoUnico() != null && cadastroInicialBD.getCodigoUnico() != 0 ){
-                    firebaseCadastroInicial.child(DatabaseHelper.CadastroInicial.CODIGO_UNICO).setValue(cadastroInicialBD.getCodigoUnico(), completionListener[0]);
+                if (cadastroBasicoBD.getCodigoUnico() != null && cadastroBasicoBD.getCodigoUnico() != 0 ){
+                    firebaseCadastroInicial.child(DatabaseHelper.CadastroInicial.CODIGO_UNICO).setValue(cadastroBasicoBD.getCodigoUnico(), completionListener[0]);
                 }else {
                     this.numDadosCadastroInicialSalvos++;
                     this.numRespostasCadastroInicial++;

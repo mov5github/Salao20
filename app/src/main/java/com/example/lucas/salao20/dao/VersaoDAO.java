@@ -55,16 +55,15 @@ public class VersaoDAO {
         return versoes;
     }
 
-    public long salvarVersao(Versao versao){
+    public long salvarAtualizarVersao(Versao versao){
         ContentValues values = new ContentValues();
         values.put(DatabaseHelper.Versoes.IDENTIFICACAO_TABELA, versao.getIdentificacaoTabela());
-        values.put(DatabaseHelper.Versoes.UID, versao.getUid());
         if (versao.getVersao() == null || versao.getVersao() == 0){
             values.put(DatabaseHelper.Versoes.VERSAO, 1);
         }else {
             values.put(DatabaseHelper.Versoes.VERSAO, versao.getVersao());
         }
-        if (versao.getDataModificacao() == null){
+        if (versao.getDataModificacao() == null || versao.getDataModificacao().isEmpty()){
             values.put(DatabaseHelper.Versoes.DATA_MODIFICACAO, getDateTime());
         }else {
             values.put(DatabaseHelper.Versoes.DATA_MODIFICACAO, versao.getDataModificacao());
@@ -77,16 +76,15 @@ public class VersaoDAO {
             return getDatabase().insert(DatabaseHelper.Versoes.TABELA, null, values);
         }
     }
-    public long salvarVersaoCloud(Versao versao){
+    public long salvarAtualizarVersaoCloud(Versao versao){
         ContentValues values = new ContentValues();
         values.put(DatabaseHelper.Versoes.IDENTIFICACAO_TABELA, versao.getIdentificacaoTabela());
-        values.put(DatabaseHelper.Versoes.UID, versao.getUid());
         if (versao.getVersao() == null || versao.getVersao() == 0){
             values.put(DatabaseHelper.Versoes.VERSAO, 1);
         }else {
             values.put(DatabaseHelper.Versoes.VERSAO, versao.getVersao());
         }
-        if (versao.getDataModificacao() == null){
+        if (versao.getDataModificacao() == null || versao.getDataModificacao().isEmpty()){
             values.put(DatabaseHelper.Versoes.DATA_MODIFICACAO, getDateTime());
         }else {
             values.put(DatabaseHelper.Versoes.DATA_MODIFICACAO, versao.getDataModificacao());
@@ -167,30 +165,7 @@ public class VersaoDAO {
         }
     }
 
-    public Versao buscarVersaoPorUID(String uid){
-        Cursor cursor = getDatabase().query(DatabaseHelper.Versoes.TABELA,
-                DatabaseHelper.Versoes.COLUNAS, "uid = ?", new String[]{uid}, null, null, null);
 
-        if (cursor.moveToNext()){
-            Versao model = criarVersao(cursor);
-            cursor.close();
-            return model;
-        }else {
-            return null;
-        }
-    }
-    public Versao buscarVersaoPorUIDCloud(String uid){
-        Cursor cursor = getDatabase().query(DatabaseHelper.Versoes.TABELA_CLOUD,
-                DatabaseHelper.Versoes.COLUNAS, "uid = ?", new String[]{uid}, null, null, null);
-
-        if (cursor.moveToNext()){
-            Versao model = criarVersao(cursor);
-            cursor.close();
-            return model;
-        }else {
-            return null;
-        }
-    }
 
 
     //AUXILIARES
@@ -211,8 +186,7 @@ public class VersaoDAO {
                 cursor.getInt(cursor.getColumnIndex(DatabaseHelper.Versoes._ID)),
                 cursor.getString(cursor.getColumnIndex(DatabaseHelper.Versoes.IDENTIFICACAO_TABELA)),
                 cursor.getInt(cursor.getColumnIndex(DatabaseHelper.Versoes.VERSAO)),
-                cursor.getString(cursor.getColumnIndex(DatabaseHelper.Versoes.DATA_MODIFICACAO)),
-                cursor.getString(cursor.getColumnIndex(DatabaseHelper.Versoes.UID))
+                cursor.getString(cursor.getColumnIndex(DatabaseHelper.Versoes.DATA_MODIFICACAO))
         );
     }
 

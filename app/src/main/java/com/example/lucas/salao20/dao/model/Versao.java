@@ -9,7 +9,6 @@ public class Versao {
     private String identificacaoTabela;
     private Integer versao;
     private String dataModificacao;
-    private String uid;
 
     public  Versao(){
     }
@@ -18,12 +17,11 @@ public class Versao {
         this.versao = versao;
     }
 
-    public Versao(int _id, String identificacaoTabela, int versao, String dataModificacao, String uid) {
+    public Versao(int _id, String identificacaoTabela, int versao, String dataModificacao) {
         this._id = _id;
         this.identificacaoTabela = identificacaoTabela;
         this.versao = versao;
         this.dataModificacao = dataModificacao;
-        this.uid = uid;
     }
 
     //GETTERS AND ASETTERS
@@ -55,10 +53,4 @@ public class Versao {
         this.dataModificacao = dataModificacao;
     }
 
-    public String getUid() {
-        return uid;
-    }
-    public void setUid(String uid) {
-        this.uid = uid;
-    }
 }

@@ -20,7 +20,7 @@ import android.widget.Toast;
 
 import com.example.lucas.salao20.R;
 import com.example.lucas.salao20.dao.DatabaseHelper;
-import com.example.lucas.salao20.dao.model.CadastroInicial;
+import com.example.lucas.salao20.dao.model.CadastroBasico;
 import com.example.lucas.salao20.fragments.configuracaoInicial.FragmentBasicoCabeleireiro;
 import com.example.lucas.salao20.fragments.configuracaoInicial.FragmentBasicoCliente;
 import com.example.lucas.salao20.fragments.configuracaoInicial.FragmentCabeleireiros;
@@ -59,7 +59,7 @@ public class CadastroInicialActivity extends AppCompatActivity {
     private boolean processandoClique;
 
     //CADASTROS INICIAL CRONTROLE
-    static CadastroInicial cadastroInicialBD;
+    static CadastroBasico cadastroBasicoBD;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -94,8 +94,8 @@ public class CadastroInicialActivity extends AppCompatActivity {
         cadastroInicialActivityAtiva = true;
 
         if (!sincronizacaoConfiguracaoInicialRequerida){
-            if (cadastroInicialBD.getNivelUsuario() != 1.0){
-                if (cadastroInicialBD.getTipoUsuario().equals("salão")){
+            if (cadastroBasicoBD.getNivelUsuario() != 1.0){
+                if (cadastroBasicoBD.getTipoUsuario().equals("salão")){
                     sincronizacaoConfiguracaoInicialRequerida = true;
 
                 }
@@ -144,34 +144,34 @@ public class CadastroInicialActivity extends AppCompatActivity {
     private void initView() {
         //BUNDLE
         Bundle bundle = getIntent().getExtras();
-        if (cadastroInicialBD == null){
-            cadastroInicialBD = new CadastroInicial();
+        if (cadastroBasicoBD == null){
+            cadastroBasicoBD = new CadastroBasico();
         }
         if (bundle.containsKey(DatabaseHelper.CadastroInicial.NIVEL_USUARIO)){
-            cadastroInicialBD.setNivelUsuario(bundle.getDouble(DatabaseHelper.CadastroInicial.NIVEL_USUARIO));
+            cadastroBasicoBD.setNivelUsuario(bundle.getDouble(DatabaseHelper.CadastroInicial.NIVEL_USUARIO));
         }
         if (bundle.containsKey(DatabaseHelper.CadastroInicial.TIPO_USUARIO)){
-            cadastroInicialBD.setTipoUsuario(bundle.getString(DatabaseHelper.CadastroInicial.TIPO_USUARIO));
+            cadastroBasicoBD.setTipoUsuario(bundle.getString(DatabaseHelper.CadastroInicial.TIPO_USUARIO));
         }
         if (bundle.containsKey(DatabaseHelper.CadastroInicial.CODIGO_UNICO)){
-            cadastroInicialBD.setCodigoUnico(bundle.getInt(DatabaseHelper.CadastroInicial.CODIGO_UNICO));
+            cadastroBasicoBD.setCodigoUnico(bundle.getInt(DatabaseHelper.CadastroInicial.CODIGO_UNICO));
         }
 
         //TOOLBAR
         mToolbar = (Toolbar) findViewById(R.id.toolbar_tabs);
-        if (cadastroInicialBD.getNivelUsuario() == 1.0){
+        if (cadastroBasicoBD.getNivelUsuario() == 1.0){
             mToolbar.setTitle("CONFIGURAÇÃO INICIAL");
             mToolbar.setSubtitle("Tipo de  usuário");
             mToolbar.setLogo(R.mipmap.ic_launcher);
         }else {
             mToolbar.setTitle("CONFIGURAÇÃO INICIAL");
-            if (cadastroInicialBD.getTipoUsuario().equals("salão")){
+            if (cadastroBasicoBD.getTipoUsuario().equals("salão")){
                 mToolbar.setSubtitle("Configurações do salão");
                 mToolbar.setLogo(R.mipmap.ic_launcher);
-            }else if (cadastroInicialBD.getTipoUsuario().equals("cabeleireiro")){
+            }else if (cadastroBasicoBD.getTipoUsuario().equals("cabeleireiro")){
                 mToolbar.setSubtitle("Configurações do cabeleireiro");
                 mToolbar.setLogo(R.mipmap.ic_launcher);
-            }else if (cadastroInicialBD.getTipoUsuario().equals("cliente")){
+            }else if (cadastroBasicoBD.getTipoUsuario().equals("cliente")){
                 mToolbar.setSubtitle("Configurações do cliente");
                 mToolbar.setLogo(R.mipmap.ic_launcher);
             }
@@ -180,25 +180,25 @@ public class CadastroInicialActivity extends AppCompatActivity {
 
         //TABS
         mViewPager = (ViewPager) findViewById(R.id.vp_tabs_tabs);
-        if (cadastroInicialBD.getNivelUsuario() == 1.0){
+        if (cadastroBasicoBD.getNivelUsuario() == 1.0){
             String[] titles = {FragmentTipoCadastro.getTitulo()};
             mViewPager.setAdapter(new ConfiguracaoInicialAdapter(getSupportFragmentManager(),this,titles,null));
         }else {
-            if (cadastroInicialBD.getTipoUsuario().equals("salão")){
+            if (cadastroBasicoBD.getTipoUsuario().equals("salão")){
                 String[] titles = {FragmentFuncionamento.getTitulo(), FragmentServicos.getTitulo(),FragmentCabeleireiros.getTitulo()};
-                mViewPager.setAdapter(new ConfiguracaoInicialAdapter(getSupportFragmentManager(),this,titles,cadastroInicialBD.getTipoUsuario()));
-            }else if (cadastroInicialBD.getTipoUsuario().equals("cabeleireiro")){
+                mViewPager.setAdapter(new ConfiguracaoInicialAdapter(getSupportFragmentManager(),this,titles, cadastroBasicoBD.getTipoUsuario()));
+            }else if (cadastroBasicoBD.getTipoUsuario().equals("cabeleireiro")){
                 String[] titles = {FragmentBasicoCliente.getTitulo()};
-                mViewPager.setAdapter(new ConfiguracaoInicialAdapter(getSupportFragmentManager(),this,titles,cadastroInicialBD.getTipoUsuario()));
-            }else if (cadastroInicialBD.getTipoUsuario().equals("cliente")){
+                mViewPager.setAdapter(new ConfiguracaoInicialAdapter(getSupportFragmentManager(),this,titles, cadastroBasicoBD.getTipoUsuario()));
+            }else if (cadastroBasicoBD.getTipoUsuario().equals("cliente")){
                 String[] titles = {FragmentBasicoCabeleireiro.getTitulo()};
-                mViewPager.setAdapter(new ConfiguracaoInicialAdapter(getSupportFragmentManager(),this,titles,cadastroInicialBD.getTipoUsuario()));
+                mViewPager.setAdapter(new ConfiguracaoInicialAdapter(getSupportFragmentManager(),this,titles, cadastroBasicoBD.getTipoUsuario()));
             }
         }
 
         //PROGREAS DIALOG
-        if (cadastroInicialBD.getNivelUsuario() != 1.0){
-            if (cadastroInicialBD.getTipoUsuario().equals("salão")){
+        if (cadastroBasicoBD.getNivelUsuario() != 1.0){
+            if (cadastroBasicoBD.getTipoUsuario().equals("salão")){
                 if (this.progressDialog == null){
                     this.progressDialog = new ProgressDialog(this);
                 }
@@ -270,9 +270,9 @@ public class CadastroInicialActivity extends AppCompatActivity {
     private void recriarCadastroInicialActivity(){
         Intent intent = new Intent(this,CadastroInicialActivity.class);
         Bundle bundle = new Bundle();
-        bundle.putDouble(DatabaseHelper.CadastroInicial.NIVEL_USUARIO, cadastroInicialBD.getNivelUsuario());
-        bundle.putString(DatabaseHelper.CadastroInicial.TIPO_USUARIO, cadastroInicialBD.getTipoUsuario());
-        bundle.putInt(DatabaseHelper.CadastroInicial.CODIGO_UNICO, cadastroInicialBD.getCodigoUnico());
+        bundle.putDouble(DatabaseHelper.CadastroInicial.NIVEL_USUARIO, cadastroBasicoBD.getNivelUsuario());
+        bundle.putString(DatabaseHelper.CadastroInicial.TIPO_USUARIO, cadastroBasicoBD.getTipoUsuario());
+        bundle.putInt(DatabaseHelper.CadastroInicial.CODIGO_UNICO, cadastroBasicoBD.getCodigoUnico());
         intent.putExtras(bundle);
         finish();
         startActivity(intent);
@@ -282,18 +282,18 @@ public class CadastroInicialActivity extends AppCompatActivity {
     public void confirmarTipoCadastro(View view) {
         if (!this.processandoClique){
             this.processandoClique = true;
-            if (cadastroInicialBD == null){
-                cadastroInicialBD = new CadastroInicial();
+            if (cadastroBasicoBD == null){
+                cadastroBasicoBD = new CadastroBasico();
             }
             switch (view.getId()){
                 case R.id.btn_cadastro_cliente:
-                    cadastroInicialBD.setTipoUsuario("cliente");
+                    cadastroBasicoBD.setTipoUsuario("cliente");
                     break;
                 case R.id.btn_cadastro_salao:
-                    cadastroInicialBD.setTipoUsuario("salão");
+                    cadastroBasicoBD.setTipoUsuario("salão");
                     break;
                 case R.id.btn_cadastro_cabeleireiro:
-                    cadastroInicialBD.setTipoUsuario("cabeleireiro");
+                    cadastroBasicoBD.setTipoUsuario("cabeleireiro");
                     break;
                 default:
                     break;
@@ -315,7 +315,7 @@ public class CadastroInicialActivity extends AppCompatActivity {
                         if (mAuth.getCurrentUser().getUid() != null && !mAuth.getCurrentUser().getUid().isEmpty()){
                             bundle.putString(DatabaseHelper.CadastroInicial.UID, mAuth.getCurrentUser().getUid());
                         }
-                        bundle.putString(DatabaseHelper.CadastroInicial.TIPO_USUARIO, cadastroInicialBD.getTipoUsuario());
+                        bundle.putString(DatabaseHelper.CadastroInicial.TIPO_USUARIO, cadastroBasicoBD.getTipoUsuario());
                         bundle.putDouble(DatabaseHelper.CadastroInicial.NIVEL_USUARIO, 2.0);
 
                         intent.putExtras(bundle);
@@ -329,7 +329,7 @@ public class CadastroInicialActivity extends AppCompatActivity {
                     }
                 });
             }
-            switch (cadastroInicialBD.getTipoUsuario()){
+            switch (cadastroBasicoBD.getTipoUsuario()){
                 case "cliente":
                     builder.setTitle("Salvar cadastro como Cliente ?");
                     builder.setMessage("Ao criar uma conta como Cliente você podera se vincular a um ou mais salões online, para ter acesso a promoções, agendar horários com seus cabeleireiros e muito mais !");
@@ -369,8 +369,8 @@ public class CadastroInicialActivity extends AppCompatActivity {
         return broadcastReceiverCadastroInicialAtualizado;
     }
 
-    public static void setCadastroInicialBD(CadastroInicial cadastroInicialBD) {
-        CadastroInicialActivity.cadastroInicialBD = cadastroInicialBD;
+    public static void setCadastroBasicoBD(CadastroBasico cadastroBasicoBD) {
+        CadastroInicialActivity.cadastroBasicoBD = cadastroBasicoBD;
     }
 
 

@@ -17,8 +17,8 @@ import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import com.example.lucas.salao20.R;
-import com.example.lucas.salao20.asyncTasks.VerificarCadastroInicialBDAsyncTask;
-import com.example.lucas.salao20.dao.model.CadastroInicial;
+import com.example.lucas.salao20.asyncTasks.VerificarUserBDAsyncTask;
+import com.example.lucas.salao20.dao.model.CadastroBasico;
 import com.example.lucas.salao20.domain.User;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -46,7 +46,7 @@ public class LoginActivity extends CommonActivity implements GoogleApiClient.OnC
 
 
     //ASYNCTASK
-    private VerificarCadastroInicialBDAsyncTask VerificarCadastroInicialBDAsyncTask;
+    private VerificarUserBDAsyncTask verificarUserBDAsyncTask;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -65,6 +65,7 @@ public class LoginActivity extends CommonActivity implements GoogleApiClient.OnC
     }
 
     @Override
+
     protected void onResume() {
         super.onResume();
         Log.i("script","onResume() LOGIN");
@@ -79,7 +80,7 @@ public class LoginActivity extends CommonActivity implements GoogleApiClient.OnC
         super.onStart();
         Log.i("script","onStart() LOGIN");
         if( mAuth.getCurrentUser() != null ){
-            if (this.VerificarCadastroInicialBDAsyncTask.getStatus() != AsyncTask.Status.RUNNING){
+            if (this.verificarUserBDAsyncTask.getStatus() != AsyncTask.Status.RUNNING){
                 callSplashScreenActivity();
             }
         }else{
@@ -105,9 +106,9 @@ public class LoginActivity extends CommonActivity implements GoogleApiClient.OnC
         if( mAuthListener != null ){
             mAuth.removeAuthStateListener( mAuthListener );
         }
-        if(this.VerificarCadastroInicialBDAsyncTask.getStatus() == AsyncTask.Status.RUNNING){
+        if(this.verificarUserBDAsyncTask.getStatus() == AsyncTask.Status.RUNNING){
             mAuth.signOut();
-            this.VerificarCadastroInicialBDAsyncTask.cancel(true);
+            this.verificarUserBDAsyncTask.cancel(true);
         }
     }
 
@@ -202,10 +203,10 @@ public class LoginActivity extends CommonActivity implements GoogleApiClient.OnC
 
                 if (userFirebase.getUid()!= null && !userFirebase.getUid().isEmpty()){
                     Log.i("script","getFirebaseAuthResultHandler() uid != null");
-                    if (VerificarCadastroInicialBDAsyncTask.getStatus() == AsyncTask.Status.PENDING){
-                        CadastroInicial cadastroInicial = new CadastroInicial();
-                        cadastroInicial.setUid(userFirebase.getUid());
-                        VerificarCadastroInicialBDAsyncTask.execute(cadastroInicial);
+                    if (verificarUserBDAsyncTask.getStatus() == AsyncTask.Status.PENDING){
+                        com.example.lucas.salao20.dao.model.User userMod = new com.example.lucas.salao20.dao.model.User();
+                        userMod.setUid(userFirebase.getUid());
+                        verificarUserBDAsyncTask.execute(userMod);
                     }
                 }else{
                     Log.i("script","getFirebaseAuthResultHandler() uid == null login");
@@ -257,7 +258,7 @@ public class LoginActivity extends CommonActivity implements GoogleApiClient.OnC
     }
 
     private void initAsyncTask(){
-        this.VerificarCadastroInicialBDAsyncTask = new VerificarCadastroInicialBDAsyncTask(this, this);
+        this.verificarUserBDAsyncTask = new VerificarUserBDAsyncTask(this, this);
     }
 
     public void irSplashScreen(Boolean novoUsuario){
