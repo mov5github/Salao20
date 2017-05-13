@@ -1,7 +1,7 @@
 package com.example.lucas.salao20.activitys;
 
+import android.content.Context;
 import android.content.Intent;
-import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -17,9 +17,10 @@ import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import com.example.lucas.salao20.R;
-import com.example.lucas.salao20.asyncTasks.VerificarUserBDAsyncTask;
-import com.example.lucas.salao20.dao.model.CadastroBasico;
 import com.example.lucas.salao20.domain.User;
+import com.example.lucas.salao20.enumeradores.TipoUsuarioENUM;
+import com.example.lucas.salao20.geral.CadastroBasico;
+import com.example.lucas.salao20.intentServices.BackgroundIntentService;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.tasks.OnCompleteListener;
@@ -29,24 +30,34 @@ import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.crash.FirebaseCrash;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.ValueEventListener;
+
+import java.util.Map;
 
 /**
  * Created by Lucas on 17/03/2017.
  */
 
 public class LoginActivity extends CommonActivity implements GoogleApiClient.OnConnectionFailedListener{
-    private FirebaseAuth mAuth;
-    private FirebaseAuth.AuthStateListener mAuthListener;
     private User user;
+    private Context context;
 
     private Toolbar mToolbar;
+    private FloatingActionButton fab;
 
     //CONTROLE
     private boolean fabProcessando;
+    private static boolean loginActivityAtiva;
 
+    //OBJETOS
+    private CadastroBasico cadastroBasico = new CadastroBasico();
 
-    //ASYNCTASK
-    private VerificarUserBDAsyncTask verificarUserBDAsyncTask;
+    //FIREBASE
+    private FirebaseAuth mAuth;
+    private FirebaseAuth.AuthStateListener mAuthListener;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -55,17 +66,18 @@ public class LoginActivity extends CommonActivity implements GoogleApiClient.OnC
 
         setContentView(R.layout.activity_login);
 
+        this.context = this;
         mAuth = FirebaseAuth.getInstance();
         mAuthListener = getFirebaseAuthResultHandler();
 
+        verifyLogged();
+
+        initControles();
         initViews();
         initUser();
-        initControles();
-        initAsyncTask();
     }
 
     @Override
-
     protected void onResume() {
         super.onResume();
         Log.i("script","onResume() LOGIN");
@@ -79,21 +91,17 @@ public class LoginActivity extends CommonActivity implements GoogleApiClient.OnC
     protected void onStart() {
         super.onStart();
         Log.i("script","onStart() LOGIN");
-        if( mAuth.getCurrentUser() != null ){
-            if (this.verificarUserBDAsyncTask.getStatus() != AsyncTask.Status.RUNNING){
-                callSplashScreenActivity();
-            }
-        }else{
-            mAuth.addAuthStateListener( mAuthListener );
+        loginActivityAtiva = true;
+        if (BackgroundIntentService.isBackgroundIntentServiceAtivo()){
+            stopService(new Intent(getApplicationContext(),BackgroundIntentService.class));
         }
-
+        mAuth.addAuthStateListener( mAuthListener );
     }
 
     @Override
     protected void onStop() {
         super.onStop();
         Log.i("script","onStop() LOGIN");
-
         if( mAuthListener != null ){
             mAuth.removeAuthStateListener( mAuthListener );
         }
@@ -102,14 +110,8 @@ public class LoginActivity extends CommonActivity implements GoogleApiClient.OnC
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        loginActivityAtiva = false;
         Log.i("script","onDestroy() LOGIN");
-        if( mAuthListener != null ){
-            mAuth.removeAuthStateListener( mAuthListener );
-        }
-        if(this.verificarUserBDAsyncTask.getStatus() == AsyncTask.Status.RUNNING){
-            mAuth.signOut();
-            this.verificarUserBDAsyncTask.cancel(true);
-        }
     }
 
     @Override
@@ -139,7 +141,7 @@ public class LoginActivity extends CommonActivity implements GoogleApiClient.OnC
         setSupportActionBar(mToolbar);
 
         //FLOATING ACTION BUTTON
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab_login);
+        fab = (FloatingActionButton) findViewById(R.id.fab_login);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -189,40 +191,83 @@ public class LoginActivity extends CommonActivity implements GoogleApiClient.OnC
     private FirebaseAuth.AuthStateListener getFirebaseAuthResultHandler(){
         Log.i("script","getFirebaseAuthResultHandler() login ");
 
-        FirebaseAuth.AuthStateListener callback = new FirebaseAuth.AuthStateListener() {
+        final FirebaseAuth.AuthStateListener callback = new FirebaseAuth.AuthStateListener() {
             @Override
             public void onAuthStateChanged(@NonNull FirebaseAuth firebaseAuth) {
                 Log.i("script","getFirebaseAuthResultHandler() onAuthStateChanged login");
-
-                FirebaseUser userFirebase = firebaseAuth.getCurrentUser();
-
-                if( userFirebase == null ){
-                    Log.i("script","getFirebaseAuthResultHandler() userFirebase == null login");
-                    return;
-                }
-
-                if (userFirebase.getUid()!= null && !userFirebase.getUid().isEmpty()){
-                    Log.i("script","getFirebaseAuthResultHandler() uid != null");
-                    if (verificarUserBDAsyncTask.getStatus() == AsyncTask.Status.PENDING){
-                        com.example.lucas.salao20.dao.model.User userMod = new com.example.lucas.salao20.dao.model.User();
-                        userMod.setUid(userFirebase.getUid());
-                        verificarUserBDAsyncTask.execute(userMod);
+                if(mAuth.getCurrentUser() == null){
+                    Log.i("script","getFirebaseAuthResultHandler() getCurrentUser() == null login");
+                    if (fabProcessando){
+                        fabProcessando = false;
+                        closeProgressBar();
+                        showSnackbar("Login falhou");
                     }
-                }else{
+                }else if (mAuth.getCurrentUser().getUid().isEmpty()){
                     Log.i("script","getFirebaseAuthResultHandler() uid == null login");
                     mAuth.signOut();
-                    callErroActivity("LOGINuserFirebase.getUid()==null");
+                    if (fabProcessando){
+                        fabProcessando = false;
+                        closeProgressBar();
+                        showSnackbar("Login falhou");
+                    }
+                }else {
+                    Log.i("script","getFirebaseAuthResultHandler() uid != null");
+                    if (fabProcessando){
+                        startService(new Intent(getApplicationContext(), BackgroundIntentService.class).putExtra(BackgroundIntentService.getSincronizacaoInicial(),true));
+                        callSplashScreenActivity();
+                    }
                 }
-
             }
         };
         return( callback );
     }
 
+    private void verifyLogged(){
+        Log.i("script","verifyLogged()");
+        if( mAuth.getCurrentUser() != null ){
+            Log.i("script","verifyLogged() mAuth.getCurrentUser() != null LOGIN");
+            if (!mAuth.getCurrentUser().getUid().isEmpty()){
+                Log.i("script","verifyLogged() UID != null LOGIN");
+                if (BackgroundIntentService.isBackgroundIntentServiceAtivo()){
+                    if(BackgroundIntentService.getCadastroBasico() != null){
+                        if(BackgroundIntentService.getCadastroBasico().getNivelUsuario() == 1.0){
+                            callConfiguracaoIncialActivity(null);
+                        }else if(BackgroundIntentService.getCadastroBasico().getNivelUsuario() > 1.0 && BackgroundIntentService.getCadastroBasico().getNivelUsuario() < 3.0){
+                            if (BackgroundIntentService.getCadastroBasico().getTipoUsuario().equals(TipoUsuarioENUM.CLIENTE) || BackgroundIntentService.getCadastroBasico().getTipoUsuario().equals(TipoUsuarioENUM.SALAO) || BackgroundIntentService.getCadastroBasico().getTipoUsuario().equals(TipoUsuarioENUM.CABELEIREIRO)){
+                                callConfiguracaoIncialActivity(null);
+                            }else {
+                                callSplashScreenActivity();
+                            }
+                        }else if (BackgroundIntentService.getCadastroBasico().getNivelUsuario() > 3.0){
+                            if (BackgroundIntentService.getCadastroBasico().getTipoUsuario().equals(TipoUsuarioENUM.CLIENTE) || BackgroundIntentService.getCadastroBasico().getTipoUsuario().equals(TipoUsuarioENUM.SALAO) || BackgroundIntentService.getCadastroBasico().getTipoUsuario().equals(TipoUsuarioENUM.CABELEIREIRO)){
+                                callHomeActivity();
+                            }else {
+                                callSplashScreenActivity();
+                            }
+                        }else {
+                            callSplashScreenActivity();
+                        }
+                    }else{
+                        callSplashScreenActivity();
+                    }
+                }else {
+                    mAuth.signOut();
+                    //passa para onstart
+                }
+            }else {
+                Log.i("script","verifyLogged()  UID = null");
+                mAuth.signOut();
+                //passa para onstart
+            }
+        }else{
+            Log.i("script","verifyLogged() mAuth.getCurrentUser() == null");
+            //passa para onstart
+        }
+    }
+
     private void verifyLogin(){
         Log.i("script","verifyLogin()");
         FirebaseCrash.log("LoginActivity:verifyLogin()");
-        user.saveProviderSP( LoginActivity.this, "" );
         mAuth.signInWithEmailAndPassword(
                 user.getEmail(),
                 user.getPassword()
@@ -257,22 +302,6 @@ public class LoginActivity extends CommonActivity implements GoogleApiClient.OnC
         }
     }
 
-    private void initAsyncTask(){
-        this.verificarUserBDAsyncTask = new VerificarUserBDAsyncTask(this, this);
-    }
-
-    public void irSplashScreen(Boolean novoUsuario){
-        if (novoUsuario == null){
-            mAuth.signOut();
-            callErroActivity("LOGINnovoUsuario == null");
-        }else {
-            Intent intent = new Intent(this, SplashScreenActivity.class);
-            intent.putExtra("novoUsuario",novoUsuario);
-            startActivity(intent);
-            finish();
-        }
-    }
-
     public  void irHome(){
         callHomeActivity();
     }
@@ -288,4 +317,8 @@ public class LoginActivity extends CommonActivity implements GoogleApiClient.OnC
         showToast("Recuperar acesso");
     }
 
+    //GETTERS SETTERS
+    public static boolean isLoginActivityAtiva() {
+        return loginActivityAtiva;
+    }
 }

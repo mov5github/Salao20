@@ -58,7 +58,7 @@ public class AtualizarCadastroInicialIntentService extends IntentService {
 
     @Override
     public int onStartCommand(@Nullable Intent intent, int flags, int startId) {
-        if (intent != null && intent.getExtras() != null) {
+        /*if (intent != null && intent.getExtras() != null) {
             this.bundle = intent.getExtras();
 
             if (this.bundle.containsKey("desligar") && bundle.getInt("desligar") == 1){
@@ -84,13 +84,13 @@ public class AtualizarCadastroInicialIntentService extends IntentService {
                     this.activityOrigem = "";
                 }
             }
-        }
+        }*/
         return super.onStartCommand(intent, flags, startId);
     }
 
     @Override
     protected void onHandleIntent(@Nullable Intent intent) {
-        //Busca versao
+       /* //Busca versao
         if (this.ativo && !this.stopAll) {
             if (this.versaoDAO == null) {
                 this.versaoDAO = new VersaoDAO(this);
@@ -200,7 +200,7 @@ public class AtualizarCadastroInicialIntentService extends IntentService {
                     break;
             }
         }
-
+*/
         stopSelf();
     }
 
@@ -212,7 +212,7 @@ public class AtualizarCadastroInicialIntentService extends IntentService {
 
     //AUXILIARES
     private void atualizaEstadoCadastroInicialBDCloud(){
-
+/*
         CadastroBasico cadastroBasicoBDCloud = this.cadastroBasicoDAO.buscarCadastroInicialPorUIDCloud(this.uid);
         if (cadastroBasicoBDCloud != null){
             cadastroBasicoBDCloud.setTipoUsuario(this.cadastroBasicoBD.getTipoUsuario());
@@ -240,7 +240,7 @@ public class AtualizarCadastroInicialIntentService extends IntentService {
         long result = -1;
         while (this.ativo && !this.stopAll && result == -1){
             result = this.versaoDAO.salvarAtualizarVersaoCloud(this.versaoCadastroInicialBDCloud);
-        }
+        }*/
     }
 
     private void encerrarAtividadesAbertas(){
@@ -363,7 +363,7 @@ public class AtualizarCadastroInicialIntentService extends IntentService {
         }
 
         private void salvarCadastroInicialNoFirebase(DatabaseReference.CompletionListener... completionListener){
-            if (this.firebaseCadastroInicial == null){
+           /* if (this.firebaseCadastroInicial == null){
                 this.firebaseCadastroInicial = LibraryClass.getFirebase().child("users").child(uid).child(DatabaseHelper.CadastroInicial.TABELA);
             }
             if( completionListener.length == 0 ){
@@ -405,11 +405,11 @@ public class AtualizarCadastroInicialIntentService extends IntentService {
                     this.numDadosCadastroInicialSalvos++;
                     this.numRespostasCadastroInicial++;
                 }
-            }
+            }*/
         }
 
         private void salvarVersaoCadastroInicialNoFirebase(DatabaseReference.CompletionListener... completionListener){
-            if (this.firebaseVersaoCadastroInicial == null){
+           /* if (this.firebaseVersaoCadastroInicial == null){
                 this.firebaseVersaoCadastroInicial = LibraryClass.getFirebase().child("users").child(uid).child(DatabaseHelper.Versoes.TABELA).child(DatabaseHelper.CadastroInicial.TABELA);
             }
             if( completionListener.length == 0 ){
@@ -438,7 +438,7 @@ public class AtualizarCadastroInicialIntentService extends IntentService {
                 }else {
                     firebaseVersaoCadastroInicial.child(DatabaseHelper.Versoes.DATA_MODIFICACAO).setValue(getDateTime(), completionListener[0]);
                 }
-            }
+            }*/
         }
     }
 }

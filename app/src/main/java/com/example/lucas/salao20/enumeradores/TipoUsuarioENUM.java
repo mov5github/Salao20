@@ -5,7 +5,7 @@ package com.example.lucas.salao20.enumeradores;
  */
 
 public class TipoUsuarioENUM {
-    public  static final String CLIENTE = "cliente";
-    public  static final String CABELEIREIRO = "cabeleireiro";
-    public  static final String SALAO = "salão";
+    public static final String CLIENTE = "cliente";
+    public static final String CABELEIREIRO = "cabeleireiro";
+    public static final String SALAO = "salão";
 }

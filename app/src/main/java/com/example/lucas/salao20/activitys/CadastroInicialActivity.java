@@ -21,6 +21,7 @@ import android.widget.Toast;
 import com.example.lucas.salao20.R;
 import com.example.lucas.salao20.dao.DatabaseHelper;
 import com.example.lucas.salao20.dao.model.CadastroBasico;
+import com.example.lucas.salao20.enumeradores.TipoUsuarioENUM;
 import com.example.lucas.salao20.fragments.configuracaoInicial.FragmentBasicoCabeleireiro;
 import com.example.lucas.salao20.fragments.configuracaoInicial.FragmentBasicoCliente;
 import com.example.lucas.salao20.fragments.configuracaoInicial.FragmentCabeleireiros;
@@ -28,14 +29,12 @@ import com.example.lucas.salao20.fragments.configuracaoInicial.FragmentFuncionam
 import com.example.lucas.salao20.fragments.configuracaoInicial.FragmentServicos;
 import com.example.lucas.salao20.fragments.configuracaoInicial.FragmentTipoCadastro;
 import com.example.lucas.salao20.intentServices.AtualizarCadastroInicialIntentService;
+import com.example.lucas.salao20.intentServices.BackgroundIntentService;
 import com.example.lucas.salao20.slidingTabLayout.ConfiguracaoInicialAdapter;
 import com.example.lucas.salao20.slidingTabLayout.SlidingTabLayout;
 import com.google.firebase.auth.FirebaseAuth;
 
 public class CadastroInicialActivity extends AppCompatActivity {
-    public static final String ACTIVITY_CADASTRO_INICIAL = "activity.cadastro.inicial";
-    static String BRODCAST_RECEIVER_ATUALIZAR_CADASTRO_INICIAL = "com.example.lucas.salao20.brodcastreceiver.cadastroinicialatualizado";
-
     private Toolbar mToolbar;
     private SlidingTabLayout mSlidingTabLayout;
     private ViewPager mViewPager;
@@ -50,16 +49,10 @@ public class CadastroInicialActivity extends AppCompatActivity {
     //PROGRESDIALOG
     private ProgressDialog progressDialog;
 
-    //BRODCASTRECEIVER
-    private BroadcastReceiver broadcastReceiverCadastroInicialAtualizado;
-
     //CONTROLES
     static boolean cadastroInicialActivityAtiva;
-    static boolean sincronizacaoConfiguracaoInicialRequerida;
     private boolean processandoClique;
 
-    //CADASTROS INICIAL CRONTROLE
-    static CadastroBasico cadastroBasicoBD;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -69,13 +62,9 @@ public class CadastroInicialActivity extends AppCompatActivity {
         setContentView(R.layout.activity_cadastro_inicial);
 
         mAuth = FirebaseAuth.getInstance();
-        verifyLogged();
 
         initControles();
-
         initView();
-
-        initBrodcastReceiver();
     }
 
     @Override
@@ -92,15 +81,6 @@ public class CadastroInicialActivity extends AppCompatActivity {
         super.onStart();
         Log.i("script","CadastroInicialActivity() onStart()");
         cadastroInicialActivityAtiva = true;
-
-        if (!sincronizacaoConfiguracaoInicialRequerida){
-            if (cadastroBasicoBD.getNivelUsuario() != 1.0){
-                if (cadastroBasicoBD.getTipoUsuario().equals("salão")){
-                    sincronizacaoConfiguracaoInicialRequerida = true;
-
-                }
-            }
-        }
     }
 
     @Override
@@ -108,15 +88,6 @@ public class CadastroInicialActivity extends AppCompatActivity {
         super.onDestroy();
         Log.i("script","CadastroInicialActivity() onDestroy()");
         cadastroInicialActivityAtiva = false;
-
-        //CANCELA ATUALIZARBANCOSINTENTSERVICE
-        Intent intent = new Intent(getApplicationContext(), AtualizarCadastroInicialIntentService.class);
-        Bundle bundle = new Bundle();
-        bundle.putInt("desligar",1);
-        intent.putExtras(bundle);
-        startService(intent);
-
-        unregisterReceiver(this.broadcastReceiverCadastroInicialAtualizado);
     }
 
     @Override
@@ -142,69 +113,62 @@ public class CadastroInicialActivity extends AppCompatActivity {
 
 
     private void initView() {
-        //BUNDLE
-        Bundle bundle = getIntent().getExtras();
-        if (cadastroBasicoBD == null){
-            cadastroBasicoBD = new CadastroBasico();
-        }
-        if (bundle.containsKey(DatabaseHelper.CadastroInicial.NIVEL_USUARIO)){
-            cadastroBasicoBD.setNivelUsuario(bundle.getDouble(DatabaseHelper.CadastroInicial.NIVEL_USUARIO));
-        }
-        if (bundle.containsKey(DatabaseHelper.CadastroInicial.TIPO_USUARIO)){
-            cadastroBasicoBD.setTipoUsuario(bundle.getString(DatabaseHelper.CadastroInicial.TIPO_USUARIO));
-        }
-        if (bundle.containsKey(DatabaseHelper.CadastroInicial.CODIGO_UNICO)){
-            cadastroBasicoBD.setCodigoUnico(bundle.getInt(DatabaseHelper.CadastroInicial.CODIGO_UNICO));
-        }
-
         //TOOLBAR
         mToolbar = (Toolbar) findViewById(R.id.toolbar_tabs);
-        if (cadastroBasicoBD.getNivelUsuario() == 1.0){
-            mToolbar.setTitle("CONFIGURAÇÃO INICIAL");
+        mToolbar.setTitle("CONFIGURAÇÃO INICIAL");
+        if (BackgroundIntentService.getCadastroBasico().getNivelUsuario() == 1.0){
             mToolbar.setSubtitle("Tipo de  usuário");
             mToolbar.setLogo(R.mipmap.ic_launcher);
         }else {
-            mToolbar.setTitle("CONFIGURAÇÃO INICIAL");
-            if (cadastroBasicoBD.getTipoUsuario().equals("salão")){
-                mToolbar.setSubtitle("Configurações do salão");
-                mToolbar.setLogo(R.mipmap.ic_launcher);
-            }else if (cadastroBasicoBD.getTipoUsuario().equals("cabeleireiro")){
-                mToolbar.setSubtitle("Configurações do cabeleireiro");
-                mToolbar.setLogo(R.mipmap.ic_launcher);
-            }else if (cadastroBasicoBD.getTipoUsuario().equals("cliente")){
-                mToolbar.setSubtitle("Configurações do cliente");
-                mToolbar.setLogo(R.mipmap.ic_launcher);
+            switch (BackgroundIntentService.getCadastroBasico().getTipoUsuario()){
+                case TipoUsuarioENUM.SALAO:
+                    mToolbar.setSubtitle("Configurações do salão");
+                    mToolbar.setLogo(R.mipmap.ic_launcher);
+                    break;
+                case TipoUsuarioENUM.CABELEIREIRO:
+                    mToolbar.setSubtitle("Configurações do cabeleireiro");
+                    mToolbar.setLogo(R.mipmap.ic_launcher);
+                    break;
+                case TipoUsuarioENUM.CLIENTE:
+                    mToolbar.setSubtitle("Configurações do cabeleireiro");
+                    mToolbar.setLogo(R.mipmap.ic_launcher);
+                    break;
+                default:
+                    mAuth.signOut();
+                    break;
             }
         }
         setSupportActionBar(mToolbar);
 
         //TABS
         mViewPager = (ViewPager) findViewById(R.id.vp_tabs_tabs);
-        if (cadastroBasicoBD.getNivelUsuario() == 1.0){
+        if (BackgroundIntentService.getCadastroBasico().getNivelUsuario() == 1.0){
             String[] titles = {FragmentTipoCadastro.getTitulo()};
             mViewPager.setAdapter(new ConfiguracaoInicialAdapter(getSupportFragmentManager(),this,titles,null));
         }else {
-            if (cadastroBasicoBD.getTipoUsuario().equals("salão")){
-                String[] titles = {FragmentFuncionamento.getTitulo(), FragmentServicos.getTitulo(),FragmentCabeleireiros.getTitulo()};
-                mViewPager.setAdapter(new ConfiguracaoInicialAdapter(getSupportFragmentManager(),this,titles, cadastroBasicoBD.getTipoUsuario()));
-            }else if (cadastroBasicoBD.getTipoUsuario().equals("cabeleireiro")){
-                String[] titles = {FragmentBasicoCliente.getTitulo()};
-                mViewPager.setAdapter(new ConfiguracaoInicialAdapter(getSupportFragmentManager(),this,titles, cadastroBasicoBD.getTipoUsuario()));
-            }else if (cadastroBasicoBD.getTipoUsuario().equals("cliente")){
-                String[] titles = {FragmentBasicoCabeleireiro.getTitulo()};
-                mViewPager.setAdapter(new ConfiguracaoInicialAdapter(getSupportFragmentManager(),this,titles, cadastroBasicoBD.getTipoUsuario()));
+            switch (BackgroundIntentService.getCadastroBasico().getTipoUsuario()){
+                case TipoUsuarioENUM.SALAO:
+                    String[] titles = {FragmentFuncionamento.getTitulo(), FragmentServicos.getTitulo(),FragmentCabeleireiros.getTitulo()};
+                    mViewPager.setAdapter(new ConfiguracaoInicialAdapter(getSupportFragmentManager(),this,titles, BackgroundIntentService.getCadastroBasico().getTipoUsuario()));
+                    break;
+                case TipoUsuarioENUM.CABELEIREIRO:
+                    String[] titles2 = {FragmentBasicoCliente.getTitulo()};
+                    mViewPager.setAdapter(new ConfiguracaoInicialAdapter(getSupportFragmentManager(),this,titles2, BackgroundIntentService.getCadastroBasico().getTipoUsuario()));
+                    break;
+                case TipoUsuarioENUM.CLIENTE:
+                    String[] titles3 = {FragmentBasicoCabeleireiro.getTitulo()};
+                    mViewPager.setAdapter(new ConfiguracaoInicialAdapter(getSupportFragmentManager(),this,titles3, BackgroundIntentService.getCadastroBasico().getTipoUsuario()));
+                    break;
+                default:
+                    mAuth.signOut();
+                    break;
             }
         }
 
         //PROGREAS DIALOG
-        if (cadastroBasicoBD.getNivelUsuario() != 1.0){
-            if (cadastroBasicoBD.getTipoUsuario().equals("salão")){
-                if (this.progressDialog == null){
-                    this.progressDialog = new ProgressDialog(this);
-                }
-                this.progressDialog.setMessage("Sincronizando dados na nuvem ...");
-                this.progressDialog.show();
-            }
+        if (this.progressDialog == null){
+            this.progressDialog = new ProgressDialog(this);
+            this.progressDialog.setMessage("Sincronizando dados na nuvem ...");
         }
 
 
@@ -217,50 +181,9 @@ public class CadastroInicialActivity extends AppCompatActivity {
 
     private void initControles(){
         this.processandoClique = false;
-        sincronizacaoConfiguracaoInicialRequerida = false;
-    }
-
-    private void initBrodcastReceiver(){
-        this.broadcastReceiverCadastroInicialAtualizado = new BroadcastReceiver() {
-            @Override
-            public void onReceive(Context context, Intent intent) {
-                processandoClique = false;
-                progressDialog.dismiss();
-                recriarCadastroInicialActivity();
-            }
-        };
-        IntentFilter intentFilter = new IntentFilter(BRODCAST_RECEIVER_ATUALIZAR_CADASTRO_INICIAL);
-        registerReceiver(this.broadcastReceiverCadastroInicialAtualizado, intentFilter);
-    }
-
-    private void verifyLogged(){
-        Log.i("script","verifyLogged()");
-        if( mAuth.getCurrentUser() != null ){
-            Log.i("script","verifyLogged() mAuth.getCurrentUser() != null");
-            if (mAuth.getCurrentUser().getUid() != null && !mAuth.getCurrentUser().getUid().isEmpty()){
-                Log.i("script","verifyLogged() set UID");
-                //segue no onCreate
-            }else {
-                Log.i("script","verifyLogged()  UID = null");
-                mAuth.signOut();
-                callErroActivity("SPLASHSCREENuserFirebase.getUid()==null");
-            }
-        }
-        else{
-            Log.i("script","verifyLogged() mAuth.getCurrentUser() == null");
-            callLoginActivity();
-        }
     }
 
     //CALL
-    private void callErroActivity(String erro){
-        Intent intent = new Intent(this, ErroActivity.class);
-        if (erro != null && !erro.isEmpty()){
-            intent.putExtra("erro",erro);
-        }
-        startActivity(intent);
-    }
-
     private void callLoginActivity(){
         Intent intent = new Intent(this, LoginActivity.class);
         startActivity(intent);
@@ -269,11 +192,6 @@ public class CadastroInicialActivity extends AppCompatActivity {
 
     private void recriarCadastroInicialActivity(){
         Intent intent = new Intent(this,CadastroInicialActivity.class);
-        Bundle bundle = new Bundle();
-        bundle.putDouble(DatabaseHelper.CadastroInicial.NIVEL_USUARIO, cadastroBasicoBD.getNivelUsuario());
-        bundle.putString(DatabaseHelper.CadastroInicial.TIPO_USUARIO, cadastroBasicoBD.getTipoUsuario());
-        bundle.putInt(DatabaseHelper.CadastroInicial.CODIGO_UNICO, cadastroBasicoBD.getCodigoUnico());
-        intent.putExtras(bundle);
         finish();
         startActivity(intent);
     }
@@ -282,44 +200,29 @@ public class CadastroInicialActivity extends AppCompatActivity {
     public void confirmarTipoCadastro(View view) {
         if (!this.processandoClique){
             this.processandoClique = true;
-            if (cadastroBasicoBD == null){
-                cadastroBasicoBD = new CadastroBasico();
-            }
+            String tipoUsuario = "";
             switch (view.getId()){
                 case R.id.btn_cadastro_cliente:
-                    cadastroBasicoBD.setTipoUsuario("cliente");
+                    tipoUsuario = TipoUsuarioENUM.CLIENTE;
                     break;
                 case R.id.btn_cadastro_salao:
-                    cadastroBasicoBD.setTipoUsuario("salão");
+                    tipoUsuario = TipoUsuarioENUM.SALAO;
                     break;
                 case R.id.btn_cadastro_cabeleireiro:
-                    cadastroBasicoBD.setTipoUsuario("cabeleireiro");
+                    tipoUsuario = TipoUsuarioENUM.CABELEIREIRO;
                     break;
                 default:
                     break;
             }
 
-            if (this.progressDialog == null){
-                this.progressDialog = new ProgressDialog(this);
-                progressDialog.setMessage("Salvando na nuvem ...");
-                progressDialog.setCancelable(false);
-            }
             if (this.builder == null){
                 this.builder = new AlertDialog.Builder(this);
                 //define um botão como positivo
+                final String finalTipoUsuario = tipoUsuario;
                 builder.setPositiveButton("SALVAR", new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface arg0, int arg1) {
-                        progressDialog.show();
-                        Intent intent = new Intent(getApplicationContext(), AtualizarCadastroInicialIntentService.class);
-                        Bundle bundle = new Bundle();
-                        if (mAuth.getCurrentUser().getUid() != null && !mAuth.getCurrentUser().getUid().isEmpty()){
-                            bundle.putString(DatabaseHelper.CadastroInicial.UID, mAuth.getCurrentUser().getUid());
-                        }
-                        bundle.putString(DatabaseHelper.CadastroInicial.TIPO_USUARIO, cadastroBasicoBD.getTipoUsuario());
-                        bundle.putDouble(DatabaseHelper.CadastroInicial.NIVEL_USUARIO, 2.0);
-
-                        intent.putExtras(bundle);
-                        startService(intent);
+                        BackgroundIntentService.salvarTipoUsuario(finalTipoUsuario);
+                        recriarCadastroInicialActivity();
                     }
                 });
                 //define um botão como negativo.
@@ -329,16 +232,17 @@ public class CadastroInicialActivity extends AppCompatActivity {
                     }
                 });
             }
-            switch (cadastroBasicoBD.getTipoUsuario()){
-                case "cliente":
+
+            switch (tipoUsuario){
+                case TipoUsuarioENUM.CLIENTE:
                     builder.setTitle("Salvar cadastro como Cliente ?");
                     builder.setMessage("Ao criar uma conta como Cliente você podera se vincular a um ou mais salões online, para ter acesso a promoções, agendar horários com seus cabeleireiros e muito mais !");
                     break;
-                case "salão":
+                case TipoUsuarioENUM.SALAO:
                     builder.setTitle("Salvar cadastro como Salão ?");
                     builder.setMessage("Ao criar uma conta como Salão você estara abrindo um salão online; podendo definir os serviços prestados, abrir uma agenda para que seus clientes possam agendar horários, adicionar os cabeleireiros que realizaram os serviços no seu salão, gerar promoções e muito mais !");
                     break;
-                case "cabeleireiro":
+                case TipoUsuarioENUM.CABELEIREIRO:
                     builder.setTitle("Salvar cadastro como Cabeleireiro ?");
                     builder.setMessage("Ao criar uma conta como Cabeleireiro você podera se vincular a um ou mais salões online ja existentes, os clientes destes salões poderam agendar horarios com você, voce podera gerenciar seus serviços prestados no decorrer do mês e muito mais !");
                     break;
@@ -349,30 +253,7 @@ public class CadastroInicialActivity extends AppCompatActivity {
             this.alertDialog = builder.create();
             this.alertDialog.show();
         }
-
-
-    }
-
-    public void proximaEtapa(View view) {
     }
 
     //GETTERS SETTERS
-    public static boolean isCadastroInicialActivityAtiva() {
-        return cadastroInicialActivityAtiva;
-    }
-
-    public static String getBrodcastReceiverAtualizarCadastroInicial() {
-        return BRODCAST_RECEIVER_ATUALIZAR_CADASTRO_INICIAL;
-    }
-
-    public BroadcastReceiver getBroadcastReceiverCadastroInicialAtualizado() {
-        return broadcastReceiverCadastroInicialAtualizado;
-    }
-
-    public static void setCadastroBasicoBD(CadastroBasico cadastroBasicoBD) {
-        CadastroInicialActivity.cadastroBasicoBD = cadastroBasicoBD;
-    }
-
-
-
 }

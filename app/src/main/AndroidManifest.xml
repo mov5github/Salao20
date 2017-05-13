@@ -21,15 +21,16 @@
             android:name=".activitys.SplashScreenActivity"
             android:configChanges="orientation|screenSize"
             android:launchMode="singleInstance">
+        </activity>
+        <activity
+            android:name=".activitys.LoginActivity"
+            android:configChanges="orientation|screenSize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity
-            android:name=".activitys.LoginActivity"
-            android:configChanges="orientation|screenSize" />
         <activity
             android:name=".activitys.SignUpActivity"
             android:configChanges="orientation|screenSize" />
@@ -44,10 +45,6 @@
             android:configChanges="orientation|screenSize" />
 
         <!-- SERVICES -->
-        <service
-            android:name=".intentServices.SincronizarBancosIntentService"
-            android:enabled="true"
-            android:exported="false" />
 
     </application>
 

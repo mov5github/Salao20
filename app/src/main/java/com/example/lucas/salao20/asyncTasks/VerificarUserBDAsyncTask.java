@@ -119,7 +119,7 @@ public class VerificarUserBDAsyncTask extends AsyncTask<User,Void,Boolean> {
             if (this.cadastroInicialCompleto){
                 loginActivity.irHome();
             }else {
-                loginActivity.irSplashScreen(novoUsuario);
+               // loginActivity.irSplashScreen(novoUsuario);
             }
         }
     }

@@ -40,4 +40,6 @@ public class CadastroBasico {
     public void set_uid(String uid) {
         this.uid = uid;
     }
+
+
 }

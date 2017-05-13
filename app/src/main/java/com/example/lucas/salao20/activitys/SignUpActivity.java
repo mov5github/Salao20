@@ -9,6 +9,7 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v7.widget.Toolbar;
+import android.util.Base64;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -20,7 +21,11 @@ import android.widget.Toast;
 
 import com.example.lucas.salao20.R;
 import com.example.lucas.salao20.domain.User;
+import com.example.lucas.salao20.domain.util.LibraryClass;
 import com.example.lucas.salao20.fragments.signUp.FragmentCadastroBasico;
+import com.example.lucas.salao20.geral.Acount;
+import com.example.lucas.salao20.geral.CadastroBasico;
+import com.example.lucas.salao20.geral.Criptografia;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.Task;
@@ -30,6 +35,19 @@ import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.crash.FirebaseCrash;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.ServerValue;
+
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
+import java.security.PrivateKey;
+import java.security.PublicKey;
+import java.security.SecureRandom;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+
+import javax.crypto.Cipher;
+
 
 /**
  * Created by Lucas on 17/03/2017.
@@ -46,30 +64,46 @@ public class SignUpActivity extends CommonActivity implements DatabaseReference.
 
     //CONTROLE
     private boolean fabProcessando;
+    private boolean mAuthStateListenerProcessando;
+
 
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Log.i("script","onCreate() SIGNUP");
         setContentView(R.layout.activity_sign_up);
+
         initViews();
         initUser();
         initControles();
 
         mAuth = FirebaseAuth.getInstance();
-
         mAuthStateListener = new FirebaseAuth.AuthStateListener() {
             @Override
             public void onAuthStateChanged(@NonNull FirebaseAuth firebaseAuth) {
-                FirebaseUser firebaseUser = firebaseAuth.getCurrentUser();
+                if (mAuth.getCurrentUser() != null && !mAuth.getCurrentUser().getUid().isEmpty()){
+                    Log.i("script","getFirebaseAuthResultHandler() signup  user logado");
+                    if (!mAuthStateListenerProcessando){
+                        mAuthStateListenerProcessando = true;
+                        DatabaseReference firebase = LibraryClass.getFirebase().child("users").child( mAuth.getCurrentUser().getUid() );
 
-                if( firebaseUser == null || user.getId() != null ){
-                    return;
+                        Criptografia crip = new Criptografia();
+                        crip.gerarChave();
+                        Acount acount = new Acount();
+                        acount.setEmail(user.getEmail());
+                        acount.setSenha(user.getPassword());
+                        CadastroBasico cadastroBasico = new CadastroBasico();
+                        cadastroBasico.setNivelUsuario(1.0);
+
+                        Map<String, Object> childUpdates = new HashMap<>();
+                        childUpdates.put(Acount.getACOUNT(), acount.toMap());
+                        childUpdates.put(Criptografia.getCRIPTOGRAFIA(), crip.toMap());
+                        childUpdates.put(CadastroBasico.getCADASTRO_BASICO(), cadastroBasico.toMap());
+                        firebase.updateChildren(childUpdates,SignUpActivity.this);
+                    }
                 }
-
-                user.setId( firebaseUser.getUid() );
-                user.saveDB( SignUpActivity.this,SignUpActivity.this);
             }
         };
+        mAuth.addAuthStateListener(mAuthStateListener);
     }
 
     @Override
@@ -134,6 +168,12 @@ public class SignUpActivity extends CommonActivity implements DatabaseReference.
         if (progressBar == null){
             progressBar = (ProgressBar) findViewById(R.id.sign_up_progress);
         }
+
+        //EDITTEXT
+        email = (AutoCompleteTextView)findViewById(R.id.email);
+        password = (EditText)findViewById(R.id.password);
+        passwordAgain = (EditText)findViewById(R.id.password_again);
+
         //TOOLBAR
         if (mToolbar == null){
             mToolbar = (Toolbar) findViewById(R.id.toolbar_sign_up);
@@ -142,13 +182,13 @@ public class SignUpActivity extends CommonActivity implements DatabaseReference.
             mToolbar.setLogo(R.mipmap.ic_launcher);
             setSupportActionBar(mToolbar);
         }
+
         //FRAGMENT
         if (getSupportFragmentManager().getFragments() == null || getSupportFragmentManager().getFragments().size() == 0){
             Log.i("script","getSupportFragmentManager()== null set fragment TipoCadastro  ");
             FragmentCadastroBasico fragmentCadastroBasico = new FragmentCadastroBasico();
             replaceFragment(fragmentCadastroBasico);
         }
-
 
         //FLOATING ACTION BUTTON
         if (fab == null){
@@ -192,15 +232,45 @@ public class SignUpActivity extends CommonActivity implements DatabaseReference.
 
     @Override
     public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference) {
-        mAuth.signOut();
+        if (databaseError != null){
+            Log.i("script","onComplete() erro != null");
+            removerUsuarioCriado();
+        }else{
+            Log.i("script","onComplete() erro == null");
+            mAuth.signOut();
+            mAuthStateListenerProcessando = false;
+            showToast( "Conta criada com sucesso!" );
+            closeProgressBar();
+            finish();
+        }
+    }
 
-        showToast( "Conta criada com sucesso!" );
-        closeProgressBar();
-        finish();
+    private void removerUsuarioCriado(){
+        if ( mAuth.getCurrentUser() != null){
+            DatabaseReference firebase = LibraryClass.getFirebase().child( mAuth.getCurrentUser().getUid() );
+            firebase.setValue(null);
+            mAuth.getCurrentUser().delete()
+                    .addOnCompleteListener(new OnCompleteListener<Void>() {
+                        @Override
+                        public void onComplete(@NonNull Task<Void> task) {
+                            if (task.isSuccessful()) {
+                                Log.i("script","removerUsuarioCriado() task.isSuccessful()");
+                                showToast( "Erro, tentar novamente!" );
+                                mAuth.signOut();
+                                mAuthStateListenerProcessando = false;
+                                fabProcessando = false;
+                                closeProgressBar();
+                            }else{
+                                removerUsuarioCriado();
+                            }
+                        }
+                    });
+        }
     }
 
     private void initControles(){
         this.fabProcessando = false;
+        this.mAuthStateListenerProcessando = false;
 
         Intent intent = getIntent();
         this.emailRecebido = intent.getStringExtra("email");

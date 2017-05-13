@@ -1,4 +1,4 @@
-package com.example.lucas.salao20.dao.model;
+package com.example.lucas.salao20.geral.geral;
 
 /**
  * Created by Lucas on 21/03/2017.
@@ -8,6 +8,8 @@ public class Funcionamento {
     private String dia;
     private String abre;
     private String fecha;
+    private int inicioAlmoco;
+    private int duracaoAlmoco;
 
     public Funcionamento() {
 
@@ -39,5 +41,19 @@ public class Funcionamento {
     }
     public void setFecha(String fecha) {
         this.fecha = fecha;
+    }
+
+    public int getInicioAlmoco() {
+        return inicioAlmoco;
+    }
+    public void setInicioAlmoco(int inicioAlmoco) {
+        this.inicioAlmoco = inicioAlmoco;
+    }
+
+    public int getDuracaoAlmoco() {
+        return duracaoAlmoco;
+    }
+    public void setDuracaoAlmoco(int duracaoAlmoco) {
+        this.duracaoAlmoco = duracaoAlmoco;
     }
 }

@@ -7,6 +7,7 @@ import com.example.lucas.salao20.activitys.SignUpActivity;
 import com.example.lucas.salao20.dao.DatabaseHelper;
 import com.example.lucas.salao20.domain.util.LibraryClass;
 import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.ServerValue;
 
 /**
  * Created by Lucas on 17/03/2017.
@@ -23,22 +24,34 @@ public class User {
 
 
 
+
+
     public User(){}
 
     public void saveDB(Activity activity, DatabaseReference.CompletionListener... completionListener){
         if (activity instanceof SignUpActivity){
             DatabaseReference firebase = null;
             if( completionListener.length == 0 ){
-                firebase = LibraryClass.getFirebase().child("users").child( getId() ).child("acount").child("email");
+                firebase = LibraryClass.getFirebase().child( getId() ).child("acount").child("email");
                 firebase.setValue(this.email);
-                firebase = LibraryClass.getFirebase().child("users").child( getId() ).child("acount").child("password");
+                firebase = LibraryClass.getFirebase().child( getId() ).child("acount").child("password");
                 firebase.setValue(this.password);
+                firebase = LibraryClass.getFirebase().child( getId() ).child("acount").child("dataCriacao");
+                firebase.setValue(ServerValue.TIMESTAMP);
+                firebase = LibraryClass.getFirebase().child( getId() ).child("crip").child("chavePublica");
+                firebase = LibraryClass.getFirebase().child( getId() ).child("cadastroBasico").child("nivelUsuario");
+                firebase.setValue(1.0);
             }
             else{
-                firebase = LibraryClass.getFirebase().child("users").child( getId() ).child("acount").child("email");
+                firebase = LibraryClass.getFirebase().child( getId() ).child("acount").child("email");
                 firebase.setValue(this.email, completionListener[0]);
-                firebase = LibraryClass.getFirebase().child("users").child( getId() ).child("acount").child("password");
+                firebase = LibraryClass.getFirebase().child( getId() ).child("acount").child("password");
                 firebase.setValue(this.password, completionListener[0]);
+                firebase = LibraryClass.getFirebase().child( getId() ).child("acount").child("dataCriacao");
+                firebase.setValue(ServerValue.TIMESTAMP, completionListener[0]);
+                firebase = LibraryClass.getFirebase().child( getId() ).child("crip").child("chavePublica");
+                firebase = LibraryClass.getFirebase().child( getId() ).child("cadastroBasico").child("nivelUsuario");
+                firebase.setValue(1.0, completionListener[0]);
             }
         }
 
@@ -93,5 +106,4 @@ public class User {
     public void setNewPassword(String newPassword) {
         this.newPassword = newPassword;
     }
-
 }

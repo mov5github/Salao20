@@ -6,12 +6,14 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 
+import com.example.lucas.salao20.enumeradores.TipoUsuarioENUM;
 import com.example.lucas.salao20.fragments.configuracaoInicial.FragmentBasicoCabeleireiro;
 import com.example.lucas.salao20.fragments.configuracaoInicial.FragmentBasicoCliente;
 import com.example.lucas.salao20.fragments.configuracaoInicial.FragmentCabeleireiros;
 import com.example.lucas.salao20.fragments.configuracaoInicial.FragmentFuncionamento;
 import com.example.lucas.salao20.fragments.configuracaoInicial.FragmentServicos;
 import com.example.lucas.salao20.fragments.configuracaoInicial.FragmentTipoCadastro;
+import com.example.lucas.salao20.intentServices.BackgroundIntentService;
 
 /**
  * Created by Lucas on 21/03/2017.
@@ -28,26 +30,30 @@ public class ConfiguracaoInicialAdapter extends FragmentPagerAdapter {
         mContext = ctx;
         titles =  titulos;
         if (tipoUsuario == null){
-            this.tipoUsuario = "void";
+            this.tipoUsuario = null;
             mFragments = new Fragment[1];
         }else {
+            switch (tipoUsuario){
+                case TipoUsuarioENUM.SALAO:
+                    mFragments = new Fragment[3];
+                    break;
+                case TipoUsuarioENUM.CABELEIREIRO:
+                    mFragments = new Fragment[3];
+                    break;
+                case TipoUsuarioENUM.CLIENTE:
+                    mFragments = new Fragment[3];
+                    break;
+                default:
+                    break;
+            }
             this.tipoUsuario = tipoUsuario;
-        }
-        if (this.tipoUsuario.equals("salão")){
-            mFragments = new Fragment[3];
-        }
-        if (this.tipoUsuario.equals("cliente")){
-            mFragments = new Fragment[1];
-        }
-        if (this.tipoUsuario.equals("cabeleireiro")){
-            mFragments = new Fragment[1];
         }
     }
 
     @Override
     public Fragment getItem(int position) {
         Fragment frag = null;
-        if (tipoUsuario.equals("void") || tipoUsuario.equals("")){
+        if (this.tipoUsuario == null){
             switch (position){
                 case 0:
                     frag = new FragmentTipoCadastro();
@@ -55,7 +61,7 @@ public class ConfiguracaoInicialAdapter extends FragmentPagerAdapter {
                 default:
                     break;
             }
-        }else if (tipoUsuario.equals("salão")){
+        }else if (tipoUsuario.equals(TipoUsuarioENUM.SALAO)){
             switch (position){
                 case 0:
                     frag = new FragmentFuncionamento();
@@ -72,7 +78,7 @@ public class ConfiguracaoInicialAdapter extends FragmentPagerAdapter {
                 default:
                     break;
             }
-        }else if (tipoUsuario.equals("cliente")){
+        }else if (tipoUsuario.equals(TipoUsuarioENUM.CLIENTE)){
             switch (position){
                 case 0:
                     frag = new FragmentBasicoCliente();
@@ -81,7 +87,7 @@ public class ConfiguracaoInicialAdapter extends FragmentPagerAdapter {
                     break;
             }
         }
-        else if (tipoUsuario.equals("cabeleireiro")){
+        else if (tipoUsuario.equals(TipoUsuarioENUM.CABELEIREIRO)){
             switch (position){
                 case 0:
                     frag = new FragmentBasicoCabeleireiro();
