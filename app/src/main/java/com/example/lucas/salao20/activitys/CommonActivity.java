@@ -118,8 +118,11 @@ public abstract class CommonActivity extends AppCompatActivity{
         finish();
     }
 
-    protected void callHomeActivity(){
+    protected void callHomeActivity(Bundle bundle){
         Intent intent = new Intent(this, HomeActivity.class);
+        if (bundle != null){
+            intent.putExtras(bundle);
+        }
         startActivity(intent);
         finish();
     }

@@ -14,6 +14,4 @@ public class DiasENUM {
     public static final String DOMINGO = "domingo";
     public static final String ABRE = "abre";
     public static final String FECHA = "fecha";
-
-
 }

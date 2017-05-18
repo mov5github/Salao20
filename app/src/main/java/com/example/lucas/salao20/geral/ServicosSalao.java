@@ -1,6 +1,7 @@
 package com.example.lucas.salao20.geral;
 
 import com.example.lucas.salao20.geral.geral.Servico;
+import com.google.firebase.database.Exclude;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -14,6 +15,7 @@ import java.util.Iterator;
 
 public class ServicosSalao {
     private ArrayList<Servico> servicosSalao;
+
 
 
     public ServicosSalao() {

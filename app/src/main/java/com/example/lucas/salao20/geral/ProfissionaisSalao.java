@@ -2,6 +2,7 @@ package com.example.lucas.salao20.geral;
 
 import com.example.lucas.salao20.geral.geral.Profissional;
 import com.example.lucas.salao20.geral.geral.Servico;
+import com.google.firebase.database.Exclude;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -15,6 +16,7 @@ import java.util.Iterator;
 
 public class ProfissionaisSalao {
     private ArrayList<Profissional> profissionais;
+
 
     public ProfissionaisSalao() {
     }

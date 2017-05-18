@@ -33,20 +33,36 @@ public class CadastroBasico {
     }
 
     //AUXILIARES
-    @Exclude
     public void receberDoFirebase(Map map){
         if (map.containsKey(NIVEL_USUARIO) && map.get(NIVEL_USUARIO) != null){
             this.nivelUsuario = (Double) map.get(NIVEL_USUARIO);
+        }else if (map.containsKey(NIVEL_USUARIO) && map.get(NIVEL_USUARIO) == null){
+            this.nivelUsuario = null;
         }
         if (map.containsKey(TIPO_USUARIO) && map.get(TIPO_USUARIO) != null){
             this.tipoUsuario = (String) map.get(TIPO_USUARIO);
+        }else if (map.containsKey(TIPO_USUARIO) && map.get(TIPO_USUARIO) == null){
+            this.tipoUsuario = null;
         }
         if (map.containsKey(CODIGO_UNICO) && map.get(CODIGO_UNICO) != null){
             this.codigoUnico = (String) map.get(CODIGO_UNICO);
+        }else if (map.containsKey(CODIGO_UNICO) && map.get(CODIGO_UNICO) == null){
+            this.codigoUnico = null;
         }
     }
 
-    @Exclude
+    public void receberDoFirebaseRemover(Map map){
+        if (map.containsKey(NIVEL_USUARIO)){
+            this.nivelUsuario = null;
+        }
+        if (map.containsKey(TIPO_USUARIO)){
+            this.tipoUsuario = null;
+        }
+        if (map.containsKey(CODIGO_UNICO)){
+            this.codigoUnico = null;
+        }
+    }
+
     public Map<String, Object> toMap() {
         HashMap<String, Object> result = new HashMap<>();
         if (nivelUsuario != null){
@@ -62,49 +78,39 @@ public class CadastroBasico {
     }
 
     //GETTERS SETTERS
-    @Exclude
     public Double getNivelUsuario() {
         return nivelUsuario;
     }
-    @Exclude
     public void setNivelUsuario(Double nivelUsuario) {
         this.nivelUsuario = nivelUsuario;
     }
 
-    @Exclude
     public String getTipoUsuario() {
         return tipoUsuario;
     }
-    @Exclude
     public void setTipoUsuario(String tipoUsuario) {
         this.tipoUsuario = tipoUsuario;
     }
 
-    @Exclude
     public String getCodigoUnico() {
         return codigoUnico;
     }
-    @Exclude
     public void setCodigoUnico(String codigoUnico) {
         this.codigoUnico = codigoUnico;
     }
 
-    @Exclude
     public static String getCADASTRO_BASICO() {
         return CADASTRO_BASICO;
     }
 
-    @Exclude
     public static String getNIVEL_USUARIO(){
         return NIVEL_USUARIO;
     }
 
-    @Exclude
     public static String getTIPO_USUARIO(){
         return TIPO_USUARIO;
     }
 
-    @Exclude
     public static String getCODIGO_UNICO(){
         return CODIGO_UNICO;
     }

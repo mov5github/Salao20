@@ -5,14 +5,13 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
-import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.util.Log;
 
 import com.example.lucas.salao20.activitys.ErroActivity;
 import com.example.lucas.salao20.activitys.LoginActivity;
-import com.example.lucas.salao20.activitys.SplashScreenActivity;
 import com.example.lucas.salao20.domain.util.LibraryClass;
+import com.example.lucas.salao20.enumeradores.GeralENUM;
 import com.example.lucas.salao20.enumeradores.TipoUsuarioENUM;
 import com.example.lucas.salao20.geral.CadastroBasico;
 import com.example.lucas.salao20.geral.ProfissionaisSalao;
@@ -22,7 +21,7 @@ import com.example.lucas.salao20.geral.geral.Profissional;
 import com.example.lucas.salao20.geral.geral.Servico;
 import com.example.lucas.salao20.geral.ServicosSalao;
 import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -43,8 +42,10 @@ public class BackgroundIntentService extends IntentService {
 
     //ENUM
     private static final String SINCRONIZACAO_INICIAL = "SincronizacaoInicial_BackgroundIntentService";
-    private static final String SINCRONIZACAO_CONFIGURACAO_INICIAL = "SincronizacaoConfiguracaoInicial_BackgroundIntentService";
-    private static final String SINCRONIZACAO_HOME = "SincronizacaoHome_BackgroundIntentService";
+    private static final String SINCRONIZACAO_CLIENTE = "SincronizacaoCliente_BackgroundIntentService";
+    private static final String SINCRONIZACAO_SALAO = "SincronizacaoSalao_BackgroundIntentService";
+    private static final String SINCRONIZACAO_CABELEIREIRO = "SincronizacaoCabeleireiro_BackgroundIntentService";
+
 
     private boolean ativo;
     private boolean stopAll;
@@ -57,7 +58,6 @@ public class BackgroundIntentService extends IntentService {
 
     //FIREBASE
     private static FirebaseAuth mAuth;
-    private FirebaseAuth.AuthStateListener mAuthListener;
 
     //REFERENCIAS
     private static DatabaseReference refCadastrobasico;
@@ -68,10 +68,14 @@ public class BackgroundIntentService extends IntentService {
     //OBJETOS
     private static CadastroBasico cadastroBasico = new CadastroBasico();
     private static FuncionamentoSalao funcionamentoSalao = new FuncionamentoSalao();
-    private static ServicosSalao servicosSalao = new ServicosSalao();
-    private static ProfissionaisSalao profissionaisSalao = new ProfissionaisSalao();
+    private static ServicosSalao servicosSalao;
+    private static ProfissionaisSalao profissionaisSalao;
 
     //RUNNABLES
+
+    //CONTROLES
+    private static boolean sincronizacaoInicialIniciada = false;
+    private static boolean sincronizacaoConfiguracoesIniciaisiniciada = false;
 
 
 
@@ -117,17 +121,24 @@ public class BackgroundIntentService extends IntentService {
                 }
             }
             if (this.bundle != null){
-                if (this.bundle.containsKey(SINCRONIZACAO_CONFIGURACAO_INICIAL)){
-                    Log.i("script", SINCRONIZACAO_CONFIGURACAO_INICIAL);
-                    this.bundle.remove(SINCRONIZACAO_CONFIGURACAO_INICIAL);
-                    handlerIntentService.post(new RunnableSincronizacaoConfiguracaoInicial());
+                if (this.bundle.containsKey(SINCRONIZACAO_CLIENTE)){
+                    Log.i("script", SINCRONIZACAO_CLIENTE);
+                    this.bundle.remove(SINCRONIZACAO_CLIENTE);
+                    handlerIntentService.post(new RunnableSincronizacaoCliente());
                 }
             }
             if (this.bundle != null){
-                if (this.bundle.containsKey(SINCRONIZACAO_HOME)){
-                    Log.i("script", SINCRONIZACAO_HOME);
-                    this.bundle.remove(SINCRONIZACAO_HOME);
-                    handlerIntentService.post(new RunnableSincronizacaoHome());
+                if (this.bundle.containsKey(SINCRONIZACAO_SALAO)){
+                    Log.i("script", SINCRONIZACAO_SALAO);
+                    this.bundle.remove(SINCRONIZACAO_SALAO);
+                    handlerIntentService.post(new RunnableSincronizacaoSalao());
+                }
+            }
+            if (this.bundle != null){
+                if (this.bundle.containsKey(SINCRONIZACAO_CABELEIREIRO)){
+                    Log.i("script", SINCRONIZACAO_CABELEIREIRO);
+                    this.bundle.remove(SINCRONIZACAO_CABELEIREIRO);
+                    handlerIntentService.post(new RunnableSincronizacaoCabeleireiro());
                 }
             }
         }
@@ -143,8 +154,6 @@ public class BackgroundIntentService extends IntentService {
             handlerIntentService.removeCallbacksAndMessages(null);
         }
         threadWork.interrupt();
-        mAuth.removeAuthStateListener(mAuthListener);
-        mAuth.signOut();
         removerEventsFirebase();
         fecharActivitysAbertasIrLogin();
     }
@@ -160,47 +169,16 @@ public class BackgroundIntentService extends IntentService {
         if (mAuth == null){
             mAuth = FirebaseAuth.getInstance();
         }
-        if (mAuthListener == null){
-            mAuthListener = getFirebaseAuthResultHandler();
-        }
     }
 
-    private FirebaseAuth.AuthStateListener getFirebaseAuthResultHandler(){
-        Log.i("script","getFirebaseAuthResultHandler() login ");
-
-        FirebaseAuth.AuthStateListener callback = new FirebaseAuth.AuthStateListener() {
-            @Override
-            public void onAuthStateChanged(@NonNull FirebaseAuth firebaseAuth) {
-                Log.i("script","getFirebaseAuthResultHandler() onAuthStateChanged SincronizacaoIntentService");
-
-                FirebaseUser userFirebase = firebaseAuth.getCurrentUser();
-
-                if( userFirebase == null || userFirebase.getUid().isEmpty()){
-                    Log.i("script","getFirebaseAuthResultHandler() userFirebase == null SincronizacaoIntentService");
-                    //stopAll = true;
-                    stopService(new Intent(getApplicationContext(),BackgroundIntentService.class));
-                }else {
-                    Log.i("script","getFirebaseAuthResultHandler() userFirebase != null SincronizacaoIntentService");
-                }
-            }
-        };
-        return( callback );
-    }
 
     //AUXILIAR
     private void fecharActivitysAbertasIrLogin() {
         Log.i("script","fecharActivitysAbertasIrLogin()");
-
-        Intent intent = new Intent(context, ErroActivity.class);
-        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
-        startActivity(intent);
-    }
-
-    public static Boolean verificarMauth(){
-        if (mAuth != null && mAuth.getCurrentUser() != null && !mAuth.getCurrentUser().getUid().isEmpty()){
-            return true;
-        }else {
-            return false;
+        if (!LoginActivity.isLoginActivityAtiva()){
+            Intent intent = new Intent(context, LoginActivity.class);
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+            startActivity(intent);
         }
     }
 
@@ -251,94 +229,41 @@ public class BackgroundIntentService extends IntentService {
                 handlerThreadWork.post(new Runnable() {
                     @Override
                     public void run() {
-                        if (mAuth.getCurrentUser() != null){
-                            if (!mAuth.getCurrentUser().getUid().isEmpty()){
-                                refCadastrobasico = LibraryClass.getFirebase().child("users").child(mAuth.getCurrentUser().getUid()).child("cadastroBasico");
-                                refCadastrobasico.addValueEventListener(new ValueEventListener() {
-                                    @Override
-                                    public void onDataChange(DataSnapshot dataSnapshot) {
-                                        if (dataSnapshot.getValue(Map.class) != null) {
-                                            cadastroBasico.receberDoFirebase(dataSnapshot.getValue(Map.class));
-                                        }
+                        if (mAuth.getCurrentUser() != null && !mAuth.getCurrentUser().getUid().isEmpty()){
+                            sincronizacaoInicialIniciada = true;
+                            refCadastrobasico = LibraryClass.getFirebase().child(GeralENUM.USERS).child(mAuth.getCurrentUser().getUid()).child(CadastroBasico.getCADASTRO_BASICO());
+                            refCadastrobasico.addChildEventListener(new ChildEventListener() {
+                                @Override
+                                public void onChildAdded(DataSnapshot dataSnapshot, String s) {
+                                    if (dataSnapshot.getValue(Map.class) != null){
+                                        cadastroBasico.receberDoFirebase(dataSnapshot.getValue(Map.class));
                                     }
-
-                                    @Override
-                                    public void onCancelled(DatabaseError databaseError) {
-
-                                    }
-                                });
-                            }
-                        }
-                    }
-                });
-            }
-        }
-    }
-
-    private class RunnableSincronizacaoConfiguracaoInicial implements Runnable {
-        @Override
-        public void run() {
-            if (handlerThreadWork != null){
-                handlerThreadWork.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        if (mAuth.getCurrentUser() != null){
-                            if (!mAuth.getCurrentUser().getUid().isEmpty()){
-                                if (BackgroundIntentService.getCadastroBasico().getTipoUsuario().equals(TipoUsuarioENUM.SALAO)){
-                                    refFuncionamento = LibraryClass.getFirebase().child("users").child(mAuth.getCurrentUser().getUid()).child("configuracoes").child("funcionamento");
-                                    refFuncionamento.addValueEventListener(new ValueEventListener() {
-                                        @Override
-                                        public void onDataChange(DataSnapshot dataSnapshot) {
-                                            if (dataSnapshot.getValue(JSONObject.class) != null) {
-                                                funcionamentoSalao.receberDoFirebase(dataSnapshot.getValue(JSONObject.class));
-                                            }else {
-                                                funcionamentoSalao.setFuncionamentoDoSalao(new ArrayList<Funcionamento>());
-                                            }
-                                        }
-
-                                        @Override
-                                        public void onCancelled(DatabaseError databaseError) {
-
-                                        }
-                                    });
-                                    refServicos = LibraryClass.getFirebase().child("users").child(mAuth.getCurrentUser().getUid()).child("configuracoes").child("servicos");
-                                    refServicos.addValueEventListener(new ValueEventListener() {
-                                        @Override
-                                        public void onDataChange(DataSnapshot dataSnapshot) {
-                                            if (dataSnapshot.getValue(JSONObject.class) != null) {
-                                                servicosSalao.receberDoFirebase(dataSnapshot.getValue(JSONObject.class));
-                                            }else {
-                                                servicosSalao.setServicosSalao(new ArrayList<Servico>());
-                                            }
-                                        }
-
-                                        @Override
-                                        public void onCancelled(DatabaseError databaseError) {
-
-                                        }
-                                    });
-                                    refProfissionais = LibraryClass.getFirebase().child("users").child(mAuth.getCurrentUser().getUid()).child("configuracoes").child("profissionais");
-                                    refProfissionais.addValueEventListener(new ValueEventListener() {
-                                        @Override
-                                        public void onDataChange(DataSnapshot dataSnapshot) {
-                                            if (dataSnapshot.getValue(JSONObject.class) != null) {
-                                                profissionaisSalao.receberDoFirebase(dataSnapshot.getValue(JSONObject.class));
-                                            }else {
-                                                profissionaisSalao.setProfissionais(new ArrayList<Profissional>());
-                                            }
-                                        }
-
-                                        @Override
-                                        public void onCancelled(DatabaseError databaseError) {
-
-                                        }
-                                    });
-                                }else if (BackgroundIntentService.getCadastroBasico().getTipoUsuario().equals(TipoUsuarioENUM.CABELEIREIRO)){
-                                    //TODO
-                                }else if (BackgroundIntentService.getCadastroBasico().getTipoUsuario().equals(TipoUsuarioENUM.CLIENTE)){
-                                    //TODO
                                 }
-                            }
+
+                                @Override
+                                public void onChildChanged(DataSnapshot dataSnapshot, String s) {
+                                    if (dataSnapshot.getValue(Map.class) != null){
+                                        cadastroBasico.receberDoFirebase(dataSnapshot.getValue(Map.class));
+                                    }
+                                }
+
+                                @Override
+                                public void onChildRemoved(DataSnapshot dataSnapshot) {
+                                    if (dataSnapshot.getValue(Map.class) != null){
+                                        cadastroBasico.receberDoFirebaseRemover(dataSnapshot.getValue(Map.class));
+                                    }
+                                }
+
+                                @Override
+                                public void onChildMoved(DataSnapshot dataSnapshot, String s) {
+
+                                }
+
+                                @Override
+                                public void onCancelled(DatabaseError databaseError) {
+
+                                }
+                            });
                         }
                     }
                 });
@@ -346,35 +271,66 @@ public class BackgroundIntentService extends IntentService {
         }
     }
 
-    private class RunnableSincronizacaoHome implements Runnable {
+    private class RunnableSincronizacaoCliente implements Runnable {
         @Override
         public void run() {
             if (handlerThreadWork != null){
                 handlerThreadWork.post(new Runnable() {
                     @Override
                     public void run() {
-                        if (mAuth.getCurrentUser() != null){
-                            if (!mAuth.getCurrentUser().getUid().isEmpty()){
-                                refCadastrobasico = LibraryClass.getFirebase().child("users").child(mAuth.getCurrentUser().getUid()).child("cadastroBasico");
-                                refCadastrobasico.addValueEventListener(new ValueEventListener() {
-                                    @Override
-                                    public void onDataChange(DataSnapshot dataSnapshot) {
-                                        if (dataSnapshot.getValue(Map.class) != null) {
-                                            cadastroBasico.receberDoFirebase(dataSnapshot.getValue(Map.class));
-                                        }
-                                    }
-
-                                    @Override
-                                    public void onCancelled(DatabaseError databaseError) {
-
-                                    }
-                                });
-                            }
-                        }
+                        //TODO
                     }
                 });
             }
         }
+    }
+
+    private class RunnableSincronizacaoCabeleireiro implements Runnable {
+        @Override
+        public void run() {
+            if (handlerThreadWork != null){
+                handlerThreadWork.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        //TODO
+                    }
+                });
+            }
+        }
+    }
+
+    private class RunnableSincronizacaoSalao implements Runnable {
+        @Override
+        public void run() {
+            if (handlerThreadWork != null){
+                handlerThreadWork.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        //TODO
+                    }
+                });
+            }
+        }
+    }
+
+    private static class RunnableSincronizacaoConfiguracaoInicial implements Runnable {
+        @Override
+        public void run() {
+            if (handlerThreadWork != null){
+                handlerThreadWork.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        //TODO
+                    }
+                });
+            }
+        }
+    }
+
+
+    //SINCRONIZADORES
+    public static void sincronizacaoCadastroInicial(){
+        handlerThreadWork.post(new RunnableSincronizacaoConfiguracaoInicial());
     }
 
     //ATUALIZADORES
@@ -386,8 +342,8 @@ public class BackgroundIntentService extends IntentService {
                 cadastroBasico.setNivelUsuario(2.0);
 
                 Map<String, Object> postValues = new HashMap<String, Object>();
-                postValues.put("tipoUsuario",cadastroBasico.getTipoUsuario());
-                postValues.put("nivelUsuario",cadastroBasico.getNivelUsuario());
+                postValues.put(CadastroBasico.getTIPO_USUARIO(),cadastroBasico.getTipoUsuario());
+                postValues.put(CadastroBasico.getNIVEL_USUARIO(),cadastroBasico.getNivelUsuario());
 
                 refCadastrobasico.updateChildren(postValues);
             }
@@ -403,14 +359,6 @@ public class BackgroundIntentService extends IntentService {
         return SINCRONIZACAO_INICIAL;
     }
 
-    public static String getSincronizacaoConfiguracaoInicial() {
-        return SINCRONIZACAO_CONFIGURACAO_INICIAL;
-    }
-
-    public static String getSincronizacaoHome() {
-        return SINCRONIZACAO_HOME;
-    }
-
     public static CadastroBasico getCadastroBasico() {
         return cadastroBasico;
     }
@@ -419,4 +367,15 @@ public class BackgroundIntentService extends IntentService {
         return refCadastrobasico;
     }
 
+    public static String getSincronizacaoCliente() {
+        return SINCRONIZACAO_CLIENTE;
+    }
+
+    public static String getSincronizacaoSalao() {
+        return SINCRONIZACAO_SALAO;
+    }
+
+    public static String getSincronizacaoCabeleireiro() {
+        return SINCRONIZACAO_CABELEIREIRO;
+    }
 }

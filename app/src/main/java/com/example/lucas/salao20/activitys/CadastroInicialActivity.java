@@ -7,6 +7,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Build;
+import android.support.annotation.NonNull;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
@@ -41,6 +42,7 @@ public class CadastroInicialActivity extends AppCompatActivity {
 
     //  FIREBASE AUTH
     private FirebaseAuth mAuth;
+    private FirebaseAuth.AuthStateListener mAuthListener;
 
     //ALERT DIALOG
     private AlertDialog alertDialog;
@@ -62,6 +64,8 @@ public class CadastroInicialActivity extends AppCompatActivity {
         setContentView(R.layout.activity_cadastro_inicial);
 
         mAuth = FirebaseAuth.getInstance();
+        mAuthListener = getFirebaseAuthResultHandler();
+
 
         initControles();
         initView();
@@ -81,6 +85,14 @@ public class CadastroInicialActivity extends AppCompatActivity {
         super.onStart();
         Log.i("script","CadastroInicialActivity() onStart()");
         cadastroInicialActivityAtiva = true;
+        mAuth.addAuthStateListener(mAuthListener);
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        Log.i("script","CadastroInicialActivity() onStop()");
+        mAuth.removeAuthStateListener(mAuthListener);
     }
 
     @Override
@@ -183,6 +195,25 @@ public class CadastroInicialActivity extends AppCompatActivity {
         this.processandoClique = false;
     }
 
+    private FirebaseAuth.AuthStateListener getFirebaseAuthResultHandler(){
+        Log.i("script","getFirebaseAuthResultHandler() CadastroInicial ");
+
+        final FirebaseAuth.AuthStateListener callback = new FirebaseAuth.AuthStateListener() {
+            @Override
+            public void onAuthStateChanged(@NonNull FirebaseAuth firebaseAuth) {
+                Log.i("script","getFirebaseAuthResultHandler() onAuthStateChanged CadastroInicial");
+                if(mAuth.getCurrentUser() == null){
+                    Log.i("script","getFirebaseAuthResultHandler() getCurrentUser() == null CadastroInicial");
+                    callLoginActivity();
+                }else if (mAuth.getCurrentUser().getUid().isEmpty()){
+                    Log.i("script","getFirebaseAuthResultHandler() uid == null CadastroInicial");
+                    mAuth.signOut();
+                }
+            }
+        };
+        return( callback );
+    }
+
     //CALL
     private void callLoginActivity(){
         Intent intent = new Intent(this, LoginActivity.class);
@@ -222,6 +253,7 @@ public class CadastroInicialActivity extends AppCompatActivity {
                 builder.setPositiveButton("SALVAR", new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface arg0, int arg1) {
                         BackgroundIntentService.salvarTipoUsuario(finalTipoUsuario);
+                        BackgroundIntentService.sincronizacaoCadastroInicial();
                         recriarCadastroInicialActivity();
                     }
                 });

@@ -22,10 +22,12 @@ import android.widget.Toast;
 import com.example.lucas.salao20.R;
 import com.example.lucas.salao20.domain.User;
 import com.example.lucas.salao20.domain.util.LibraryClass;
+import com.example.lucas.salao20.enumeradores.GeralENUM;
 import com.example.lucas.salao20.fragments.signUp.FragmentCadastroBasico;
 import com.example.lucas.salao20.geral.Acount;
 import com.example.lucas.salao20.geral.CadastroBasico;
 import com.example.lucas.salao20.geral.Criptografia;
+import com.example.lucas.salao20.intentServices.BackgroundIntentService;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.Task;
@@ -53,7 +55,7 @@ import javax.crypto.Cipher;
  * Created by Lucas on 17/03/2017.
  */
 
-public class SignUpActivity extends CommonActivity implements DatabaseReference.CompletionListener{
+public class SignUpActivity extends CommonActivity{
     private Toolbar mToolbar;
     private FloatingActionButton fab;
     private FirebaseAuth mAuth;
@@ -77,33 +79,7 @@ public class SignUpActivity extends CommonActivity implements DatabaseReference.
         initControles();
 
         mAuth = FirebaseAuth.getInstance();
-        mAuthStateListener = new FirebaseAuth.AuthStateListener() {
-            @Override
-            public void onAuthStateChanged(@NonNull FirebaseAuth firebaseAuth) {
-                if (mAuth.getCurrentUser() != null && !mAuth.getCurrentUser().getUid().isEmpty()){
-                    Log.i("script","getFirebaseAuthResultHandler() signup  user logado");
-                    if (!mAuthStateListenerProcessando){
-                        mAuthStateListenerProcessando = true;
-                        DatabaseReference firebase = LibraryClass.getFirebase().child("users").child( mAuth.getCurrentUser().getUid() );
-
-                        Criptografia crip = new Criptografia();
-                        crip.gerarChave();
-                        Acount acount = new Acount();
-                        acount.setEmail(user.getEmail());
-                        acount.setSenha(user.getPassword());
-                        CadastroBasico cadastroBasico = new CadastroBasico();
-                        cadastroBasico.setNivelUsuario(1.0);
-
-                        Map<String, Object> childUpdates = new HashMap<>();
-                        childUpdates.put(Acount.getACOUNT(), acount.toMap());
-                        childUpdates.put(Criptografia.getCRIPTOGRAFIA(), crip.toMap());
-                        childUpdates.put(CadastroBasico.getCADASTRO_BASICO(), cadastroBasico.toMap());
-                        firebase.updateChildren(childUpdates,SignUpActivity.this);
-                    }
-                }
-            }
-        };
-        mAuth.addAuthStateListener(mAuthStateListener);
+        mAuthStateListener = getFirebaseAuthResultHandler();
     }
 
     @Override
@@ -185,7 +161,7 @@ public class SignUpActivity extends CommonActivity implements DatabaseReference.
 
         //FRAGMENT
         if (getSupportFragmentManager().getFragments() == null || getSupportFragmentManager().getFragments().size() == 0){
-            Log.i("script","getSupportFragmentManager()== null set fragment TipoCadastro  ");
+            Log.i("script","getSupportFragmentManager()== null set fragment cadastro basico  ");
             FragmentCadastroBasico fragmentCadastroBasico = new FragmentCadastroBasico();
             replaceFragment(fragmentCadastroBasico);
         }
@@ -230,19 +206,51 @@ public class SignUpActivity extends CommonActivity implements DatabaseReference.
         }
     }
 
-    @Override
-    public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference) {
-        if (databaseError != null){
-            Log.i("script","onComplete() erro != null");
-            removerUsuarioCriado();
-        }else{
-            Log.i("script","onComplete() erro == null");
-            mAuth.signOut();
-            mAuthStateListenerProcessando = false;
-            showToast( "Conta criada com sucesso!" );
-            closeProgressBar();
-            finish();
-        }
+
+    private FirebaseAuth.AuthStateListener getFirebaseAuthResultHandler(){
+        Log.i("script","getFirebaseAuthResultHandler() login ");
+
+        final FirebaseAuth.AuthStateListener callback = new FirebaseAuth.AuthStateListener() {
+            @Override
+            public void onAuthStateChanged(@NonNull FirebaseAuth firebaseAuth) {
+                if (mAuth.getCurrentUser() != null && !mAuth.getCurrentUser().getUid().isEmpty()){
+                    Log.i("script","getFirebaseAuthResultHandler() signup  user logado");
+                    if (!mAuthStateListenerProcessando){
+                        mAuthStateListenerProcessando = true;
+                        DatabaseReference firebase = LibraryClass.getFirebase().child(GeralENUM.USERS).child( mAuth.getCurrentUser().getUid() );
+
+                        Criptografia crip = new Criptografia();
+                        crip.gerarChave();
+                        Acount acount = new Acount();
+                        acount.setEmail(user.getEmail());
+                        acount.setSenha(user.getPassword());
+                        CadastroBasico cadastroBasico = new CadastroBasico();
+                        cadastroBasico.setNivelUsuario(1.0);
+
+                        Map<String, Object> childUpdates = new HashMap<>();
+                        childUpdates.put(Acount.getACOUNT(), acount.toMap());
+                        childUpdates.put(Criptografia.getCRIPTOGRAFIA(), crip.toMap());
+                        childUpdates.put(CadastroBasico.getCADASTRO_BASICO(), cadastroBasico.toMap());
+                        firebase.updateChildren(childUpdates, new DatabaseReference.CompletionListener() {
+                            @Override
+                            public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference) {
+                                if (databaseError != null){
+                                    Log.i("script","onComplete() erro != null");
+                                    removerUsuarioCriado();
+                                }else{
+                                    Log.i("script","onComplete() erro == null");
+                                    mAuth.signOut();
+                                    showToast( "Conta criada com sucesso!" );
+                                    closeProgressBar();
+                                    finish();
+                                }
+                            }
+                        });
+                    }
+                }
+            }
+        };
+        return( callback );
     }
 
     private void removerUsuarioCriado(){
