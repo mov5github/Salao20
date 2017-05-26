@@ -1,4 +1,4 @@
-package com.example.lucas.salao20.slidingTabLayout;
+package com.example.lucas.salao20.adapters;
 
 import android.content.Context;
 import android.os.Bundle;
@@ -9,11 +9,10 @@ import android.support.v4.app.FragmentPagerAdapter;
 import com.example.lucas.salao20.enumeradores.TipoUsuarioENUM;
 import com.example.lucas.salao20.fragments.configuracaoInicial.FragmentBasicoCabeleireiro;
 import com.example.lucas.salao20.fragments.configuracaoInicial.FragmentBasicoCliente;
-import com.example.lucas.salao20.fragments.configuracaoInicial.FragmentCabeleireiros;
+import com.example.lucas.salao20.fragments.configuracaoInicial.FragmentProfissionais;
 import com.example.lucas.salao20.fragments.configuracaoInicial.FragmentFuncionamento;
 import com.example.lucas.salao20.fragments.configuracaoInicial.FragmentServicos;
 import com.example.lucas.salao20.fragments.configuracaoInicial.FragmentTipoCadastro;
-import com.example.lucas.salao20.intentServices.BackgroundIntentService;
 
 /**
  * Created by Lucas on 21/03/2017.
@@ -72,7 +71,7 @@ public class ConfiguracaoInicialAdapter extends FragmentPagerAdapter {
                     mFragments[position] = frag;
                     break;
                 case 2:
-                    frag = new FragmentCabeleireiros();
+                    frag = new FragmentProfissionais();
                     mFragments[position] = frag;
                     break;
                 default:
@@ -116,7 +115,7 @@ public class ConfiguracaoInicialAdapter extends FragmentPagerAdapter {
         return (titles[position]);
     }
 
-    public Fragment getCurrentFragment(int position){
+    public Fragment getFragment(int position){
         Fragment fragment = null;
         switch (position){
             case 0:

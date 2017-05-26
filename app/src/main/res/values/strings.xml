@@ -31,6 +31,7 @@
     <string name="prompt_nascimento_dia">Dia</string>
     <string name="prompt_nascimento_mes">Mês</string>
     <string name="prompt_nascimento_ano">Ano</string>
+    <string name="prompt_nome_salao">Nome do Salão</string>
     <string name="prompt_password">Senha</string>
     <string name="prompt_password_again">Confirme a Senha</string>
     <string name="prompt_rg">RG</string>

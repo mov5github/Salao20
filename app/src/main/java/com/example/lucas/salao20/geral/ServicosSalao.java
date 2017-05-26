@@ -19,7 +19,6 @@ public class ServicosSalao {
 
 
     public ServicosSalao() {
-        this.servicosSalao = null;
     }
 
     public void receberDoFirebase(JSONObject jason){
@@ -69,7 +68,8 @@ public class ServicosSalao {
     }
 
     //GETTERS
-    public void setServicosSalao(ArrayList<Servico> servicosSalao) {
-        this.servicosSalao = servicosSalao;
+    public ArrayList<Servico> getServicosSalao() {
+        return servicosSalao;
     }
+
 }

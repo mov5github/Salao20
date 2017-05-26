@@ -1,26 +1,56 @@
 package com.example.lucas.salao20.fragments.configuracaoInicial;
 
+import android.content.Context;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+import android.support.design.widget.FloatingActionButton;
+import android.support.design.widget.TextInputLayout;
 import android.support.v4.app.Fragment;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.InputMethodManager;
+import android.widget.AutoCompleteTextView;
 import android.widget.CheckBox;
+import android.widget.ProgressBar;
+import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.lucas.salao20.R;
-import com.example.lucas.salao20.dao.model.Funcionamento;
+import com.example.lucas.salao20.activitys.CadastroInicialActivity;
+import com.example.lucas.salao20.domain.util.LibraryClass;
 import com.example.lucas.salao20.enumeradores.DiasENUM;
+import com.example.lucas.salao20.enumeradores.GeralENUM;
 import com.example.lucas.salao20.geral.FuncionamentoSalao;
+import com.example.lucas.salao20.geral.geral.Funcionamento;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.ChildEventListener;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.ValueEventListener;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Created by Lucas on 21/03/2017.
  */
 
-public class FragmentFuncionamento extends Fragment{
+public class FragmentFuncionamento extends Fragment implements DatabaseReference.CompletionListener{
+    //ENUM
+    private static final String TITULO = "Funcionamento";
+
+    private ProgressBar progressFuncionamento;
+    private FloatingActionButton fabFuncionamento;
+
+    private ScrollView formFuncionamento;
+    private TextInputLayout formNomeSalao;
+    private AutoCompleteTextView nomeSalao;
+    private TextView labelHorario;
     private TextView abreSegunda;
     private TextView abreTerca;
     private TextView abreQuarta;
@@ -43,24 +73,99 @@ public class FragmentFuncionamento extends Fragment{
     private CheckBox sabado;
     private CheckBox domingo;
 
+    //FIREBASE AUTH
+    private FirebaseAuth mAuth;
 
-    static FuncionamentoSalao funcionamentoSalao;
+    //FIREBASE REF
+    private DatabaseReference refFuncionamento;
+    private DatabaseReference refNomeSalao;
+
+    //FIREBASE VEL
+    private ValueEventListener valueEventListenerFuncionamento;
+    private ValueEventListener valueEventListenerNomeSalao;
+
+
+    //OBJETOS
+    private static FuncionamentoSalao funcionamentoSalao;
+
+    //CONTROLE
+    private static boolean diasRecebidos;
+    private static boolean nomeRecebido;
+
+
+
 
 
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+        Log.i("frag","onCreateView");
         View view = inflater.inflate(R.layout.fragment_funcionamento,container,false);
         initViews(view);
         return view;
     }
 
-    public static String getTitulo() {
-        String titulo = "Funcionamento";
-        return titulo;
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        Log.i("frag","onCreate");
+        if (funcionamentoSalao == null){
+            funcionamentoSalao = new FuncionamentoSalao();
+        }
+        initFirebase();
+        initControles();
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        Log.i("frag","onStart");
+        if (this.refFuncionamento != null){
+            this.refFuncionamento.addValueEventListener(this.valueEventListenerFuncionamento);
+        }
+        if (this.refNomeSalao != null){
+            this.refNomeSalao.addValueEventListener(this.valueEventListenerNomeSalao);
+        }
+        /*if (this.refFuncionamento != null){
+           this.refFuncionamento.addChildEventListener(this.childEventListenerFuncionamento);
+        }
+        if (this.refNomeSalao != null){
+            this.refNomeSalao.addChildEventListener(this.childEventListenerNomeSalao);
+        }*/
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+        Log.i("frag","onStop");
+        removerFirebase();
+    }
+
+    @Override
+    public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference) {
+        if (databaseError == null){
+            CadastroInicialActivity.setEtapaFuncionamentoSalvo(true);
+            CadastroInicialActivity.notificarSalvamentoConcluido();
+        }else {
+            this.refNomeSalao.setValue(this.nomeSalao.getText().toString(), this);
+        }
     }
 
     private void initViews(View view){
+        progressFuncionamento = (ProgressBar) view.findViewById(R.id.progress_fragment_funcionamento) ;
+        fabFuncionamento = (FloatingActionButton) view.findViewById(R.id.fab_fragment_funcionamento);
+        fabFuncionamento.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                fabFuncionamento.setVisibility(View.INVISIBLE);
+                fabFuncionamento.setClickable(false);
+                proximaEtapa();
+            }
+        });
+        formFuncionamento = (ScrollView) view.findViewById(R.id.form_funcionamento);
+        formNomeSalao = (TextInputLayout) view.findViewById(R.id.form_nome_salao);
+        labelHorario = (TextView) view.findViewById(R.id.label_horario_funcionamento);
+        nomeSalao = (AutoCompleteTextView) view.findViewById(R.id.nome_salao) ;
         abreSegunda = (TextView) view.findViewById(R.id.abre_segunda);
         abreTerca =  (TextView) view.findViewById(R.id.abre_terca);
         abreQuarta = (TextView) view.findViewById(R.id.abre_quarta);
@@ -84,143 +189,398 @@ public class FragmentFuncionamento extends Fragment{
         domingo =(CheckBox) view.findViewById(R.id.domingo);
     }
 
-    public boolean preenchimentoIsValid(){
-        Log.i("script","entrou validacao");
-        if (segunda.isChecked()) {
-            Log.i("script","segunda check");
-            if (abreSegunda.getText().toString().equals("--:--")){
-                showToast("Preencher horario de abertura das segundas!");
-                return false;
-            }else if (fechaSegunda.getText().toString().equals("--:--")){
-                showToast("Preencher horario de encerramento das segundas!");
-                return false;
+    private void initFirebase(){
+        this.mAuth = FirebaseAuth.getInstance();
+        if (this.mAuth.getCurrentUser() != null && !this.mAuth.getCurrentUser().getUid().isEmpty()){
+            if (this.refFuncionamento == null){
+                this.refFuncionamento = LibraryClass.getFirebase().child(GeralENUM.USERS).child(mAuth.getCurrentUser().getUid()).child(GeralENUM.FUNCIONAMENTO);
             }
-        }
-        if (terca.isChecked()) {
-            Log.i("script","terca check");
-            if (abreTerca.getText().toString().equals("--:--")){
-                showToast("Preencher horario de abertura das terças!");
-                return false;
-            }else if (fechaTerca.getText().toString().equals("--:--")){
-                showToast("Preencher horario de encerramento das terças!");
-                return false;
-            }
-        }
-        if (quarta.isChecked()) {
-            Log.i("script","quarta check");
-            if (abreQuarta.getText().toString().equals("--:--")){
-                showToast("Preencher horario de abertura das quartas!");
-                return false;
-            }else if (fechaQuarta.getText().toString().equals("--:--")){
-                showToast("Preencher horario de encerramento das quartas!");
-                return false;
-            }
-        }
-        if (quinta.isChecked()) {
-            Log.i("script","quinta check");
-            if (abreQuinta.getText().toString().equals("--:--")){
-                showToast("Preencher horario de abertura das quintas!");
-                return false;
-            }else if (fechaQuinta.getText().toString().equals("--:--")){
-                showToast("Preencher horario de encerramento das quintas!");
-                return false;
-            }
-        }
-        if (sexta.isChecked()) {
-            Log.i("script","sexta check");
-            if (abreSexta.getText().toString().equals("--:--")){
-                showToast("Preencher horario de abertura das sextas!");
-                return false;
-            }else if (fechaSexta.getText().toString().equals("--:--")){
-                showToast("Preencher horario de encerramento das sextas!");
-                return false;
-            }
-        }
-        if (sabado.isChecked()) {
-            Log.i("script","sabado check");
-            if (abreSabado.getText().toString().equals("--:--")){
-                showToast("Preencher horario de abertura dos sabados!");
-                return false;
-            }else if (fechaSabado.getText().toString().equals("--:--")){
-                showToast("Preencher horario de encerramento dos sabados!");
-                return false;
-            }
-        }
-        if (domingo.isChecked()) {
-            Log.i("script","domingo check");
-            if (abreDomingo.getText().toString().equals("--:--")){
-                showToast("Preencher horario de abertura dos domingos!");
-                return false;
-            }else if (fechaDomingo.getText().toString().equals("--:--")){
-                showToast("Preencher horario de encerramento dos domingos!");
-                return false;
+            if (this.refNomeSalao == null){
+                this.refNomeSalao = LibraryClass.getFirebase().child(GeralENUM.USERS).child(mAuth.getCurrentUser().getUid()).child(GeralENUM.CADASTRO_COMPLEMENTAR).child(GeralENUM.NOME);
             }
         }
 
-        if(!segunda.isChecked() && !terca.isChecked() && !quarta.isChecked() && !quinta.isChecked() && !sexta.isChecked() && !sabado.isChecked() && !domingo.isChecked()){
-            showToast("Selecionar pelo menos um dia da semana!");
-            return false;
+        if (this.valueEventListenerFuncionamento == null){
+            this.valueEventListenerFuncionamento = new ValueEventListener() {
+                @Override
+                public void onDataChange(DataSnapshot dataSnapshot) {
+                    funcionamentoSalao.setFuncionamentoDoSalao(new HashMap<String, Funcionamento>());
+                    if (dataSnapshot.exists()){
+                        Funcionamento funcionamento;
+                        for (DataSnapshot child : dataSnapshot.getChildren()) {
+                            funcionamento = new Funcionamento();
+                            funcionamento.setDia(child.getKey());
+                            if (child.hasChild(DiasENUM.ABRE)){
+                                funcionamento.setAbre(child.child(DiasENUM.ABRE).getValue(String.class));
+                            }
+                            if (child.hasChild(DiasENUM.FECHA)){
+                                funcionamento.setFecha(child.child(DiasENUM.FECHA).getValue(String.class));
+                            }
+                            funcionamentoSalao.addFuncionamento(funcionamento);
+                        }
+                    }
+                    diasRecebidos = true;
+                    atualizarFormulario();
+                }
+
+                @Override
+                public void onCancelled(DatabaseError databaseError) {
+                }
+            };
         }
-        return true;
+
+        if (this.valueEventListenerNomeSalao == null){
+            this.valueEventListenerNomeSalao = new ValueEventListener() {
+                @Override
+                public void onDataChange(DataSnapshot dataSnapshot) {
+                    if (dataSnapshot.exists()){
+                        nomeSalao.setText(dataSnapshot.getValue(String.class));
+                    }
+                    nomeRecebido = true;
+                    liberarPreenchimento();
+                }
+
+                @Override
+                public void onCancelled(DatabaseError databaseError) {
+                }
+            };
+        }
+
+        /*if (this.childEventListenerFuncionamento == null){
+            this.childEventListenerFuncionamento = new ChildEventListener() {
+                @Override
+                public void onChildAdded(DataSnapshot dataSnapshot, String s) {
+                    Log.i("fire1","childEventListenerFuncionamento");
+                    if (dataSnapshot.exists()){
+                        Log.i("fire1","childEventListenerFuncionamento existe");
+                        Funcionamento funcionamento;
+                        for (DataSnapshot child : dataSnapshot.getChildren()) {
+                            Log.i("fire1","childEventListenerFuncionamento for");
+                            funcionamento = new Funcionamento();
+                            funcionamento.setDia(child.getKey());
+                            if (child.hasChild(DiasENUM.ABRE)){
+                                funcionamento.setAbre(child.child(DiasENUM.ABRE).getValue(String.class));
+                            }
+                            if (child.hasChild(DiasENUM.FECHA)){
+                                funcionamento.setFecha(child.child(DiasENUM.FECHA).getValue(String.class));
+                            }
+                            funcionamentoSalao.addFuncionamento(funcionamento);
+                        }
+                    }
+                    diasRecebidos = true;
+                    atualizarFormulario();
+                }
+
+                @Override
+                public void onChildChanged(DataSnapshot dataSnapshot, String s) {
+
+                }
+
+                @Override
+                public void onChildRemoved(DataSnapshot dataSnapshot) {
+
+                }
+
+                @Override
+                public void onChildMoved(DataSnapshot dataSnapshot, String s) {
+
+                }
+
+                @Override
+                public void onCancelled(DatabaseError databaseError) {
+
+                }
+            };
+        }
+
+        if (this.childEventListenerNomeSalao == null){
+            this.childEventListenerNomeSalao = new ChildEventListener() {
+                @Override
+                public void onChildAdded(DataSnapshot dataSnapshot, String s) {
+                    Log.i("fire1","childEventListenerNomeSalao");
+                    if (dataSnapshot.exists()){
+                        Log.i("fire1","childEventListenerNomeSalao existe");
+                        nomeSalao.setText(dataSnapshot.getValue(String.class));
+                    }
+                    nomeRecebido = true;
+                    atualizarFormulario();
+                }
+
+                @Override
+                public void onChildChanged(DataSnapshot dataSnapshot, String s) {
+
+                }
+
+                @Override
+                public void onChildRemoved(DataSnapshot dataSnapshot) {
+
+                }
+
+                @Override
+                public void onChildMoved(DataSnapshot dataSnapshot, String s) {
+
+                }
+
+                @Override
+                public void onCancelled(DatabaseError databaseError) {
+
+                }
+            };
+        }*/
     }
 
-    public FuncionamentoSalao criarFuncionamentoSalao(){
-        FuncionamentoSalao funcionamentoSalao = new FuncionamentoSalao();
-        Funcionamento funcionamento = new Funcionamento();
-
-        if (this.abreSegunda.getText() != null && !this.abreSegunda.getText().toString().isEmpty() && !this.abreSegunda.getText().toString().equals("--:--") && this.fechaSegunda.getText() != null && !this.fechaSegunda.getText().toString().isEmpty() && !this.fechaSegunda.getText().toString().equals("--:--")){
-            funcionamento.setDia(DiasENUM.SEGUNDA);
-            funcionamento.setAbre(this.abreSegunda.getText().toString());
-            funcionamento.setFecha(this.fechaSegunda.getText().toString());
-            //funcionamentoSalao.addFuncionamento(funcionamento);
-        }
-
-        if (this.abreTerca.getText() != null && !this.abreTerca.getText().toString().isEmpty() && !this.abreTerca.getText().toString().equals("--:--") && this.fechaTerca.getText() != null && !this.fechaTerca.getText().toString().isEmpty() && !this.fechaTerca.getText().toString().equals("--:--")){
-            funcionamento = new Funcionamento();
-            funcionamento.setAbre(this.abreTerca.getText().toString());
-            funcionamento.setFecha(this.fechaTerca.getText().toString());
-            //funcionamentoSalao.addFuncionamento(funcionamento);
-        }
-
-        if (this.abreQuarta.getText() != null && !this.abreQuarta.getText().toString().isEmpty() && !this.abreQuarta.getText().toString().equals("--:--") && this.fechaQuarta.getText() != null && !this.fechaQuarta.getText().toString().isEmpty() && !this.fechaQuarta.getText().toString().equals("--:--")){
-            funcionamento = new Funcionamento();
-            funcionamento.setAbre(this.abreQuarta.getText().toString());
-            funcionamento.setFecha(this.fechaQuarta.getText().toString());
-           // funcionamentoSalao.addFuncionamento(funcionamento);
-        }
-
-        if (this.abreQuinta.getText() != null && !this.abreQuinta.getText().toString().isEmpty() && !this.abreQuinta.getText().toString().equals("--:--") && this.fechaQuinta.getText() != null && !this.fechaQuinta.getText().toString().isEmpty() && !this.fechaQuinta.getText().toString().equals("--:--")){
-            funcionamento = new Funcionamento();
-            funcionamento.setAbre(this.abreQuinta.getText().toString());
-            funcionamento.setFecha(this.fechaQuinta.getText().toString());
-            //funcionamentoSalao.addFuncionamento(funcionamento);
-        }
-
-        if (this.abreSexta.getText() != null && !this.abreSexta.getText().toString().isEmpty() && !this.abreSexta.getText().toString().equals("--:--") && this.fechaSexta.getText() != null && !this.fechaSexta.getText().toString().isEmpty() && !this.fechaSexta.getText().toString().equals("--:--")){
-            funcionamento = new Funcionamento();
-            funcionamento.setAbre(this.abreSexta.getText().toString());
-            funcionamento.setFecha(this.fechaSexta.getText().toString());
-           // funcionamentoSalao.addFuncionamento(funcionamento);
-        }
-
-        if (this.abreSabado.getText() != null && !this.abreSabado.getText().toString().isEmpty() && !this.abreSabado.getText().toString().equals("--:--") && this.fechaSabado.getText() != null && !this.fechaSabado.getText().toString().isEmpty() && !this.fechaSabado.getText().toString().equals("--:--")){
-            funcionamento = new Funcionamento();
-            funcionamento.setAbre(this.abreSabado.getText().toString());
-            funcionamento.setFecha(this.fechaSabado.getText().toString());
-            //funcionamentoSalao.addFuncionamento(funcionamento);
-        }
-
-        if (this.abreDomingo.getText() != null && !this.abreDomingo.getText().toString().isEmpty() && !this.abreDomingo.getText().toString().equals("--:--") && this.fechaDomingo.getText() != null && !this.fechaDomingo.getText().toString().isEmpty() && !this.fechaDomingo.getText().toString().equals("--:--")){
-            funcionamento = new Funcionamento();
-            funcionamento.setAbre(this.abreDomingo.getText().toString());
-            funcionamento.setFecha(this.fechaDomingo.getText().toString());
-            //funcionamentoSalao.addFuncionamento(funcionamento);
-        }
-
-        return funcionamentoSalao;
+    private void initControles(){
+        diasRecebidos = false;
+        nomeRecebido = false;
     }
 
-    public void aplicaVisibilidadeHorarios(View view){
+    private void removerFirebase(){
+        if (this.refFuncionamento != null){
+            this.refFuncionamento.removeEventListener(this.valueEventListenerFuncionamento);
+        }
+        if (this.refNomeSalao != null){
+            this.refNomeSalao.removeEventListener(this.valueEventListenerNomeSalao);
+        }
+        /*if (this.refFuncionamento != null){
+           this.refFuncionamento.removeEventListener(this.childEventListenerFuncionamento);
+        }
+        if (this.refNomeSalao != null){
+            this.refNomeSalao.removeEventListener(this.childEventListenerNomeSalao);
+        }*/
+    }
+
+    private void proximaEtapa(){
+        if (formularioIsValid()){
+            this.fabFuncionamento.setClickable(true);
+            this.fabFuncionamento.setVisibility(View.VISIBLE);
+            CadastroInicialActivity.setEtapaFuncionamentoPreenchida(true);
+            CadastroInicialActivity.setEtapaFuncionamentoSalvo(false);
+            atualizarGeral();
+            InputMethodManager imm = (InputMethodManager) getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
+            imm.hideSoftInputFromWindow(this.nomeSalao.getWindowToken(), 0);
+            if (!CadastroInicialActivity.isEtapaServicosPreenchida()){
+                ((CadastroInicialActivity) getActivity()).getmViewPager().setCurrentItem(1);
+            }else if (!CadastroInicialActivity.isEtapaProfissionaisPreenchida()){
+                ((CadastroInicialActivity) getActivity()).getmViewPager().setCurrentItem(2);
+            }else {
+                ((CadastroInicialActivity) getActivity()).aguardarSalvar();
+            }
+
+        }else {
+            this.fabFuncionamento.setClickable(true);
+            this.fabFuncionamento.setVisibility(View.VISIBLE);
+        }
+    }
+
+    private void atualizarFormulario(){
+            if (funcionamentoSalao.getFuncionamentoDoSalao() != null){
+                if (funcionamentoSalao.getFuncionamentoDoSalao().keySet().contains(DiasENUM.SEGUNDA)){
+                    this.segunda.setChecked(true);
+                    if (funcionamentoSalao.getFuncionamentoDoSalao().get(DiasENUM.SEGUNDA).getAbre() != null && !funcionamentoSalao.getFuncionamentoDoSalao().get(DiasENUM.SEGUNDA).getAbre().isEmpty()){
+                        this.abreSegunda.setText(funcionamentoSalao.getFuncionamentoDoSalao().get(DiasENUM.SEGUNDA).getAbre());
+                    }
+                    if (funcionamentoSalao.getFuncionamentoDoSalao().get(DiasENUM.SEGUNDA).getFecha() != null && !funcionamentoSalao.getFuncionamentoDoSalao().get(DiasENUM.SEGUNDA).getFecha().isEmpty()){
+                        this.fechaSegunda.setText(funcionamentoSalao.getFuncionamentoDoSalao().get(DiasENUM.SEGUNDA).getFecha());
+                    }
+                }else {
+                    this.segunda.setChecked(false);
+                }
+                aplicaVisibilidadeHorarios(this.segunda);
+
+                if (funcionamentoSalao.getFuncionamentoDoSalao().keySet().contains(DiasENUM.TERCA)){
+                    this.terca.setChecked(true);
+                    if (funcionamentoSalao.getFuncionamentoDoSalao().get(DiasENUM.TERCA).getAbre() != null && !funcionamentoSalao.getFuncionamentoDoSalao().get(DiasENUM.TERCA).getAbre().isEmpty()){
+                        this.abreTerca.setText(funcionamentoSalao.getFuncionamentoDoSalao().get(DiasENUM.TERCA).getAbre());
+                    }
+                    if (funcionamentoSalao.getFuncionamentoDoSalao().get(DiasENUM.TERCA).getFecha() != null && !funcionamentoSalao.getFuncionamentoDoSalao().get(DiasENUM.TERCA).getFecha().isEmpty()){
+                        this.fechaTerca.setText(funcionamentoSalao.getFuncionamentoDoSalao().get(DiasENUM.TERCA).getFecha());
+                    }
+                }else {
+                    this.terca.setChecked(false);
+                }
+                aplicaVisibilidadeHorarios(this.terca);
+
+                if (funcionamentoSalao.getFuncionamentoDoSalao().keySet().contains(DiasENUM.QUARTA)){
+                    this.quarta.setChecked(true);
+                    if (funcionamentoSalao.getFuncionamentoDoSalao().get(DiasENUM.QUARTA).getAbre() != null && !funcionamentoSalao.getFuncionamentoDoSalao().get(DiasENUM.QUARTA).getAbre().isEmpty()){
+                        this.abreQuarta.setText(funcionamentoSalao.getFuncionamentoDoSalao().get(DiasENUM.QUARTA).getAbre());
+                    }
+                    if (funcionamentoSalao.getFuncionamentoDoSalao().get(DiasENUM.QUARTA).getFecha() != null && !funcionamentoSalao.getFuncionamentoDoSalao().get(DiasENUM.QUARTA).getFecha().isEmpty()){
+                        this.fechaQuarta.setText(funcionamentoSalao.getFuncionamentoDoSalao().get(DiasENUM.QUARTA).getFecha());
+                    }
+                }else {
+                    this.quarta.setChecked(false);
+                }
+                aplicaVisibilidadeHorarios(this.quarta);
+
+                if (funcionamentoSalao.getFuncionamentoDoSalao().keySet().contains(DiasENUM.QUINTA)){
+                    this.quinta.setChecked(true);
+                    if (funcionamentoSalao.getFuncionamentoDoSalao().get(DiasENUM.QUINTA).getAbre() != null && !funcionamentoSalao.getFuncionamentoDoSalao().get(DiasENUM.QUINTA).getAbre().isEmpty()){
+                        this.abreQuinta.setText(funcionamentoSalao.getFuncionamentoDoSalao().get(DiasENUM.QUINTA).getAbre());
+                    }
+                    if (funcionamentoSalao.getFuncionamentoDoSalao().get(DiasENUM.QUINTA).getFecha() != null && !funcionamentoSalao.getFuncionamentoDoSalao().get(DiasENUM.QUINTA).getFecha().isEmpty()){
+                        this.fechaQuinta.setText(funcionamentoSalao.getFuncionamentoDoSalao().get(DiasENUM.QUINTA).getFecha());
+                    }
+                }else {
+                    this.quinta.setChecked(false);
+                }
+                aplicaVisibilidadeHorarios(this.quinta);
+
+                if (funcionamentoSalao.getFuncionamentoDoSalao().keySet().contains(DiasENUM.SEXTA)){
+                    this.sexta.setChecked(true);
+                    if (funcionamentoSalao.getFuncionamentoDoSalao().get(DiasENUM.SEXTA).getAbre() != null && !funcionamentoSalao.getFuncionamentoDoSalao().get(DiasENUM.SEXTA).getAbre().isEmpty()){
+                        this.abreSexta.setText(funcionamentoSalao.getFuncionamentoDoSalao().get(DiasENUM.SEXTA).getAbre());
+                    }
+                    if (funcionamentoSalao.getFuncionamentoDoSalao().get(DiasENUM.SEXTA).getFecha() != null && !funcionamentoSalao.getFuncionamentoDoSalao().get(DiasENUM.SEXTA).getFecha().isEmpty()){
+                        this.fechaSexta.setText(funcionamentoSalao.getFuncionamentoDoSalao().get(DiasENUM.SEXTA).getFecha());
+                    }
+                }else {
+                    this.sexta.setChecked(false);
+                }
+                aplicaVisibilidadeHorarios(this.sexta);
+
+                if (funcionamentoSalao.getFuncionamentoDoSalao().keySet().contains(DiasENUM.SABADO)){
+                    this.sabado.setChecked(true);
+                    if (funcionamentoSalao.getFuncionamentoDoSalao().get(DiasENUM.SABADO).getAbre() != null && !funcionamentoSalao.getFuncionamentoDoSalao().get(DiasENUM.SABADO).getAbre().isEmpty()){
+                        this.abreSabado.setText(funcionamentoSalao.getFuncionamentoDoSalao().get(DiasENUM.SABADO).getAbre());
+                    }
+                    if (funcionamentoSalao.getFuncionamentoDoSalao().get(DiasENUM.SABADO).getFecha() != null && !funcionamentoSalao.getFuncionamentoDoSalao().get(DiasENUM.SABADO).getFecha().isEmpty()){
+                        this.fechaSabado.setText(funcionamentoSalao.getFuncionamentoDoSalao().get(DiasENUM.SABADO).getFecha());
+                    }
+                }else {
+                    this.sabado.setChecked(false);
+                }
+                aplicaVisibilidadeHorarios(this.sabado);
+
+                if (funcionamentoSalao.getFuncionamentoDoSalao().keySet().contains(DiasENUM.DOMINGO)){
+                    this.domingo.setChecked(true);
+                    if (funcionamentoSalao.getFuncionamentoDoSalao().get(DiasENUM.DOMINGO).getAbre() != null && !funcionamentoSalao.getFuncionamentoDoSalao().get(DiasENUM.DOMINGO).getAbre().isEmpty()){
+                        this.abreDomingo.setText(funcionamentoSalao.getFuncionamentoDoSalao().get(DiasENUM.DOMINGO).getAbre());
+                    }
+                    if (funcionamentoSalao.getFuncionamentoDoSalao().get(DiasENUM.DOMINGO).getFecha() != null && !funcionamentoSalao.getFuncionamentoDoSalao().get(DiasENUM.DOMINGO).getFecha().isEmpty()){
+                        this.fechaDomingo.setText(funcionamentoSalao.getFuncionamentoDoSalao().get(DiasENUM.DOMINGO).getFecha());
+                    }
+                }else {
+                    this.domingo.setChecked(false);
+                }
+                aplicaVisibilidadeHorarios(this.domingo);
+            }
+            liberarPreenchimento();
+    }
+
+    public void diaSelecionado(CheckBox checkBox){
+        switch (checkBox.getId()){
+            case R.id.segunda:
+                if (checkBox.isChecked()){
+                    abreSegunda.setVisibility(View.VISIBLE);
+                    fechaSegunda.setVisibility(View.VISIBLE);
+                    funcionamentoSalao.addFuncionamento(new Funcionamento(DiasENUM.SEGUNDA,this.abreSegunda.getText().toString(),this.fechaSegunda.getText().toString()));
+                    Map<String, Object> childUpdates = new HashMap<>();
+                    childUpdates.put(DiasENUM.SEGUNDA, funcionamentoSalao.getFuncionamentoDoSalao().get(DiasENUM.SEGUNDA).toMap());
+                    this.refFuncionamento.updateChildren(childUpdates);
+                }else{
+                    abreSegunda.setVisibility(View.INVISIBLE);
+                    fechaSegunda.setVisibility(View.INVISIBLE);
+                    funcionamentoSalao.removerFuncionamento(DiasENUM.SEGUNDA);
+                    this.refFuncionamento.child(DiasENUM.SEGUNDA).removeValue();
+                }
+                break;
+            case R.id.terca:
+                if (checkBox.isChecked()){
+                    abreTerca.setVisibility(View.VISIBLE);
+                    fechaTerca.setVisibility(View.VISIBLE);
+                    funcionamentoSalao.addFuncionamento(new Funcionamento(DiasENUM.TERCA,this.abreTerca.getText().toString(),this.fechaTerca.getText().toString()));
+                    Map<String, Object> childUpdates = new HashMap<>();
+                    childUpdates.put(DiasENUM.TERCA, funcionamentoSalao.getFuncionamentoDoSalao().get(DiasENUM.TERCA).toMap());
+                    this.refFuncionamento.updateChildren(childUpdates);
+                }else {
+                    abreTerca.setVisibility(View.INVISIBLE);
+                    fechaTerca.setVisibility(View.INVISIBLE);
+                    funcionamentoSalao.removerFuncionamento(DiasENUM.TERCA);
+                    this.refFuncionamento.child(DiasENUM.TERCA).removeValue();
+                }
+                break;
+            case R.id.quarta:
+                if (checkBox.isChecked()){
+                    abreQuarta.setVisibility(View.VISIBLE);
+                    fechaQuarta.setVisibility(View.VISIBLE);
+                    funcionamentoSalao.addFuncionamento(new Funcionamento(DiasENUM.QUARTA,this.abreQuarta.getText().toString(),this.fechaQuarta.getText().toString()));
+                    Map<String, Object> childUpdates = new HashMap<>();
+                    childUpdates.put(DiasENUM.QUARTA, funcionamentoSalao.getFuncionamentoDoSalao().get(DiasENUM.QUARTA).toMap());
+                    this.refFuncionamento.updateChildren(childUpdates);
+                }else{
+                    abreQuarta.setVisibility(View.INVISIBLE);
+                    fechaQuarta.setVisibility(View.INVISIBLE);
+                    funcionamentoSalao.removerFuncionamento(DiasENUM.QUARTA);
+                    this.refFuncionamento.child(DiasENUM.QUARTA).removeValue();
+                }
+                break;
+            case R.id.quinta:
+                if (checkBox.isChecked()){
+                    abreQuinta.setVisibility(View.VISIBLE);
+                    fechaQuinta.setVisibility(View.VISIBLE);
+                    funcionamentoSalao.addFuncionamento(new Funcionamento(DiasENUM.QUINTA,this.abreQuinta.getText().toString(),this.fechaQuinta.getText().toString()));
+                    Map<String, Object> childUpdates = new HashMap<>();
+                    childUpdates.put(DiasENUM.QUINTA, funcionamentoSalao.getFuncionamentoDoSalao().get(DiasENUM.QUINTA).toMap());
+                    this.refFuncionamento.updateChildren(childUpdates);
+                }else {
+                    abreQuinta.setVisibility(View.INVISIBLE);
+                    fechaQuinta.setVisibility(View.INVISIBLE);
+                    funcionamentoSalao.removerFuncionamento(DiasENUM.QUINTA);
+                    this.refFuncionamento.child(DiasENUM.QUINTA).removeValue();
+                }
+                break;
+            case R.id.sexta:
+                if (checkBox.isChecked()){
+                    abreSexta.setVisibility(View.VISIBLE);
+                    fechaSexta.setVisibility(View.VISIBLE);
+                    funcionamentoSalao.addFuncionamento(new Funcionamento(DiasENUM.SEXTA,this.abreSexta.getText().toString(),this.fechaSexta.getText().toString()));
+                    Map<String, Object> childUpdates = new HashMap<>();
+                    childUpdates.put(DiasENUM.SEXTA, funcionamentoSalao.getFuncionamentoDoSalao().get(DiasENUM.SEXTA).toMap());
+                    this.refFuncionamento.updateChildren(childUpdates);
+                }else {
+                    abreSexta.setVisibility(View.INVISIBLE);
+                    fechaSexta.setVisibility(View.INVISIBLE);
+                    funcionamentoSalao.removerFuncionamento(DiasENUM.SEXTA);
+                    this.refFuncionamento.child(DiasENUM.SEXTA).removeValue();
+                }
+                break;
+            case R.id.sabado:
+                if (checkBox.isChecked()){
+                    abreSabado.setVisibility(View.VISIBLE);
+                    fechaSabado.setVisibility(View.VISIBLE);
+                    funcionamentoSalao.addFuncionamento(new Funcionamento(DiasENUM.SABADO,this.abreSabado.getText().toString(),this.fechaSabado.getText().toString()));
+                    Map<String, Object> childUpdates = new HashMap<>();
+                    childUpdates.put(DiasENUM.SABADO, funcionamentoSalao.getFuncionamentoDoSalao().get(DiasENUM.SABADO).toMap());
+                    this.refFuncionamento.updateChildren(childUpdates);
+                }else {
+                    abreSabado.setVisibility(View.INVISIBLE);
+                    fechaSabado.setVisibility(View.INVISIBLE);
+                    funcionamentoSalao.removerFuncionamento(DiasENUM.SABADO);
+                    this.refFuncionamento.child(DiasENUM.SABADO).removeValue();
+                }
+                break;
+            case R.id.domingo:
+                if (checkBox.isChecked()){
+                    abreDomingo.setVisibility(View.VISIBLE);
+                    fechaDomingo.setVisibility(View.VISIBLE);
+                    funcionamentoSalao.addFuncionamento(new Funcionamento(DiasENUM.DOMINGO,this.abreDomingo.getText().toString(),this.fechaDomingo.getText().toString()));
+                    Map<String, Object> childUpdates = new HashMap<>();
+                    childUpdates.put(DiasENUM.DOMINGO, funcionamentoSalao.getFuncionamentoDoSalao().get(DiasENUM.DOMINGO).toMap());
+                    this.refFuncionamento.updateChildren(childUpdates);
+                }else {
+                    abreDomingo.setVisibility(View.INVISIBLE);
+                    fechaDomingo.setVisibility(View.INVISIBLE);
+                    funcionamentoSalao.removerFuncionamento(DiasENUM.DOMINGO);
+                    this.refFuncionamento.child(DiasENUM.DOMINGO).removeValue();
+                }
+                break;
+            default:
+                break;
+        }
+    }
+
+    private void aplicaVisibilidadeHorarios(View view){
         CheckBox checkBox = (CheckBox) view;
         switch (view.getId()){
             case R.id.segunda:
@@ -291,6 +651,122 @@ public class FragmentFuncionamento extends Fragment{
         }
     }
 
+    private void liberarPreenchimento(){
+        if (nomeRecebido && diasRecebidos){
+            this.fabFuncionamento.setVisibility(View.VISIBLE);
+            this.fabFuncionamento.setClickable(true);
+            this.labelHorario.setVisibility(View.VISIBLE);
+            this.formFuncionamento.setClickable(true);
+            this.formFuncionamento.setVisibility(View.VISIBLE);
+            this.progressFuncionamento.setVisibility(View.INVISIBLE);
+            this.nomeSalao.setVisibility(View.VISIBLE);
+            this.formNomeSalao.setVisibility(View.VISIBLE);
+        }
+    }
+
+    private boolean formularioIsValid(){
+        if (this.nomeSalao.getText().toString().isEmpty()){
+            showToast("Preencher o nome do salão!");
+            return false;
+        }else{
+            if (this.segunda.isChecked() || this.terca.isChecked() || this.quarta.isChecked() || this.quinta.isChecked() ||
+                    this.sexta.isChecked() || this.sabado.isChecked() || this.domingo.isChecked()){
+                if (this.segunda.isChecked()){
+                    if (this.abreSegunda.getText().equals("--:--") || this.abreSegunda.getText().toString().isEmpty()){
+                        showToast("Preencher a abertura de segunda!");
+                        return false;
+                    }else if (this.fechaSegunda.getText().equals("--:--") || this.fechaSegunda.getText().toString().isEmpty()){
+                        showToast("Preencher o fechamento de segunda!");
+                        return false;
+                    }
+                }
+                if (this.terca.isChecked()){
+                    if (this.abreTerca.getText().equals("--:--") || this.abreTerca.getText().toString().isEmpty()){
+                        showToast("Preencher a abertura de terça!");
+                        return false;
+                    }else if (this.fechaTerca.getText().equals("--:--") || this.fechaTerca.getText().toString().isEmpty()) {
+                        showToast("Preencher o fechamento de terça!");
+                        return false;
+                    }
+                }
+                if (this.quarta.isChecked()){
+                    if (this.abreQuarta.getText().equals("--:--") || this.abreQuarta.getText().toString().isEmpty()){
+                        showToast("Preencher a abertura de quarta!");
+                        return false;
+                    }else if (this.fechaQuarta.getText().equals("--:--") || this.fechaQuarta.getText().toString().isEmpty()){
+                        showToast("Preencher o fechamento de quarta!");
+                        return false;
+                    }
+                }
+                if (this.quinta.isChecked()){
+                    if (this.abreQuinta.getText().equals("--:--") || this.abreQuinta.getText().toString().isEmpty()){
+                        showToast("Preencher a abertura de quinta!");
+                        return false;
+                    }else if (this.fechaQuinta.getText().equals("--:--") || this.fechaQuinta.getText().toString().isEmpty()){
+                        showToast("Preencher o fechamento de quinta!");
+                        return false;
+                    }
+                }
+                if (this.sexta.isChecked()){
+                    if (this.abreSexta.getText().equals("--:--") || this.abreSexta.getText().toString().isEmpty()){
+                        showToast("Preencher a abertura de sexta!");
+                        return false;
+                    }else if (this.fechaSexta.getText().equals("--:--") || this.fechaSexta.getText().toString().isEmpty()){
+                        showToast("Preencher o fechamento de sexta!");
+                        return false;
+                    }
+                }
+                if (this.sabado.isChecked()){
+                    if (this.abreSabado.getText().equals("--:--") || this.abreSabado.getText().toString().isEmpty()){
+                        showToast("Preencher a abertura de sábado!");
+                        return false;
+                    }else if (this.fechaSabado.getText().equals("--:--") || this.fechaSabado.getText().toString().isEmpty()){
+                        showToast("Preencher o fechamento de sábado!");
+                        return false;
+                    }
+                }
+                if (this.domingo.isChecked()){
+                    if (this.abreDomingo.getText().equals("--:--") || this.abreDomingo.getText().toString().isEmpty()){
+                        showToast("Preencher a abertura de domingo!");
+                        return false;
+                    }else if (this.fechaDomingo.getText().equals("--:--") || this.fechaDomingo.getText().toString().isEmpty()){
+                        showToast("Preencher o fechamento de domingo!");
+                        return false;
+                    }
+                }
+                return true;
+            }else {
+                showToast("Selecione ao menos um dia!");
+                return false;
+            }
+        }
+    }
+
+    private void atualizarGeral(){
+        if (!funcionamentoSalao.getFuncionamentoDoSalao().containsKey(DiasENUM.SEGUNDA)){
+            this.refFuncionamento.child(DiasENUM.SEGUNDA).removeValue();
+        }
+        if (!funcionamentoSalao.getFuncionamentoDoSalao().containsKey(DiasENUM.TERCA)){
+            this.refFuncionamento.child(DiasENUM.TERCA).removeValue();
+        }
+        if (!funcionamentoSalao.getFuncionamentoDoSalao().containsKey(DiasENUM.QUARTA)){
+            this.refFuncionamento.child(DiasENUM.QUARTA).removeValue();
+        }
+        if (!funcionamentoSalao.getFuncionamentoDoSalao().containsKey(DiasENUM.QUINTA)){
+            this.refFuncionamento.child(DiasENUM.QUINTA).removeValue();
+        }
+        if (!funcionamentoSalao.getFuncionamentoDoSalao().containsKey(DiasENUM.SEXTA)){
+            this.refFuncionamento.child(DiasENUM.SEXTA).removeValue();
+        }
+        if (!funcionamentoSalao.getFuncionamentoDoSalao().containsKey(DiasENUM.SABADO)){
+            this.refFuncionamento.child(DiasENUM.SABADO).removeValue();
+        }
+        if (!funcionamentoSalao.getFuncionamentoDoSalao().containsKey(DiasENUM.DOMINGO)){
+            this.refFuncionamento.child(DiasENUM.DOMINGO).removeValue();
+        }
+        this.refNomeSalao.setValue(this.nomeSalao.getText().toString(), this);
+    }
+
     private void showToast( String message ){
         Toast.makeText(getActivity(),
                 message,
@@ -300,108 +776,7 @@ public class FragmentFuncionamento extends Fragment{
 
 
     //Getters and Setters
-    public TextView getAbreSegunda() {
-        return abreSegunda;
-    }
-    public void setAbreSegunda(TextView abreSegunda) {
-        this.abreSegunda = abreSegunda;
-    }
-
-    public TextView getAbreTerca() {
-        return abreTerca;
-    }
-    public void setAbreTerca(TextView abreTerca) {
-        this.abreTerca = abreTerca;
-    }
-
-    public TextView getAbreQuarta() {
-        return abreQuarta;
-    }
-    public void setAbreQuarta(TextView abreQuarta) {
-        this.abreQuarta = abreQuarta;
-    }
-
-    public TextView getAbreQuinta() {
-        return abreQuinta;
-    }
-    public void setAbreQuinta(TextView abreQuinta) {
-        this.abreQuinta = abreQuinta;
-    }
-
-    public TextView getAbreSexta() {
-        return abreSexta;
-    }
-    public void setAbreSexta(TextView abreSexta) {
-        this.abreSexta = abreSexta;
-    }
-
-    public TextView getAbreSabado() {
-        return abreSabado;
-    }
-    public void setAbreSabado(TextView abreSabado) {
-        this.abreSabado = abreSabado;
-    }
-
-    public TextView getAbreDomingo() {
-        return abreDomingo;
-    }
-    public void setAbreDomingo(TextView abreDomingo) {
-        this.abreDomingo = abreDomingo;
-    }
-
-    public CheckBox getSegunda() {
-        return segunda;
-    }
-    public void setSegunda(CheckBox segunda) {
-        this.segunda = segunda;
-    }
-
-    public CheckBox getTerca() {
-        return terca;
-    }
-    public void setTerca(CheckBox terca) {
-        this.terca = terca;
-    }
-
-    public CheckBox getQuinta() {
-        return quinta;
-    }
-    public void setQuinta(CheckBox quinta) {
-        this.quinta = quinta;
-    }
-
-    public CheckBox getQuarta() {
-        return quarta;
-    }
-    public void setQuarta(CheckBox quarta) {
-        this.quarta = quarta;
-    }
-
-    public CheckBox getSexta() {
-        return sexta;
-    }
-    public void setSexta(CheckBox sexta) {
-        this.sexta = sexta;
-    }
-
-    public CheckBox getSabado() {
-        return sabado;
-    }
-    public void setSabado(CheckBox sabado) {
-        this.sabado = sabado;
-    }
-
-    public CheckBox getDomingo() {
-        return domingo;
-    }
-    public void setDomingo(CheckBox domingo) {
-        this.domingo = domingo;
-    }
-
-    public static FuncionamentoSalao getFuncionamentoSalao() {
-        return funcionamentoSalao;
-    }
-    public static void setFuncionamentoSalao(FuncionamentoSalao funcionamentoSalao) {
-        FragmentFuncionamento.funcionamentoSalao = funcionamentoSalao;
+    public static String getTitulo() {
+        return TITULO;
     }
 }

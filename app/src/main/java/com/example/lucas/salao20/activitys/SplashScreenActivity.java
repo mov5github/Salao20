@@ -11,12 +11,15 @@ import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import com.example.lucas.salao20.R;
+import com.example.lucas.salao20.domain.util.LibraryClass;
+import com.example.lucas.salao20.enumeradores.GeralENUM;
 import com.example.lucas.salao20.enumeradores.TipoUsuarioENUM;
 import com.example.lucas.salao20.geral.CadastroBasico;
 import com.example.lucas.salao20.intentServices.BackgroundIntentService;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.ValueEventListener;
 
 
@@ -34,13 +37,15 @@ public class SplashScreenActivity extends CommonActivity{
     //FIREBASE
     private FirebaseAuth mAuth;
     private FirebaseAuth.AuthStateListener mAuthListener;
+    private DatabaseReference refCadastroBasico;
     private ValueEventListener valueEventListenerCadastroBasico;
 
     //CONTROLES
     private boolean splashIniciada;
-    static boolean splashScreenActivityAtiva;
+    private static boolean splashScreenActivityAtiva;
 
-    private CadastroBasico cadastroBasico;
+    //OBJETOS
+    private static CadastroBasico cadastroBasico;
 
 
     @Override
@@ -57,7 +62,6 @@ public class SplashScreenActivity extends CommonActivity{
             @Override
             public void onAuthStateChanged(@NonNull FirebaseAuth firebaseAuth) {
                 if (mAuth.getCurrentUser() == null){
-                    stopService(new Intent(getApplicationContext(),BackgroundIntentService.class));
                     callLoginActivity();
                 }else if (mAuth.getCurrentUser().getUid().isEmpty()){
                     mAuth.signOut();
@@ -72,9 +76,8 @@ public class SplashScreenActivity extends CommonActivity{
         Log.i("script","onStart() SplashScreenActivity");
         splashScreenActivityAtiva = true;
         disparaSplashScreen();
-        if (!BackgroundIntentService.isBackgroundIntentServiceAtivo()){
-            startService(new Intent(getApplicationContext(),BackgroundIntentService.class).putExtra(BackgroundIntentService.getSincronizacaoInicial(),true));
-        }
+        mAuth.addAuthStateListener(mAuthListener);
+
         if (this.valueEventListenerCadastroBasico == null){
             this.valueEventListenerCadastroBasico = new ValueEventListener() {
                 @Override
@@ -89,9 +92,14 @@ public class SplashScreenActivity extends CommonActivity{
 
                 }
             };
-            BackgroundIntentService.getRefCadastrobasico().addValueEventListener(this.valueEventListenerCadastroBasico);
         }
-        mAuth.addAuthStateListener(mAuthListener);
+
+        if (this.refCadastroBasico == null){
+            if (this.mAuth.getCurrentUser() != null && !this.mAuth.getCurrentUser().getUid().isEmpty()){
+                this.refCadastroBasico = LibraryClass.getFirebase().child(GeralENUM.USERS).child(this.mAuth.getCurrentUser().getUid()).child(CadastroBasico.getCADASTRO_BASICO());
+                this.refCadastroBasico.addValueEventListener(this.valueEventListenerCadastroBasico);
+            }
+        }
     }
 
     @Override
@@ -107,6 +115,9 @@ public class SplashScreenActivity extends CommonActivity{
         super.onDestroy();
         Log.i("script","onDestroy() SplashScreenActivity");
         handlerUIThread.removeCallbacksAndMessages(null);
+        if (this.refCadastroBasico != null){
+            this.refCadastroBasico.removeEventListener(this.valueEventListenerCadastroBasico);
+        }
     }
 
     @Override
@@ -136,7 +147,6 @@ public class SplashScreenActivity extends CommonActivity{
             this.splashIniciada = true;
             int tempoAnimacao = 2000;
             int tempoSplashCompleta = 7000;
-            int maxTempoVerificacao = 10000;
             final AlphaAnimation animation1 = new AlphaAnimation(0.0f,1.0f);
             animation1.setDuration(tempoAnimacao);
             animation1.setFillAfter(true);
@@ -184,45 +194,41 @@ public class SplashScreenActivity extends CommonActivity{
     }
 
     private void direcionarUsuario(){
-        if (this.cadastroBasico != null && this.cadastroBasico.getNivelUsuario() != null){
+        if (cadastroBasico != null && cadastroBasico.getNivelUsuario() != null){
             Bundle bundle = new Bundle();
-            if (this.cadastroBasico.getNivelUsuario() == 1.0){
-                bundle.putDouble(CadastroBasico.getNIVEL_USUARIO(),this.cadastroBasico.getNivelUsuario());
+            if (cadastroBasico.getNivelUsuario() == 1.0){
+                bundle.putDouble(CadastroBasico.getNIVEL_USUARIO(),cadastroBasico.getNivelUsuario());
                 callConfiguracaoIncialActivity(bundle);
             }else {
-                if (this.cadastroBasico.getTipoUsuario() != null && !this.cadastroBasico.getTipoUsuario().isEmpty()){
-                    switch (this.cadastroBasico.getTipoUsuario()){
+                if (cadastroBasico.getTipoUsuario() != null && !cadastroBasico.getTipoUsuario().isEmpty()){
+                    bundle.putDouble(CadastroBasico.getNIVEL_USUARIO(),cadastroBasico.getNivelUsuario());
+                    bundle.putString(CadastroBasico.getTIPO_USUARIO(),cadastroBasico.getTipoUsuario());
+                    if (cadastroBasico.getCodigoUnico() != null && !cadastroBasico.getCodigoUnico().isEmpty()){
+                        bundle.putString(CadastroBasico.getCODIGO_UNICO(),cadastroBasico.getCodigoUnico());
+                    }
+                    switch (cadastroBasico.getTipoUsuario()){
                         case TipoUsuarioENUM.SALAO:
-                            bundle.putDouble(CadastroBasico.getNIVEL_USUARIO(),this.cadastroBasico.getNivelUsuario());
-                            bundle.putString(CadastroBasico.getTIPO_USUARIO(),this.cadastroBasico.getTipoUsuario());
-                            startService(new Intent(getApplicationContext(), BackgroundIntentService.class).putExtra(BackgroundIntentService.getSincronizacaoSalao(),true));
-                            if (this.cadastroBasico.getNivelUsuario() >= 2.0 && this.cadastroBasico.getNivelUsuario() < 3.0){
+                            if (cadastroBasico.getNivelUsuario() >= 2.0 && cadastroBasico.getNivelUsuario() < 3.0){
                                 callConfiguracaoIncialActivity(bundle);
-                            }else if (this.cadastroBasico.getNivelUsuario() == 3.0){//configuracao inicial completa
+                            }else if (cadastroBasico.getNivelUsuario() == 3.0){//configuracao inicial completa
                                 callHomeActivity(bundle);
                             }else{
                                 mAuth.signOut();
                             }
                             break;
                         case TipoUsuarioENUM.CABELEIREIRO:
-                            bundle.putDouble(CadastroBasico.getNIVEL_USUARIO(),this.cadastroBasico.getNivelUsuario());
-                            bundle.putString(CadastroBasico.getTIPO_USUARIO(),this.cadastroBasico.getTipoUsuario());
-                            startService(new Intent(getApplicationContext(), BackgroundIntentService.class).putExtra(BackgroundIntentService.getSincronizacaoCabeleireiro(),true));
-                            if (this.cadastroBasico.getNivelUsuario() >= 2.0 && this.cadastroBasico.getNivelUsuario() < 3.0){
+                            if (cadastroBasico.getNivelUsuario() >= 2.0 && cadastroBasico.getNivelUsuario() < 3.0){
                                 callConfiguracaoIncialActivity(bundle);
-                            }else if (this.cadastroBasico.getNivelUsuario() == 3.0){//configuracao inicial completa
+                            }else if (cadastroBasico.getNivelUsuario() == 3.0){//configuracao inicial completa
                                 callHomeActivity(bundle);
                             }else{
                                 mAuth.signOut();
                             }
                             break;
                         case TipoUsuarioENUM.CLIENTE:
-                            bundle.putDouble(CadastroBasico.getNIVEL_USUARIO(),this.cadastroBasico.getNivelUsuario());
-                            bundle.putString(CadastroBasico.getTIPO_USUARIO(),this.cadastroBasico.getTipoUsuario());
-                            startService(new Intent(getApplicationContext(), BackgroundIntentService.class).putExtra(BackgroundIntentService.getSincronizacaoCliente(),true));
-                            if (this.cadastroBasico.getNivelUsuario() >= 2.0 && this.cadastroBasico.getNivelUsuario() < 3.0){
+                            if (cadastroBasico.getNivelUsuario() >= 2.0 && cadastroBasico.getNivelUsuario() < 3.0){
                                 callConfiguracaoIncialActivity(bundle);
-                            }else if (this.cadastroBasico.getNivelUsuario() == 3.0){//configuracao inicial completa
+                            }else if (cadastroBasico.getNivelUsuario() == 3.0){//configuracao inicial completa
                                 callHomeActivity(bundle);
                             }else {
                                 mAuth.signOut();

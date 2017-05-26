@@ -1,5 +1,10 @@
 package com.example.lucas.salao20.geral.geral;
 
+import com.example.lucas.salao20.enumeradores.DiasENUM;
+
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * Created by Lucas on 21/03/2017.
  */
@@ -19,6 +24,23 @@ public class Funcionamento {
         this.dia = dia;
         this.abre = abre;
         this.fecha = fecha;
+    }
+
+    public Map<String,Object> toMap(){
+        HashMap<String, Object> result = new HashMap<>();
+        if (abre != null && !abre.isEmpty()){
+            result.put(DiasENUM.ABRE,abre);
+        }
+        if (fecha != null && !fecha.isEmpty()){
+            result.put(DiasENUM.FECHA,fecha);
+        }
+        if (inicioAlmoco != 0){
+            result.put(DiasENUM.INICIO_ALMOCO,inicioAlmoco);
+        }
+        if (duracaoAlmoco != 0){
+            result.put(DiasENUM.DURACAO_ALMOCO,duracaoAlmoco);
+        }
+        return result;
     }
 
     //GETTERS AND SETTERS

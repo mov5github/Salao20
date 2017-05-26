@@ -53,8 +53,6 @@ import java.util.Map;
 
 public class LoginActivity extends CommonActivity implements GoogleApiClient.OnConnectionFailedListener{
     private User user;
-    private Context context;
-
     private Toolbar mToolbar;
     private FloatingActionButton fab;
 
@@ -63,21 +61,16 @@ public class LoginActivity extends CommonActivity implements GoogleApiClient.OnC
 
     //CONTROLE
     private boolean fabProcessando;
-    private boolean loggedProcessando;
-    private boolean loggedRespondeu;
     private static boolean loginActivityAtiva;
 
     //OBJETOS
-    private CadastroBasico cadastroBasico;
+    private static CadastroBasico cadastroBasico;
 
     //FIREBASE
     private FirebaseAuth mAuth;
     private FirebaseAuth.AuthStateListener mAuthListener;
-    private DatabaseReference refCadastroBasico;
-    private ValueEventListener valueEventListenerCadastroBasico;
-
-    //CONTROLE
-    private boolean iniciandoSplash = false;
+    private static DatabaseReference refCadastroBasico;
+    private static ValueEventListener valueEventListenerCadastroBasico;
 
     //HANDLER
     private Handler handler;
@@ -90,20 +83,14 @@ public class LoginActivity extends CommonActivity implements GoogleApiClient.OnC
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Log.i("script","onCreate() LOGIN");
-
         setContentView(R.layout.activity_login);
 
-        this.context = this;
-        mAuth = FirebaseAuth.getInstance();
+        initFirebase();
         initControles();
-        initHandler();
-        verifyLogged();
-
-
         initViews();
-        initUser();
+        initHandler();
 
-        mAuthListener = getFirebaseAuthResultHandler();
+        verifyLogged();
     }
 
     @Override
@@ -121,15 +108,6 @@ public class LoginActivity extends CommonActivity implements GoogleApiClient.OnC
         super.onStart();
         Log.i("script","onStart() LOGIN");
         loginActivityAtiva = true;
-        if (this.mAuth.getCurrentUser() != null && !mAuth.getCurrentUser().getUid().isEmpty()){ //USAURIO LOGADO
-            this.progressDialog.show();
-        }else{//USAURIO NAO LOGADO
-            if (BackgroundIntentService.isBackgroundIntentServiceAtivo()){
-                BackgroundIntentService.getRefCadastrobasico().removeEventListener(valueEventListenerCadastroBasico);
-                stopService(new Intent(getApplicationContext(),BackgroundIntentService.class));
-            }
-        }
-
         mAuth.addAuthStateListener( mAuthListener );
     }
 
@@ -145,17 +123,12 @@ public class LoginActivity extends CommonActivity implements GoogleApiClient.OnC
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        Log.i("script","onDestroy() LOGIN");
         loginActivityAtiva = false;
-        if (valueEventListenerCadastroBasico != null){
-            if (BackgroundIntentService.isBackgroundIntentServiceAtivo()){
-                BackgroundIntentService.getRefCadastrobasico().removeEventListener(valueEventListenerCadastroBasico);
-            }
+        if (refCadastroBasico != null){
             refCadastroBasico.removeEventListener(valueEventListenerCadastroBasico);
         }
-        if (handler != null){
-            this.handler.removeCallbacksAndMessages(null);
-        }
-        Log.i("script","onDestroy() LOGIN");
+        handler.removeCallbacksAndMessages(null);
     }
 
     @Override
@@ -192,12 +165,16 @@ public class LoginActivity extends CommonActivity implements GoogleApiClient.OnC
                 if (!fabProcessando){
                     fabProcessando = true;
                     progressDialog.show();
+                    fab.setClickable(false);
+                    fab.setVisibility(View.INVISIBLE);
                     if (validaFormulario()){
                         FirebaseCrash.log("LoginActivity:clickListener:button:sendLoginData()");
                         initUser();
                         verifyLogin();
                     }else {
                         fabProcessando = false;
+                        fab.setClickable(true);
+                        fab.setVisibility(View.VISIBLE);
                         progressDialog.dismiss();
                     }
                 }
@@ -234,12 +211,41 @@ public class LoginActivity extends CommonActivity implements GoogleApiClient.OnC
 
     private void initControles(){
         this.fabProcessando = false;
-        this.loggedProcessando = false;
-        this.loggedRespondeu = false;
     }
 
     private void initHandler(){
         this.handler = new Handler();
+        this.runnableLimiteUsuarioLogado = new Runnable() {
+            @Override
+            public void run() {
+                Log.i("script","runnableLimiteUsuarioLogado()");
+                showSnackbar("Login falhou");
+                mAuth.signOut();
+            }
+        };
+    }
+
+    private void initFirebase(){
+        this.mAuth = FirebaseAuth.getInstance();
+        mAuthListener = getFirebaseAuthResultHandler();
+        valueEventListenerCadastroBasico = new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                if (dataSnapshot.exists() && dataSnapshot.getValue(CadastroBasico.class) != null){
+                    cadastroBasico = dataSnapshot.getValue(CadastroBasico.class);
+                    direcionarUsuario();
+                }else {
+                    showSnackbar("Login falhou");
+                    mAuth.signOut();
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                showSnackbar("Login falhou");
+                mAuth.signOut();
+            }
+        };
     }
 
     private FirebaseAuth.AuthStateListener getFirebaseAuthResultHandler(){
@@ -251,53 +257,20 @@ public class LoginActivity extends CommonActivity implements GoogleApiClient.OnC
                 Log.i("script","getFirebaseAuthResultHandler() onAuthStateChanged login");
                 if(mAuth.getCurrentUser() == null){
                     Log.i("script","getFirebaseAuthResultHandler() getCurrentUser() == null login");
-                    if (loggedRespondeu){
-                        loggedRespondeu = false;
-                        loggedProcessando = false;
-                        if (runnableLimiteUsuarioLogado != null){
-                            handler.removeCallbacksAndMessages(null);
-                            runnableLimiteUsuarioLogado = null;
-                        }
-                        if (valueEventListenerCadastroBasico != null){
-                            if (BackgroundIntentService.isBackgroundIntentServiceAtivo()){
-                                BackgroundIntentService.getRefCadastrobasico().removeEventListener(valueEventListenerCadastroBasico);
-                            }
-                            refCadastroBasico.removeEventListener(valueEventListenerCadastroBasico);
-                        }
-                        if (BackgroundIntentService.isBackgroundIntentServiceAtivo()){
-                            stopService(new Intent(getApplicationContext(),BackgroundIntentService.class));
-                        }
-                        progressDialog.dismiss();
-                        showSnackbar("Login falhou");
+                    progressDialog.dismiss();
+                    fab.setClickable(true);
+                    fab.setVisibility(View.VISIBLE);
+                    if (refCadastroBasico != null){
+                        refCadastroBasico.removeEventListener(valueEventListenerCadastroBasico);
                     }
+                    handler.removeCallbacksAndMessages(null);
                 }else if (mAuth.getCurrentUser().getUid().isEmpty()){
-                    Log.i("script","getFirebaseAuthResultHandler() uid == null login");
-                    if (loggedProcessando){
-                        loggedRespondeu = true;
-                        loggedProcessando = false;
-                    }
-                    if (fabProcessando){//Usuario acabou de logar
-                        fabProcessando = false;
-                        progressDialog.dismiss();
-                        showSnackbar("Login falhou");
-                    }
+                    Log.i("script","getFirebaseAuthResultHandler() getCurrentUser() == null login");
                     mAuth.signOut();
                 }else {
                     Log.i("script","getFirebaseAuthResultHandler() uid != null");
-                    if (fabProcessando){//Usuario acabou de logar
+                    if (fabProcessando){
                         callSplashScreenActivity();
-                    }else{//Login foi criada com o user logado
-                        if (runnableLimiteUsuarioLogado == null){
-                            runnableLimiteUsuarioLogado = new Runnable() {
-                                @Override
-                                public void run() {
-                                    Log.i("script","runnableLimiteUsuarioLogado() limite de tempo atingido");
-                                    loggedRespondeu = true;
-                                    mAuth.signOut();
-                                }
-                            };
-                            handler.postDelayed(runnableLimiteUsuarioLogado,5000);
-                        }
                     }
                 }
             }
@@ -309,120 +282,76 @@ public class LoginActivity extends CommonActivity implements GoogleApiClient.OnC
         Log.i("script","verifyLogged()");
         if( mAuth.getCurrentUser() != null ){
             if(!mAuth.getCurrentUser().getUid().isEmpty()){
-                loggedProcessando = true;
-                if (BackgroundIntentService.isBackgroundIntentServiceAtivo()){
-                    if (valueEventListenerCadastroBasico == null){
-                        valueEventListenerCadastroBasico = new ValueEventListener() {
-                            @Override
-                            public void onDataChange(DataSnapshot dataSnapshot) {
-                                if (dataSnapshot.exists() && dataSnapshot.getValue(CadastroBasico.class) != null){
-                                    cadastroBasico = dataSnapshot.getValue(CadastroBasico.class);
-                                    direcionarUsuario();
-                                }else {
-                                    loggedRespondeu = true;
-                                    mAuth.signOut();
-                                }
-                            }
-
-                            @Override
-                            public void onCancelled(DatabaseError databaseError) {
-                                loggedRespondeu = true;
-                                mAuth.signOut();
-                            }
-                        };
-                    }
-                    BackgroundIntentService.getRefCadastrobasico().addListenerForSingleValueEvent(valueEventListenerCadastroBasico);
-                }else{
-                    if (refCadastroBasico == null){
-                        if (valueEventListenerCadastroBasico == null){
-                            valueEventListenerCadastroBasico = new ValueEventListener() {
-                                @Override
-                                public void onDataChange(DataSnapshot dataSnapshot) {
-                                    startService(new Intent(getApplicationContext(), BackgroundIntentService.class).putExtra(BackgroundIntentService.getSincronizacaoInicial(),true));
-                                    cadastroBasico = dataSnapshot.getValue(CadastroBasico.class);
-                                    direcionarUsuario();
-                                }
-
-                                @Override
-                                public void onCancelled(DatabaseError databaseError) {
-                                    loggedRespondeu = true;
-                                    mAuth.signOut();
-                                }
-                            };
-                        }
-                        this.refCadastroBasico = LibraryClass.getFirebase().child(GeralENUM.USERS).child(mAuth.getCurrentUser().getUid()).child(CadastroBasico.getCADASTRO_BASICO());
-                        this.refCadastroBasico.addListenerForSingleValueEvent(valueEventListenerCadastroBasico);
-                    }
-                }
+                this.progressDialog.show();
+                this.fab.setClickable(false);
+                this.fab.setVisibility(View.INVISIBLE);
+                refCadastroBasico = LibraryClass.getFirebase().child(GeralENUM.USERS).child(mAuth.getCurrentUser().getUid()).child(CadastroBasico.getCADASTRO_BASICO());
+                refCadastroBasico.addListenerForSingleValueEvent(valueEventListenerCadastroBasico);
+                handler.postDelayed(runnableLimiteUsuarioLogado,5000);
             }else{
-                loggedRespondeu = true;
+                showSnackbar("Login falhou");
                 mAuth.signOut();
             }
         }
     }
 
     private void direcionarUsuario(){
-        if (this.cadastroBasico != null && this.cadastroBasico.getNivelUsuario() != null){
+        if (cadastroBasico != null && cadastroBasico.getNivelUsuario() != null) {
             Bundle bundle = new Bundle();
-            if (this.cadastroBasico.getNivelUsuario() == 1.0){
-                bundle.putDouble(CadastroBasico.getNIVEL_USUARIO(),this.cadastroBasico.getNivelUsuario());
+            if (cadastroBasico.getNivelUsuario() == 1.0){
+                bundle.putDouble(CadastroBasico.getNIVEL_USUARIO(),cadastroBasico.getNivelUsuario());
                 callConfiguracaoIncialActivity(bundle);
             }else {
-                if (this.cadastroBasico.getTipoUsuario() != null && !this.cadastroBasico.getTipoUsuario().isEmpty()){
-                    switch (this.cadastroBasico.getTipoUsuario()){
+                if (cadastroBasico.getTipoUsuario() != null && !cadastroBasico.getTipoUsuario().isEmpty()){
+                    bundle.putDouble(CadastroBasico.getNIVEL_USUARIO(),cadastroBasico.getNivelUsuario());
+                    bundle.putString(CadastroBasico.getTIPO_USUARIO(),cadastroBasico.getTipoUsuario());
+                    if (cadastroBasico.getCodigoUnico() != null && !cadastroBasico.getCodigoUnico().isEmpty()){
+                        bundle.putString(CadastroBasico.getCODIGO_UNICO(),cadastroBasico.getCodigoUnico());
+                    }
+                    switch (cadastroBasico.getTipoUsuario()){
                         case TipoUsuarioENUM.SALAO:
-                            bundle.putDouble(CadastroBasico.getNIVEL_USUARIO(),this.cadastroBasico.getNivelUsuario());
-                            bundle.putString(CadastroBasico.getTIPO_USUARIO(),this.cadastroBasico.getTipoUsuario());
-                            startService(new Intent(getApplicationContext(), BackgroundIntentService.class).putExtra(BackgroundIntentService.getSincronizacaoSalao(),true));
-                            if (this.cadastroBasico.getNivelUsuario() >= 2.0 && this.cadastroBasico.getNivelUsuario() < 3.0){
+                            if (cadastroBasico.getNivelUsuario() >= 2.0 && cadastroBasico.getNivelUsuario() < 3.0){
                                 callConfiguracaoIncialActivity(bundle);
-                            }else if (this.cadastroBasico.getNivelUsuario() == 3.0){//configuracao inicial completa
+                            }else if (cadastroBasico.getNivelUsuario() == 3.0){//configuracao inicial completa
                                 callHomeActivity(bundle);
                             }else{
-                                loggedRespondeu = true;
+                                showSnackbar("Login falhou");
                                 mAuth.signOut();
                             }
                             break;
                         case TipoUsuarioENUM.CABELEIREIRO:
-                            bundle.putDouble(CadastroBasico.getNIVEL_USUARIO(),this.cadastroBasico.getNivelUsuario());
-                            bundle.putString(CadastroBasico.getTIPO_USUARIO(),this.cadastroBasico.getTipoUsuario());
-                            startService(new Intent(getApplicationContext(), BackgroundIntentService.class).putExtra(BackgroundIntentService.getSincronizacaoCabeleireiro(),true));
-                            if (this.cadastroBasico.getNivelUsuario() >= 2.0 && this.cadastroBasico.getNivelUsuario() < 3.0){
+                            if (cadastroBasico.getNivelUsuario() >= 2.0 && cadastroBasico.getNivelUsuario() < 3.0){
                                 callConfiguracaoIncialActivity(bundle);
-                            }else if (this.cadastroBasico.getNivelUsuario() == 3.0){//configuracao inicial completa
+                            }else if (cadastroBasico.getNivelUsuario() == 3.0){//configuracao inicial completa
                                 callHomeActivity(bundle);
                             }else{
-                                loggedRespondeu = true;
+                                showSnackbar("Login falhou");
                                 mAuth.signOut();
                             }
                             break;
                         case TipoUsuarioENUM.CLIENTE:
-                            bundle.putDouble(CadastroBasico.getNIVEL_USUARIO(),this.cadastroBasico.getNivelUsuario());
-                            bundle.putString(CadastroBasico.getTIPO_USUARIO(),this.cadastroBasico.getTipoUsuario());
-                            startService(new Intent(getApplicationContext(), BackgroundIntentService.class).putExtra(BackgroundIntentService.getSincronizacaoCliente(),true));
-                            if (this.cadastroBasico.getNivelUsuario() >= 2.0 && this.cadastroBasico.getNivelUsuario() < 3.0){
+                            if (cadastroBasico.getNivelUsuario() >= 2.0 && cadastroBasico.getNivelUsuario() < 3.0){
                                 callConfiguracaoIncialActivity(bundle);
-                            }else if (this.cadastroBasico.getNivelUsuario() == 3.0){//configuracao inicial completa
+                            }else if (cadastroBasico.getNivelUsuario() == 3.0){//configuracao inicial completa
                                 callHomeActivity(bundle);
-                            }else {
-                                loggedRespondeu = true;
+                            }else{
+                                showSnackbar("Login falhou");
                                 mAuth.signOut();
                             }
                             break;
                         default:
-                            loggedRespondeu = true;
-                            mAuth.signOut();
+                            showSnackbar("Login falhou");
+                            this.mAuth.signOut();
                             break;
                     }
-
                 }else {
-                    loggedRespondeu = true;
-                    mAuth.signOut();
+                    showSnackbar("Login falhou");
+                    this.mAuth.signOut();
                 }
             }
-        }else{
-            loggedRespondeu = true;
-            mAuth.signOut();
+        }else {
+            showSnackbar("Login falhou");
+            this.mAuth.signOut();
         }
     }
 
@@ -443,6 +372,8 @@ public class LoginActivity extends CommonActivity implements GoogleApiClient.OnC
                             showSnackbar("Login falhou");
                             progressDialog.dismiss();
                             fabProcessando = false;
+                            fab.setClickable(true);
+                            fab.setVisibility(View.VISIBLE);
                         }
                     }
                 }).addOnFailureListener(new OnFailureListener() {

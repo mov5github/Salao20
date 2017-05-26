@@ -24,7 +24,8 @@
         </activity>
         <activity
             android:name=".activitys.LoginActivity"
-            android:configChanges="orientation|screenSize">
+            android:configChanges="orientation|screenSize"
+            android:windowSoftInputMode="stateHidden" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -33,13 +34,15 @@
         </activity>
         <activity
             android:name=".activitys.SignUpActivity"
-            android:configChanges="orientation|screenSize" />
+            android:configChanges="orientation|screenSize"
+            android:windowSoftInputMode="stateHidden" />
         <activity
             android:name=".activitys.ErroActivity"
             android:configChanges="orientation|screenSize" />
         <activity
             android:name=".activitys.CadastroInicialActivity"
-            android:configChanges="orientation|screenSize" />
+            android:configChanges="orientation|screenSize"
+            android:windowSoftInputMode="stateHidden" />
         <activity
             android:name=".activitys.HomeActivity"
             android:configChanges="orientation|screenSize" />

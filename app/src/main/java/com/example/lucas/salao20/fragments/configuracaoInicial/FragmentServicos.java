@@ -3,6 +3,7 @@ package com.example.lucas.salao20.fragments.configuracaoInicial;
 import android.content.DialogInterface;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.LinearLayoutManager;
@@ -15,6 +16,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AutoCompleteTextView;
 import android.widget.EditText;
+import android.widget.ProgressBar;
 import android.widget.Spinner;
 import android.widget.Toast;
 
@@ -33,7 +35,12 @@ import java.util.List;
  */
 
 public class FragmentServicos extends Fragment implements RecyclerViewOnClickListenerHack {
-    private static String titulo = "Serviços";
+    private static final String TITULO = "Serviços";
+
+    private ProgressBar progressServicos;
+    private FloatingActionButton fabServicos;
+
+
     private List<Servico> servicoList;
     private List<String> nomesServicos;
     private AdapterSpinnerIcones adapter;
@@ -52,12 +59,10 @@ public class FragmentServicos extends Fragment implements RecyclerViewOnClickLis
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_servicos,container,false);
-
         initViews(view);
-
-
         return view;
     }
+
 
     @Override
     public void onClickListener(View view, final int position) {
@@ -92,6 +97,8 @@ public class FragmentServicos extends Fragment implements RecyclerViewOnClickLis
     }
 
     private void initViews(View view){
+        this.fabServicos = (FloatingActionButton) view.findViewById(R.id.fab_fragment_servicos);
+        this.progressServicos = (ProgressBar) view.findViewById(R.id.progress_fragment_servicos);
         this.nomeServico = (AutoCompleteTextView) view.findViewById(R.id.nome_servico);
         this.precoServico = (EditText) view.findViewById(R.id.preco_servico);
         this.precoServico.addTextChangedListener(new MascaraMonetaria(this.precoServico));
@@ -104,6 +111,13 @@ public class FragmentServicos extends Fragment implements RecyclerViewOnClickLis
         createSpinnerIcones();
         createRecyclerViewServicosAdicionados(view);
     }
+
+    public void liberarPreenchimento(){
+       //TODO
+    }
+
+
+
 
     private void createSpinnerIcones(){
         ArrayList<Integer> icones = createArrayListIcones();
@@ -263,7 +277,7 @@ public class FragmentServicos extends Fragment implements RecyclerViewOnClickLis
 
     //GETTERS AND SETTERS
     public static String getTitulo() {
-        return titulo;
+        return TITULO;
     }
 
     public List<Servico> getServicoList() {
