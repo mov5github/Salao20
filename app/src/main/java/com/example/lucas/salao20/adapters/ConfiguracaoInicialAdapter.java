@@ -36,7 +36,7 @@ public class ConfiguracaoInicialAdapter extends FragmentPagerAdapter {
                 case TipoUsuarioENUM.SALAO:
                     mFragments = new Fragment[3];
                     break;
-                case TipoUsuarioENUM.CABELEIREIRO:
+                case TipoUsuarioENUM.PROFISSIONAl:
                     mFragments = new Fragment[3];
                     break;
                 case TipoUsuarioENUM.CLIENTE:
@@ -86,7 +86,7 @@ public class ConfiguracaoInicialAdapter extends FragmentPagerAdapter {
                     break;
             }
         }
-        else if (tipoUsuario.equals(TipoUsuarioENUM.CABELEIREIRO)){
+        else if (tipoUsuario.equals(TipoUsuarioENUM.PROFISSIONAl)){
             switch (position){
                 case 0:
                     frag = new FragmentBasicoCabeleireiro();

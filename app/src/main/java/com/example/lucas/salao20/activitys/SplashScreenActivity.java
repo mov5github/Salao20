@@ -1,6 +1,5 @@
 package com.example.lucas.salao20.activitys;
 
-import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.annotation.NonNull;
@@ -15,7 +14,6 @@ import com.example.lucas.salao20.domain.util.LibraryClass;
 import com.example.lucas.salao20.enumeradores.GeralENUM;
 import com.example.lucas.salao20.enumeradores.TipoUsuarioENUM;
 import com.example.lucas.salao20.geral.CadastroBasico;
-import com.example.lucas.salao20.intentServices.BackgroundIntentService;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -196,16 +194,19 @@ public class SplashScreenActivity extends CommonActivity{
     private void direcionarUsuario(){
         if (cadastroBasico != null && cadastroBasico.getNivelUsuario() != null){
             Bundle bundle = new Bundle();
+            Bundle auxBundle = new Bundle();
             if (cadastroBasico.getNivelUsuario() == 1.0){
-                bundle.putDouble(CadastroBasico.getNIVEL_USUARIO(),cadastroBasico.getNivelUsuario());
+                auxBundle.putDouble(CadastroBasico.getNIVEL_USUARIO(),cadastroBasico.getNivelUsuario());
+                bundle.putBundle(CadastroBasico.getCADASTRO_BASICO(),auxBundle);
                 callConfiguracaoIncialActivity(bundle);
             }else {
                 if (cadastroBasico.getTipoUsuario() != null && !cadastroBasico.getTipoUsuario().isEmpty()){
-                    bundle.putDouble(CadastroBasico.getNIVEL_USUARIO(),cadastroBasico.getNivelUsuario());
-                    bundle.putString(CadastroBasico.getTIPO_USUARIO(),cadastroBasico.getTipoUsuario());
+                    auxBundle.putDouble(CadastroBasico.getNIVEL_USUARIO(),cadastroBasico.getNivelUsuario());
+                    auxBundle.putString(CadastroBasico.getTIPO_USUARIO(),cadastroBasico.getTipoUsuario());
                     if (cadastroBasico.getCodigoUnico() != null && !cadastroBasico.getCodigoUnico().isEmpty()){
-                        bundle.putString(CadastroBasico.getCODIGO_UNICO(),cadastroBasico.getCodigoUnico());
+                        auxBundle.putString(CadastroBasico.getCODIGO_UNICO(),cadastroBasico.getCodigoUnico());
                     }
+                    bundle.putBundle(CadastroBasico.getCADASTRO_BASICO(),auxBundle);
                     switch (cadastroBasico.getTipoUsuario()){
                         case TipoUsuarioENUM.SALAO:
                             if (cadastroBasico.getNivelUsuario() >= 2.0 && cadastroBasico.getNivelUsuario() < 3.0){
@@ -216,7 +217,7 @@ public class SplashScreenActivity extends CommonActivity{
                                 mAuth.signOut();
                             }
                             break;
-                        case TipoUsuarioENUM.CABELEIREIRO:
+                        case TipoUsuarioENUM.PROFISSIONAl:
                             if (cadastroBasico.getNivelUsuario() >= 2.0 && cadastroBasico.getNivelUsuario() < 3.0){
                                 callConfiguracaoIncialActivity(bundle);
                             }else if (cadastroBasico.getNivelUsuario() == 3.0){//configuracao inicial completa

@@ -174,6 +174,8 @@ public class SignUpActivity extends CommonActivity{
                 public void onClick(View view) {
                     if (!fabProcessando){
                         fabProcessando = true;
+                        fab.setClickable(false);
+                        fab.setVisibility(View.INVISIBLE);
                         openProgressBar();
                         if (formularioIsValid()) {
                             initUser();
@@ -181,6 +183,8 @@ public class SignUpActivity extends CommonActivity{
 
                         }else {
                             fabProcessando = false;
+                            fab.setClickable(true);
+                            fab.setVisibility(View.VISIBLE);
                             closeProgressBar();
                         }
                     }
@@ -267,6 +271,8 @@ public class SignUpActivity extends CommonActivity{
                                 mAuth.signOut();
                                 mAuthStateListenerProcessando = false;
                                 fabProcessando = false;
+                                fab.setVisibility(View.VISIBLE);
+                                fab.setClickable(true);
                                 closeProgressBar();
                             }else{
                                 removerUsuarioCriado();
@@ -290,6 +296,8 @@ public class SignUpActivity extends CommonActivity{
             Log.w("BrokenLogic","Nao foi possivel saveUser getEmail || getPassword");
             closeProgressBar();
             fabProcessando = false;
+            fab.setClickable(true);
+            fab.setVisibility(View.VISIBLE);
         }else {
             mAuth.createUserWithEmailAndPassword(
                     user.getEmail(),
@@ -301,6 +309,8 @@ public class SignUpActivity extends CommonActivity{
                     if( !task.isSuccessful() ){
                         closeProgressBar();
                         fabProcessando = false;
+                        fab.setClickable(true);
+                        fab.setVisibility(View.VISIBLE);
                     }
                 }
             }).addOnFailureListener(this, new OnFailureListener() {
@@ -309,6 +319,8 @@ public class SignUpActivity extends CommonActivity{
                             FirebaseCrash.report( e );
                             showSnackbar( e.getMessage() );
                             fabProcessando = false;
+                            fab.setClickable(true);
+                            fab.setVisibility(View.VISIBLE);
                         }
                     });
         }

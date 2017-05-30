@@ -62,7 +62,7 @@ public class HomeAdapter extends FragmentPagerAdapter {
                         break;
                 }
                 break;
-            case TipoUsuarioENUM.CABELEIREIRO:
+            case TipoUsuarioENUM.PROFISSIONAl:
                 switch (position) {
                     case 0:
                         frag = new FragmentBasicoCabeleireiro();

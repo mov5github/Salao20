@@ -117,7 +117,7 @@ public class VerificarUserBDAsyncTask extends AsyncTask<User,Void,Boolean> {
                 fecharConexaoBD();
             }
             if (this.cadastroInicialCompleto){
-                loginActivity.irHome();
+                //loginActivity.irHome();
             }else {
                // loginActivity.irSplashScreen(novoUsuario);
             }

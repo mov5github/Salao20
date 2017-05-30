@@ -13,6 +13,8 @@ import android.widget.EditText;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
+import com.example.lucas.salao20.geral.CadastroBasico;
+
 /**
  * Created by Lucas on 17/03/2017.
  */
@@ -105,6 +107,15 @@ public abstract class CommonActivity extends AppCompatActivity{
 
     protected void callLoginActivity(){
         Intent intent = new Intent(this, LoginActivity.class);
+        startActivity(intent);
+        finish();
+    }
+
+    protected void callCadastroInicialActivity(Bundle bundle){
+        Intent intent = new Intent(this, CadastroInicialActivity.class);
+        if (bundle != null){
+            intent.putExtras(bundle);
+        }
         startActivity(intent);
         finish();
     }

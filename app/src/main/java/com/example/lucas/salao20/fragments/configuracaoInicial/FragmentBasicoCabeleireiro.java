@@ -25,7 +25,7 @@ public class FragmentBasicoCabeleireiro extends Fragment{
     }
 
     public static String getTitulo() {
-        String titulo = "BASICO CABELEIREIRO";
+        String titulo = "BASICO PROFISSIONAl";
         return titulo;
     }
 

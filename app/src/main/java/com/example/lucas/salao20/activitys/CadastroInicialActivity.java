@@ -17,10 +17,11 @@ import android.view.View;
 import android.widget.CheckBox;
 import android.widget.Toast;
 import com.example.lucas.salao20.R;
+import com.example.lucas.salao20.dao.DatabaseHelper;
 import com.example.lucas.salao20.domain.util.LibraryClass;
+import com.example.lucas.salao20.enumeradores.DiasENUM;
 import com.example.lucas.salao20.enumeradores.GeralENUM;
 import com.example.lucas.salao20.enumeradores.TipoUsuarioENUM;
-import com.example.lucas.salao20.fragments.configuracaoInicial.FragmentBasicoCabeleireiro;
 import com.example.lucas.salao20.fragments.configuracaoInicial.FragmentBasicoCliente;
 import com.example.lucas.salao20.fragments.configuracaoInicial.FragmentProfissionais;
 import com.example.lucas.salao20.fragments.configuracaoInicial.FragmentFuncionamento;
@@ -28,6 +29,7 @@ import com.example.lucas.salao20.fragments.configuracaoInicial.FragmentServicos;
 import com.example.lucas.salao20.fragments.configuracaoInicial.FragmentTipoCadastro;
 import com.example.lucas.salao20.geral.CadastroBasico;
 import com.example.lucas.salao20.adapters.ConfiguracaoInicialAdapter;
+import com.example.lucas.salao20.geral.CadastroComplementar;
 import com.example.lucas.salao20.geral.FuncionamentoSalao;
 import com.example.lucas.salao20.geral.ProfissionaisSalao;
 import com.example.lucas.salao20.geral.ServicosSalao;
@@ -44,7 +46,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
-public class CadastroInicialActivity extends AppCompatActivity{
+public class CadastroInicialActivity extends AppCompatActivity implements DatabaseReference.CompletionListener{
     private Toolbar mToolbar;
     private SlidingTabLayout mSlidingTabLayout;
     private ViewPager mViewPager;
@@ -57,15 +59,20 @@ public class CadastroInicialActivity extends AppCompatActivity{
     private FirebaseAuth.AuthStateListener mAuthListener;
 
     //FIREBASE REF
+    private DatabaseReference refCadastroBasico;
+    private DatabaseReference refCadastroComplementar;
     private DatabaseReference refFuncionamento;
     private DatabaseReference refServicos;
     private DatabaseReference refProfissionais;
-    private DatabaseReference refUsers;
+
 
     //FIREBASE VEL
-    private ValueEventListener valueEventListenerFuncionamento;
-    private ValueEventListener valueEventListenerServicos;
-    private ValueEventListener valueEventListenerProfissionais;
+    private ValueEventListener valueEventListenerFuncionamentoSalao;
+    private ChildEventListener childEventListenerFuncionamentoSalao;
+    private ChildEventListener childEventListenerServicosSalao;
+    private ChildEventListener childEventListenerProfissionaisSalao;
+    private ChildEventListener childEventListenerCadastroComplementar;
+    private ValueEventListener valueEventListenerCadastroComplementar;
 
     //ALERT DIALOG
     private AlertDialog alertDialog;
@@ -77,19 +84,16 @@ public class CadastroInicialActivity extends AppCompatActivity{
     //CONTROLES
     private static boolean cadastroInicialActivityAtiva;
     private boolean processandoClique;
-    private boolean salvarNivelTipo;
-    private static boolean etapaFuncionamentoPreenchida;
-    private static boolean etapaServicosPreenchida;
-    private static boolean etapaProfissionaisPreenchida;
-    private static boolean etapaFuncionamentoSalvo;
-    private static boolean etapaServicosSalvo;
-    private static boolean etapaProfissionaisSalvo;
+    private static boolean cadastroComplementarObtido;
+    private static boolean funcionamentoSalaoObtido;
+
 
     //OBJETOS
-    private static CadastroBasico cadastroBasico;
-    private static FuncionamentoSalao funcionamentoSalao;
-    private static ServicosSalao servicosSalao;
-    private static ProfissionaisSalao profissionaisSalao;
+    private static CadastroBasico cadastroBasico = null;
+    private static FuncionamentoSalao funcionamentoSalao = null;
+    private static ServicosSalao servicosSalao = null;
+    private static ProfissionaisSalao profissionaisSalao = null;
+    private static CadastroComplementar cadastroComplementar = null;
 
 
 
@@ -105,6 +109,7 @@ public class CadastroInicialActivity extends AppCompatActivity{
 
         initControles();
         receberBundle();
+        initDados();
 
         initView();
     }
@@ -124,31 +129,6 @@ public class CadastroInicialActivity extends AppCompatActivity{
         Log.i("script","CadastroInicialActivity() onStart()");
         cadastroInicialActivityAtiva = true;
         mAuth.addAuthStateListener(mAuthListener);
-        if (this.salvarNivelTipo){
-            this.salvarNivelTipo = false;
-            if (cadastroBasico == null || cadastroBasico.getTipoUsuario() == null || cadastroBasico.getTipoUsuario() == null || cadastroBasico.getTipoUsuario().isEmpty()){
-                this.mAuth.signOut();
-            }else {
-                if (this.mAuth.getCurrentUser() != null && !this.mAuth.getCurrentUser().getUid().isEmpty()){
-                    if (refUsers == null){
-                        refUsers = LibraryClass.getFirebase().child(GeralENUM.USERS).child( mAuth.getCurrentUser().getUid());
-                    }
-                    Map<String, Object> childUpdates = new HashMap<>();
-                    childUpdates.put(CadastroBasico.getCADASTRO_BASICO(), cadastroBasico.toMap());
-                    refUsers.updateChildren(childUpdates, new DatabaseReference.CompletionListener() {
-                        @Override
-                        public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference) {
-                            if (databaseError != null){
-                                Log.i("script","onComplete() erro != null");
-                                mAuth.signOut();
-                            }
-                        }
-                    });
-                }else {
-                    this.mAuth.signOut();
-                }
-            }
-        }
     }
 
     @Override
@@ -186,6 +166,11 @@ public class CadastroInicialActivity extends AppCompatActivity{
         return super.onOptionsItemSelected(item);
     }
 
+    @Override
+    public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference) {
+        //TODO
+    }
+
     private void initView() {
         //TOOLBAR
         mToolbar = (Toolbar) findViewById(R.id.toolbar_tabs);
@@ -212,7 +197,7 @@ public class CadastroInicialActivity extends AppCompatActivity{
                             String[] titles = {FragmentFuncionamento.getTitulo(), FragmentServicos.getTitulo(), FragmentProfissionais.getTitulo()};
                             mViewPager.setAdapter(new ConfiguracaoInicialAdapter(getSupportFragmentManager(),this,titles, cadastroBasico.getTipoUsuario()));
                             break;
-                        case TipoUsuarioENUM.CABELEIREIRO:
+                        case TipoUsuarioENUM.PROFISSIONAl:
                             mToolbar.setSubtitle("Configurações do cabeleireiro");
                             mToolbar.setLogo(R.mipmap.ic_launcher);
                             String[] titles2 = {FragmentBasicoCliente.getTitulo()};
@@ -236,6 +221,7 @@ public class CadastroInicialActivity extends AppCompatActivity{
         //PROGREAS DIALOG
         if (this.progressDialog == null){
             this.progressDialog = new ProgressDialog(this);
+            this.progressDialog.setCancelable(false);
             this.progressDialog.setMessage("Sincronizando dados na nuvem ...");
         }
 
@@ -250,107 +236,256 @@ public class CadastroInicialActivity extends AppCompatActivity{
 
     private void initControles(){
         this.processandoClique = false;
-        this.salvarNivelTipo = false;
-        etapaFuncionamentoPreenchida = false;
-        etapaServicosPreenchida = false;
-        etapaProfissionaisPreenchida = false;
-        etapaFuncionamentoSalvo = false;
-        etapaServicosSalvo = false;
-        etapaProfissionaisSalvo = false;
+        funcionamentoSalaoObtido = false;
+        cadastroComplementarObtido = false;
     }
 
     private void initDados(){
-        if (cadastroBasico != null && cadastroBasico.getTipoUsuario() != null && !cadastroBasico.getTipoUsuario().isEmpty()){
-            switch (cadastroBasico.getTipoUsuario()){
-                case TipoUsuarioENUM.SALAO:
-                    if (this.mAuth.getCurrentUser() != null && !this.mAuth.getCurrentUser().getUid().isEmpty()){
+        if (this.mAuth.getCurrentUser() != null && !this.mAuth.getCurrentUser().getUid().isEmpty()){
+            if (this.refCadastroComplementar == null){
+                this.refCadastroComplementar = LibraryClass.getFirebase().child(GeralENUM.USERS).child(mAuth.getCurrentUser().getUid()).child(CadastroComplementar.getCADASTRO_COMPLEMENTAR());
+                this.refCadastroComplementar.keepSynced(true);
+            }
+            if (this.refCadastroBasico == null){
+                this.refCadastroBasico = LibraryClass.getFirebase().child(GeralENUM.USERS).child(mAuth.getCurrentUser().getUid()).child(CadastroBasico.getCADASTRO_BASICO());
+            }
+            if (this.childEventListenerCadastroComplementar == null){
+                this.childEventListenerCadastroComplementar = new ChildEventListener() {
+                    @Override
+                    public void onChildAdded(DataSnapshot dataSnapshot, String s) {
+                        if (dataSnapshot.exists()){
+                            if (cadastroComplementar == null){
+                                cadastroComplementar = new CadastroComplementar();
+                            }
+                            if (dataSnapshot.hasChild(CadastroComplementar.getNOME())){
+                               cadastroComplementar.setNome(dataSnapshot.child(CadastroComplementar.getNOME()).getValue(String.class));
+                           }
+                        }else{
+                            if (cadastroComplementar == null){
+                                cadastroComplementar = new CadastroComplementar();
+                            }
+                        }
+                        if (mViewPager.getCurrentItem() == 0){
+                            ((FragmentFuncionamento)((ConfiguracaoInicialAdapter)mViewPager.getAdapter()).getFragment(0)).aplicarDadosFormulario();
+                        }
+                    }
+
+                    @Override
+                    public void onChildChanged(DataSnapshot dataSnapshot, String s) {
+                        if (dataSnapshot.exists()){
+                            if (dataSnapshot.hasChild(CadastroComplementar.getNOME())){
+                                cadastroComplementar.setNome(dataSnapshot.child(CadastroComplementar.getNOME()).getValue(String.class));
+                            }
+                            if (mViewPager.getCurrentItem() == 0){
+                                ((FragmentFuncionamento)((ConfiguracaoInicialAdapter)mViewPager.getAdapter()).getFragment(0)).aplicarDadosFormulario();
+                            }
+                        }
+                    }
+
+                    @Override
+                    public void onChildRemoved(DataSnapshot dataSnapshot) {
+                        if (dataSnapshot.exists()){
+                            if (dataSnapshot.hasChild(CadastroComplementar.getNOME())){
+                                cadastroComplementar.setNome(null);
+                            }
+                            if (mViewPager.getCurrentItem() == 0){
+                                ((FragmentFuncionamento)((ConfiguracaoInicialAdapter)mViewPager.getAdapter()).getFragment(0)).aplicarDadosFormulario();
+                            }
+                        }
+                    }
+
+                    @Override
+                    public void onChildMoved(DataSnapshot dataSnapshot, String s) {
+
+                    }
+
+                    @Override
+                    public void onCancelled(DatabaseError databaseError) {
+
+                    }
+                };
+            }
+            if (this.valueEventListenerCadastroComplementar == null){
+                this.valueEventListenerCadastroComplementar = new ValueEventListener() {
+                    @Override
+                    public void onDataChange(DataSnapshot dataSnapshot) {
+                        if (dataSnapshot.exists()){
+                            if (cadastroComplementar == null){
+                                cadastroComplementar = new CadastroComplementar();
+                            }
+                            if (dataSnapshot.hasChild(CadastroComplementar.getNOME())){
+                                cadastroComplementar.setNome(dataSnapshot.child(CadastroComplementar.getNOME()).getValue(String.class));
+                            }
+                        }else{
+                            if (cadastroComplementar == null){
+                                cadastroComplementar = new CadastroComplementar();
+                            }
+                        }
+                        cadastroComplementarObtido = true;
+                        liberarPreenchimentoFragmentFuncionamento();
+                    }
+
+                    @Override
+                    public void onCancelled(DatabaseError databaseError) {
+
+                    }
+                };
+            }
+            this.refCadastroComplementar.addListenerForSingleValueEvent(this.valueEventListenerCadastroComplementar);
+
+            if (cadastroBasico != null && cadastroBasico.getTipoUsuario() != null && !cadastroBasico.getTipoUsuario().isEmpty()){
+                switch (cadastroBasico.getTipoUsuario()){
+                    case TipoUsuarioENUM.SALAO:
                         if (this.refFuncionamento == null){
                             this.refFuncionamento = LibraryClass.getFirebase().child(GeralENUM.USERS).child(mAuth.getCurrentUser().getUid()).child(GeralENUM.FUNCIONAMENTO);
+                            this.refFuncionamento.keepSynced(true);
                         }
                         if (this.refServicos == null){
                             this.refServicos = LibraryClass.getFirebase().child(GeralENUM.USERS).child(mAuth.getCurrentUser().getUid()).child(GeralENUM.SERVICOS);
+                            this.refServicos.keepSynced(true);
                         }
                         if (this.refProfissionais == null){
                             this.refProfissionais = LibraryClass.getFirebase().child(GeralENUM.USERS).child(mAuth.getCurrentUser().getUid()).child(GeralENUM.PROFISSIONAIS);
+                            this.refProfissionais.keepSynced(true);
+                        }
+                        if (cadastroBasico.getCodigoUnico() == null || cadastroBasico.getCodigoUnico().isEmpty()){
+                            gerarCodigoUnico(TipoUsuarioENUM.SALAO);
                         }
 
-                        if (this.valueEventListenerFuncionamento == null){
-                            this.valueEventListenerFuncionamento = new ValueEventListener() {
+                        if (this.childEventListenerFuncionamentoSalao == null){
+                            this.childEventListenerFuncionamentoSalao = new ChildEventListener() {
                                 @Override
-                                public void onDataChange(DataSnapshot dataSnapshot) {
-                                    Log.i("script","valueEventListenerFuncionamento onDataChange CadastroInicial ");
-                                    if (dataSnapshot.exists() && dataSnapshot.getValue(FuncionamentoSalao.class) != null){
-                                        Log.i("script","valueEventListenerFuncionamento onDataChange if CadastroInicial ");
-                                        funcionamentoSalao = dataSnapshot.getValue(FuncionamentoSalao.class);
-                                        liberarFragmentFuncionamento();
-                                    }else {
-                                        Log.i("script","valueEventListenerFuncionamento onDataChange else CadastroInicial ");
-                                        funcionamentoSalao = new FuncionamentoSalao();
-                                        liberarFragmentFuncionamento();
+                                public void onChildAdded(DataSnapshot dataSnapshot, String s) {
+                                    if (dataSnapshot.exists()){
+                                        if (funcionamentoSalao == null){
+                                            funcionamentoSalao = new FuncionamentoSalao();
+                                            funcionamentoSalao.setFuncionamentoDoSalao(new HashMap<String, Funcionamento>());
+                                        }
+
+                                        for (DataSnapshot child : dataSnapshot.getChildren()) {
+                                            Funcionamento funcionamento = new Funcionamento();
+                                            funcionamento.setDia(child.getKey());
+                                            if (child.hasChild(DiasENUM.ABRE)){
+                                                funcionamento.setAbre(child.child(DiasENUM.ABRE).getValue(String.class));
+                                            }
+                                            if (child.hasChild(DiasENUM.FECHA)){
+                                                funcionamento.setFecha(child.child(DiasENUM.FECHA).getValue(String.class));
+                                            }
+                                            funcionamentoSalao.addFuncionamento(funcionamento);
+                                        }
+                                    }else{
+                                        if (funcionamentoSalao == null){
+                                            funcionamentoSalao = new FuncionamentoSalao();
+                                            funcionamentoSalao.setFuncionamentoDoSalao(new HashMap<String, Funcionamento>());
+                                        }
+                                    }
+                                    if (mViewPager.getCurrentItem() == 0){
+                                        ((FragmentFuncionamento)((ConfiguracaoInicialAdapter)mViewPager.getAdapter()).getFragment(0)).aplicarDadosFormulario();
                                     }
                                 }
 
                                 @Override
-                                public void onCancelled(DatabaseError databaseError) {
-                                    Log.i("script","valueEventListenerFuncionamento onCancelled CadastroInicial ");
-                                }
-                            };
-                        }
-                        if (this.valueEventListenerServicos == null){
-                            this.valueEventListenerServicos = new ValueEventListener() {
-                                @Override
-                                public void onDataChange(DataSnapshot dataSnapshot) {
-                                    if (dataSnapshot.exists() && dataSnapshot.getValue(ServicosSalao.class) != null){
-                                        servicosSalao = dataSnapshot.getValue(ServicosSalao.class);
-                                        liberarFragmentServicos();
-                                    }else {
-                                        servicosSalao = new ServicosSalao();
-                                        liberarFragmentServicos();
+                                public void onChildChanged(DataSnapshot dataSnapshot, String s) {
+                                    if (dataSnapshot.exists()){
+                                        for (DataSnapshot child : dataSnapshot.getChildren()) {
+                                            if (child.hasChild(DiasENUM.ABRE)){
+                                                funcionamentoSalao.getFuncionamentoDoSalao().get(child.getKey()).setAbre(child.child(DiasENUM.ABRE).getValue(String.class));
+                                            }
+                                            if (child.hasChild(DiasENUM.FECHA)){
+                                                funcionamentoSalao.getFuncionamentoDoSalao().get(child.getKey()).setFecha(child.child(DiasENUM.FECHA).getValue(String.class));
+                                            }
+                                        }
+                                        if (mViewPager.getCurrentItem() == 0){
+                                            ((FragmentFuncionamento)((ConfiguracaoInicialAdapter)mViewPager.getAdapter()).getFragment(0)).aplicarDadosFormulario();
+                                        }
                                     }
                                 }
 
                                 @Override
-                                public void onCancelled(DatabaseError databaseError) {
-                                }
-                            };
-                        }
-                        if (this.valueEventListenerProfissionais == null){
-                            this.valueEventListenerProfissionais = new ValueEventListener() {
-                                @Override
-                                public void onDataChange(DataSnapshot dataSnapshot) {
-                                    if (dataSnapshot.exists() && dataSnapshot.getValue(ProfissionaisSalao.class) != null){
-                                        profissionaisSalao = dataSnapshot.getValue(ProfissionaisSalao.class);
-                                        liberarFragmentProfissionais();
-                                    }else {
-                                        profissionaisSalao = new ProfissionaisSalao();
-                                        liberarFragmentProfissionais();
+                                public void onChildRemoved(DataSnapshot dataSnapshot) {
+                                    if (dataSnapshot.exists()){
+                                        for (DataSnapshot child : dataSnapshot.getChildren()) {
+                                            if (child.hasChild(DiasENUM.ABRE) && child.hasChild(DiasENUM.FECHA)){
+                                                funcionamentoSalao.removerFuncionamento(child.getKey());
+                                            }else if (child.hasChild(DiasENUM.ABRE)){
+                                                funcionamentoSalao.getFuncionamentoDoSalao().get(child.getKey()).setAbre(null);
+                                            }else if (child.hasChild(DiasENUM.FECHA)){
+                                                funcionamentoSalao.getFuncionamentoDoSalao().get(child.getKey()).setFecha(null);
+                                            }
+                                        }
+                                        if (mViewPager.getCurrentItem() == 0){
+                                            ((FragmentFuncionamento)((ConfiguracaoInicialAdapter)mViewPager.getAdapter()).getFragment(0)).aplicarDadosFormulario();
+                                        }
                                     }
                                 }
 
                                 @Override
+                                public void onChildMoved(DataSnapshot dataSnapshot, String s) {
+
+                                }
+
+                                @Override
                                 public void onCancelled(DatabaseError databaseError) {
+
                                 }
                             };
                         }
+                        if (this.valueEventListenerFuncionamentoSalao == null){
+                            this.valueEventListenerFuncionamentoSalao = new ValueEventListener() {
+                                @Override
+                                public void onDataChange(DataSnapshot dataSnapshot) {
+                                    if (dataSnapshot.exists()){
+                                        if (funcionamentoSalao == null){
+                                            funcionamentoSalao = new FuncionamentoSalao();
+                                            funcionamentoSalao.setFuncionamentoDoSalao(new HashMap<String, Funcionamento>());
+                                        }
 
-                        this.refFuncionamento.addListenerForSingleValueEvent(valueEventListenerFuncionamento);
-                        this.refFuncionamento.addListenerForSingleValueEvent(valueEventListenerServicos);
-                        this.refFuncionamento.addListenerForSingleValueEvent(valueEventListenerProfissionais);
-                    }else {
-                        this.mAuth.signOut();
-                    }
-                    break;
-                case TipoUsuarioENUM.CABELEIREIRO:
-                    //TODO
-                    break;
-                case TipoUsuarioENUM.CLIENTE:
-                    //TODO
-                    break;
-                default:
-                    mAuth.signOut();
-                    break;
+                                        for (DataSnapshot child : dataSnapshot.getChildren()) {
+                                            Funcionamento funcionamento = new Funcionamento();
+                                            funcionamento.setDia(child.getKey());
+                                            if (child.hasChild(DiasENUM.ABRE)){
+                                                funcionamento.setAbre(child.child(DiasENUM.ABRE).getValue(String.class));
+                                            }
+                                            if (child.hasChild(DiasENUM.FECHA)){
+                                                funcionamento.setFecha(child.child(DiasENUM.FECHA).getValue(String.class));
+                                            }
+                                            funcionamentoSalao.addFuncionamento(funcionamento);
+                                        }
+                                    }else{
+                                        if (funcionamentoSalao == null){
+                                            funcionamentoSalao = new FuncionamentoSalao();
+                                            funcionamentoSalao.setFuncionamentoDoSalao(new HashMap<String, Funcionamento>());
+                                        }
+                                    }
+                                    funcionamentoSalaoObtido = true;
+                                    liberarPreenchimentoFragmentFuncionamento();
+                                }
+
+                                @Override
+                                public void onCancelled(DatabaseError databaseError) {
+
+                                }
+                            };
+                        }
+                        this.refFuncionamento.addListenerForSingleValueEvent(this.valueEventListenerFuncionamentoSalao);
+                        break;
+                    case TipoUsuarioENUM.PROFISSIONAl:
+                        //TODO
+                        gerarCodigoUnico(TipoUsuarioENUM.PROFISSIONAl);
+                        break;
+                    case TipoUsuarioENUM.CLIENTE:
+                        //TODO
+                        break;
+                    default:
+                        mAuth.signOut();
+                        break;
+                }
             }
+        }else {
+            this.mAuth.signOut();
         }
+
+
     }
 
     private FirebaseAuth.AuthStateListener getFirebaseAuthResultHandler(){
@@ -373,96 +508,134 @@ public class CadastroInicialActivity extends AppCompatActivity{
     }
 
     private void receberBundle(){
-        Bundle bundle = getIntent().getExtras();
-        if (bundle != null && bundle.containsKey(CadastroBasico.getNIVEL_USUARIO())){
-            if (cadastroBasico == null){
-                cadastroBasico = new CadastroBasico();
+        if (getIntent().hasExtra(CadastroBasico.getCADASTRO_BASICO())){
+            Bundle bundle = getIntent().getExtras().getBundle(CadastroBasico.getCADASTRO_BASICO());
+
+            if (bundle != null && bundle.containsKey(CadastroBasico.getNIVEL_USUARIO())){
+                if (cadastroBasico == null){
+                    cadastroBasico = new CadastroBasico();
+                }
+                cadastroBasico.setNivelUsuario(bundle.getDouble(CadastroBasico.getNIVEL_USUARIO()));
             }
-            cadastroBasico.setNivelUsuario(bundle.getDouble(CadastroBasico.getNIVEL_USUARIO()));
-        }
-        if (bundle != null && bundle.containsKey(CadastroBasico.getTIPO_USUARIO())){
-            if (cadastroBasico == null){
-                cadastroBasico = new CadastroBasico();
+            if (bundle != null && bundle.containsKey(CadastroBasico.getTIPO_USUARIO())){
+                if (cadastroBasico == null){
+                    cadastroBasico = new CadastroBasico();
+                }
+                cadastroBasico.setTipoUsuario(bundle.getString(CadastroBasico.getTIPO_USUARIO()));
             }
-            cadastroBasico.setTipoUsuario(bundle.getString(CadastroBasico.getTIPO_USUARIO()));
-        }
-        if (bundle != null && bundle.containsKey(CadastroBasico.getCODIGO_UNICO())){
-            if (cadastroBasico == null){
-                cadastroBasico = new CadastroBasico();
+            if (bundle != null && bundle.containsKey(CadastroBasico.getCODIGO_UNICO())){
+                if (cadastroBasico == null){
+                    cadastroBasico = new CadastroBasico();
+                }
+                cadastroBasico.setCodigoUnico(bundle.getString(CadastroBasico.getCODIGO_UNICO()));
             }
-            cadastroBasico.setCodigoUnico(bundle.getString(CadastroBasico.getCODIGO_UNICO()));
-        }
-        if (bundle != null && bundle.containsKey(CadastroInicialActivity.getSalvarNivelTipo())){
-            this.salvarNivelTipo = true;
         }
     }
 
     private void removerFirebaseEvents(){
        //TODO
+        if (this.refFuncionamento != null){
+            this.refFuncionamento.keepSynced(false);
+        }
+        if (this.refCadastroComplementar != null){
+            this.refCadastroComplementar.keepSynced(false);
+        }
+
+        if (this.childEventListenerFuncionamentoSalao != null){
+            this.refFuncionamento.removeEventListener(this.childEventListenerFuncionamentoSalao);
+        }
+        if (this.childEventListenerCadastroComplementar != null){
+            this.refCadastroComplementar.removeEventListener(this.childEventListenerCadastroComplementar);
+        }
+        if (this.valueEventListenerFuncionamentoSalao != null){
+            this.refFuncionamento.removeEventListener(this.valueEventListenerFuncionamentoSalao);
+        }
+        if (this.valueEventListenerCadastroComplementar != null){
+            this.refCadastroComplementar.removeEventListener(this.valueEventListenerCadastroComplementar);
+        }
     }
 
-    private void liberarFragmentFuncionamento(){
-        Log.i("script","liberarFragmentFuncionamento CadastroInicial ");
-        FragmentFuncionamento fragmentFuncionamento = (FragmentFuncionamento)((ConfiguracaoInicialAdapter) this.mViewPager.getAdapter()).getFragment(0);
-       /* fragmentFuncionamento.iniciarFormulario();
-        fragmentFuncionamento.liberarPreenchimento();*/
+    private void gerarCodigoUnico(String tipoUsuario){
+        switch (tipoUsuario){
+            case TipoUsuarioENUM.SALAO:
+                //TODO
+                break;
+            case TipoUsuarioENUM.PROFISSIONAl:
+                //TODO
+                break;
+            default:
+                mAuth.signOut();
+                break;
+        }
     }
 
-    private void liberarFragmentServicos(){
-        //TODO
-        FragmentServicos fragmentServicos = (FragmentServicos) ((ConfiguracaoInicialAdapter) this.mViewPager.getAdapter()).getFragment(1);
+    public void manterObjetosAtualizados(){
+        this.refCadastroComplementar.addChildEventListener(this.childEventListenerCadastroComplementar);
+        this.refFuncionamento.addChildEventListener(this.childEventListenerFuncionamentoSalao);
     }
 
-    private void liberarFragmentProfissionais(){
-        //TODO
-        FragmentProfissionais fragmentProfissionais = (FragmentProfissionais) ((ConfiguracaoInicialAdapter) this.mViewPager.getAdapter()).getFragment(2);
+
+    //ATUALIZADORES FIREBASE
+    public void adicionaFuncionamentoFirebase(String dia){
+        Map<String, Object> childUpdates = new HashMap<>();
+        switch (dia){
+            case DiasENUM.SEGUNDA:
+                childUpdates.put(DiasENUM.SEGUNDA, CadastroInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(DiasENUM.SEGUNDA).toMap());
+                this.refFuncionamento.updateChildren(childUpdates);
+                break;
+            case DiasENUM.TERCA:
+                childUpdates.put(DiasENUM.TERCA, CadastroInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(DiasENUM.TERCA).toMap());
+                this.refFuncionamento.updateChildren(childUpdates);
+                break;
+            case DiasENUM.QUARTA:
+                childUpdates.put(DiasENUM.QUARTA, CadastroInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(DiasENUM.QUARTA).toMap());
+                this.refFuncionamento.updateChildren(childUpdates);
+                break;
+            case DiasENUM.QUINTA:
+                childUpdates.put(DiasENUM.QUINTA, CadastroInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(DiasENUM.QUINTA).toMap());
+                this.refFuncionamento.updateChildren(childUpdates);
+                break;
+            case DiasENUM.SEXTA:
+                childUpdates.put(DiasENUM.SEXTA, CadastroInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(DiasENUM.SEXTA).toMap());
+                this.refFuncionamento.updateChildren(childUpdates);
+                break;
+            case DiasENUM.SABADO:
+                childUpdates.put(DiasENUM.SABADO, CadastroInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(DiasENUM.SABADO).toMap());
+                this.refFuncionamento.updateChildren(childUpdates);
+                break;
+            case DiasENUM.DOMINGO:
+                childUpdates.put(DiasENUM.DOMINGO, CadastroInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(DiasENUM.DOMINGO).toMap());
+                this.refFuncionamento.updateChildren(childUpdates);
+                break;
+            default:
+                break;
+        }
     }
 
-    public void salvarFuncionamentoSalao(final ArrayList<Funcionamento> funcionamentos){
-        if (this.mAuth.getCurrentUser() != null && !this.mAuth.getCurrentUser().getUid().isEmpty()){
-            //this.funcionamentoSalvo = false;
-            if (funcionamentoSalao == null){
-                funcionamentoSalao = new FuncionamentoSalao();
+    public void removeFuncionamentoFirebase(String dia){
+        this.refFuncionamento.child(dia).removeValue();
+    }
+
+
+    //LIBERARDOR DE FORMULARIOS
+    private  void liberarPreenchimentoFragmentFuncionamento(){
+        if (funcionamentoSalaoObtido && cadastroComplementarObtido){
+            if (this.mViewPager.getCurrentItem() == 0){
+                ((FragmentFuncionamento)((ConfiguracaoInicialAdapter)this.mViewPager.getAdapter()).getFragment(0)).aplicarDadosFormulario();
             }
-            //funcionamentoSalao.setFuncionamentoDoSalao(funcionamentos);
-            if (refFuncionamento == null){
-                refFuncionamento = LibraryClass.getFirebase().child(GeralENUM.USERS).child( mAuth.getCurrentUser().getUid()).child(GeralENUM.FUNCIONAMENTO);
-            }
-            Map<String, Object> childUpdates = new HashMap<>();
-            /*for (Funcionamento funcionamento : funcionamentoSalao.getFuncionamentoDoSalao()){
-                childUpdates.put(funcionamento.getDia(), funcionamento.toMap());
-            }*/
-            refFuncionamento.updateChildren(childUpdates, new DatabaseReference.CompletionListener() {
-                @Override
-                public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference) {
-                    if (databaseError != null){
-                        Log.i("script","onComplete() erro != null");
-                        salvarFuncionamentoSalao(funcionamentos);
-                    }else {
-                        //funcionamentoSalvo = true;
-                    }
-                }
-            });
+        }
+    }
+
+
+    //PROGRESS DIALOG
+    public void showProgressDialog(boolean exibir){
+        if (exibir){
+            this.progressDialog.show();
         }else {
-            this.mAuth.signOut();
+            this.progressDialog.dismiss();
         }
     }
 
-    public void aguardarSalvar(){
-        //TODO
-        if (!etapaFuncionamentoSalvo || !etapaServicosSalvo || !etapaProfissionaisSalvo){
-
-        }else {
-
-        }
-    }
-
-    public static void notificarSalvamentoConcluido(){
-        //TODO
-        if (etapaFuncionamentoSalvo && etapaServicosSalvo && etapaFuncionamentoSalvo){
-
-        }
-    }
 
     //CALL
     private void callLoginActivity(){
@@ -472,7 +645,7 @@ public class CadastroInicialActivity extends AppCompatActivity{
     }
 
     private void recriarCadastroInicialActivity(){
-        Intent intent = new Intent(this,CadastroInicialActivity.class);
+        /*Intent intent = new Intent(this,CadastroInicialActivity.class);
         Bundle bundle = new Bundle();
         if (cadastroBasico.getNivelUsuario() != null){
             bundle.putDouble(CadastroBasico.getNIVEL_USUARIO(),cadastroBasico.getNivelUsuario());
@@ -480,42 +653,69 @@ public class CadastroInicialActivity extends AppCompatActivity{
         if (cadastroBasico.getTipoUsuario() != null && !cadastroBasico.getTipoUsuario().isEmpty()){
             bundle.putString(CadastroBasico.getTIPO_USUARIO(),cadastroBasico.getTipoUsuario());
         }
-        bundle.putBoolean(SALVAR_NIVEL_TIPO,true);
         intent.putExtras(bundle);
         finish();
+        startActivity(intent);*/
+        Intent intent = new Intent(this,CadastroInicialActivity.class);
+        Bundle auxBundle = new Bundle();
+        Bundle bundle = new Bundle();
+        auxBundle.putDouble(CadastroBasico.getNIVEL_USUARIO(),cadastroBasico.getNivelUsuario());
+        auxBundle.putString(CadastroBasico.getTIPO_USUARIO(),cadastroBasico.getTipoUsuario());
+        if (cadastroBasico.getCodigoUnico() != null && !cadastroBasico.getCodigoUnico().isEmpty()){
+            auxBundle.putString(CadastroBasico.getCODIGO_UNICO(),cadastroBasico.getCodigoUnico());
+        }
+        bundle.putBundle(CadastroBasico.getCADASTRO_BASICO(),auxBundle);
+        intent.putExtras(bundle);
         startActivity(intent);
+        finish();
     }
+
+    public void callHomeActivity(){
+        Intent intent = new Intent(this, HomeActivity.class);
+        Bundle auxBundle = new Bundle();
+        Bundle bundle = new Bundle();
+        auxBundle.putDouble(CadastroBasico.getNIVEL_USUARIO(),cadastroBasico.getNivelUsuario());
+        auxBundle.putString(CadastroBasico.getTIPO_USUARIO(),cadastroBasico.getTipoUsuario());
+        if (cadastroBasico.getCodigoUnico() != null && !cadastroBasico.getCodigoUnico().isEmpty()){
+            auxBundle.putString(CadastroBasico.getCODIGO_UNICO(),cadastroBasico.getCodigoUnico());
+        }
+        bundle.putBundle(CadastroBasico.getCADASTRO_BASICO(),auxBundle);
+        intent.putExtras(bundle);
+        startActivity(intent);
+        finish();
+    }
+
 
     //BUTTONS
     public void confirmarTipoCadastro(View view) {
         if (!this.processandoClique){
             this.processandoClique = true;
-            String tipoUsuario = "";
             switch (view.getId()){
                 case R.id.btn_cadastro_cliente:
-                    tipoUsuario = TipoUsuarioENUM.CLIENTE;
+                    cadastroBasico.setTipoUsuario(TipoUsuarioENUM.CLIENTE);
+                    refCadastroBasico.child(CadastroBasico.getTIPO_USUARIO()).setValue(TipoUsuarioENUM.CLIENTE);
                     break;
                 case R.id.btn_cadastro_salao:
-                    tipoUsuario = TipoUsuarioENUM.SALAO;
+                    cadastroBasico.setTipoUsuario(TipoUsuarioENUM.SALAO);
+                    refCadastroBasico.child(CadastroBasico.getTIPO_USUARIO()).setValue(TipoUsuarioENUM.SALAO);
                     break;
                 case R.id.btn_cadastro_cabeleireiro:
-                    tipoUsuario = TipoUsuarioENUM.CABELEIREIRO;
+                    cadastroBasico.setTipoUsuario(TipoUsuarioENUM.PROFISSIONAl);
+                    refCadastroBasico.child(CadastroBasico.getTIPO_USUARIO()).setValue(TipoUsuarioENUM.PROFISSIONAl);
                     break;
                 default:
                     break;
             }
 
+
+
             if (this.builder == null){
                 this.builder = new AlertDialog.Builder(this);
                 //define um botão como positivo
-                final String finalTipoUsuario = tipoUsuario;
                 builder.setPositiveButton("SALVAR", new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface arg0, int arg1) {
-                        if (cadastroBasico == null){
-                            cadastroBasico = new CadastroBasico();
-                        }
-                        cadastroBasico.setTipoUsuario(finalTipoUsuario);
                         cadastroBasico.setNivelUsuario(2.0);
+                        refCadastroBasico.child(CadastroBasico.getNIVEL_USUARIO()).setValue(cadastroBasico.getNivelUsuario());
                         recriarCadastroInicialActivity();
                     }
                 });
@@ -523,20 +723,22 @@ public class CadastroInicialActivity extends AppCompatActivity{
                 builder.setNegativeButton("CANCELAR", new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface arg0, int arg1) {
                         processandoClique = false;
+                        cadastroBasico.setTipoUsuario(null);
+                        refCadastroBasico.child(CadastroBasico.getTIPO_USUARIO()).removeValue();
                     }
                 });
             }
 
-            switch (tipoUsuario){
-                case TipoUsuarioENUM.CLIENTE:
+            switch (view.getId()){
+                case R.id.btn_cadastro_cliente:
                     builder.setTitle("Salvar cadastro como Cliente ?");
                     builder.setMessage("Ao criar uma conta como Cliente você podera se vincular a um ou mais salões online, para ter acesso a promoções, agendar horários com seus cabeleireiros e muito mais !");
                     break;
-                case TipoUsuarioENUM.SALAO:
+                case R.id.btn_cadastro_salao:
                     builder.setTitle("Salvar cadastro como Salão ?");
                     builder.setMessage("Ao criar uma conta como Salão você estara abrindo um salão online; podendo definir os serviços prestados, abrir uma agenda para que seus clientes possam agendar horários, adicionar os cabeleireiros que realizaram os serviços no seu salão, gerar promoções e muito mais !");
                     break;
-                case TipoUsuarioENUM.CABELEIREIRO:
+                case R.id.btn_cadastro_cabeleireiro:
                     builder.setTitle("Salvar cadastro como Cabeleireiro ?");
                     builder.setMessage("Ao criar uma conta como Cabeleireiro você podera se vincular a um ou mais salões online ja existentes, os clientes destes salões poderam agendar horarios com você, voce podera gerenciar seus serviços prestados no decorrer do mês e muito mais !");
                     break;
@@ -557,11 +759,8 @@ public class CadastroInicialActivity extends AppCompatActivity{
         ((FragmentFuncionamento)((ConfiguracaoInicialAdapter)this.mViewPager.getAdapter()).getFragment(0)).diaSelecionado((CheckBox) view);
     }
 
-    //GETTERS SETTERS
-    public static String getSalvarNivelTipo() {
-        return SALVAR_NIVEL_TIPO;
-    }
 
+    //GETTERS SETTERS
     public ViewPager getmViewPager() {
         return mViewPager;
     }
@@ -577,45 +776,15 @@ public class CadastroInicialActivity extends AppCompatActivity{
         return servicosSalao;
     }
 
-    public static boolean isEtapaFuncionamentoPreenchida() {
-        return etapaFuncionamentoPreenchida;
-    }
-    public static void setEtapaFuncionamentoPreenchida(boolean etapaFuncionamentoPreenchida) {
-        CadastroInicialActivity.etapaFuncionamentoPreenchida = etapaFuncionamentoPreenchida;
+    public static CadastroComplementar getCadastroComplementar() {
+        return cadastroComplementar;
     }
 
-    public static boolean isEtapaServicosPreenchida() {
-        return etapaServicosPreenchida;
-    }
-    public static void setEtapaServicosPreenchida(boolean etapaServicosPreenchida) {
-        CadastroInicialActivity.etapaServicosPreenchida = etapaServicosPreenchida;
+    public static boolean isCadastroComplementarObtido() {
+        return cadastroComplementarObtido;
     }
 
-    public static boolean isEtapaProfissionaisPreenchida() {
-        return etapaProfissionaisPreenchida;
-    }
-    public static void setEtapaProfissionaisPreenchida(boolean etapaProfissionaisPreenchida) {
-        CadastroInicialActivity.etapaProfissionaisPreenchida = etapaProfissionaisPreenchida;
-    }
-
-    public static boolean isEtapaFuncionamentoSalvo() {
-        return etapaFuncionamentoSalvo;
-    }
-    public static void setEtapaFuncionamentoSalvo(boolean etapaFuncionamentoSalvo) {
-        CadastroInicialActivity.etapaFuncionamentoSalvo = etapaFuncionamentoSalvo;
-    }
-
-    public static boolean isEtapaServicosSalvo() {
-        return etapaServicosSalvo;
-    }
-    public static void setEtapaServicosSalvo(boolean etapaServicosSalvo) {
-        CadastroInicialActivity.etapaServicosSalvo = etapaServicosSalvo;
-    }
-
-    public static boolean isEtapaProfissionaisSalvo() {
-        return etapaProfissionaisSalvo;
-    }
-    public static void setEtapaProfissionaisSalvo(boolean etapaProfissionaisSalvo) {
-        CadastroInicialActivity.etapaProfissionaisSalvo = etapaProfissionaisSalvo;
+    public static boolean isFuncionamentoSalaoObtido() {
+        return funcionamentoSalaoObtido;
     }
 }

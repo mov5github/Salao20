@@ -1,7 +1,6 @@
 package com.example.lucas.salao20.activitys;
 
 import android.app.ProgressDialog;
-import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
@@ -25,7 +24,6 @@ import com.example.lucas.salao20.enumeradores.GeralENUM;
 import com.example.lucas.salao20.enumeradores.TipoUsuarioENUM;
 import com.example.lucas.salao20.geral.CadastroBasico;
 import com.example.lucas.salao20.geral.Teste;
-import com.example.lucas.salao20.intentServices.BackgroundIntentService;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.tasks.OnCompleteListener;
@@ -33,7 +31,6 @@ import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.crash.FirebaseCrash;
 import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
@@ -41,11 +38,7 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.ValueEventListener;
 
-import org.json.JSONObject;
-
 import java.util.ArrayList;
-import java.util.EventListener;
-import java.util.Map;
 
 /**
  * Created by Lucas on 17/03/2017.
@@ -298,20 +291,23 @@ public class LoginActivity extends CommonActivity implements GoogleApiClient.OnC
     private void direcionarUsuario(){
         if (cadastroBasico != null && cadastroBasico.getNivelUsuario() != null) {
             Bundle bundle = new Bundle();
+            Bundle auxBundle = new Bundle();
             if (cadastroBasico.getNivelUsuario() == 1.0){
-                bundle.putDouble(CadastroBasico.getNIVEL_USUARIO(),cadastroBasico.getNivelUsuario());
-                callConfiguracaoIncialActivity(bundle);
+                auxBundle.putDouble(CadastroBasico.getNIVEL_USUARIO(),cadastroBasico.getNivelUsuario());
+                bundle.putBundle(CadastroBasico.getCADASTRO_BASICO(),auxBundle);
+                callCadastroInicialActivity(bundle);
             }else {
                 if (cadastroBasico.getTipoUsuario() != null && !cadastroBasico.getTipoUsuario().isEmpty()){
-                    bundle.putDouble(CadastroBasico.getNIVEL_USUARIO(),cadastroBasico.getNivelUsuario());
-                    bundle.putString(CadastroBasico.getTIPO_USUARIO(),cadastroBasico.getTipoUsuario());
+                    auxBundle.putDouble(CadastroBasico.getNIVEL_USUARIO(),cadastroBasico.getNivelUsuario());
+                    auxBundle.putString(CadastroBasico.getTIPO_USUARIO(),cadastroBasico.getTipoUsuario());
                     if (cadastroBasico.getCodigoUnico() != null && !cadastroBasico.getCodigoUnico().isEmpty()){
-                        bundle.putString(CadastroBasico.getCODIGO_UNICO(),cadastroBasico.getCodigoUnico());
+                        auxBundle.putString(CadastroBasico.getCODIGO_UNICO(),cadastroBasico.getCodigoUnico());
                     }
+                    bundle.putBundle(CadastroBasico.getCADASTRO_BASICO(),auxBundle);
                     switch (cadastroBasico.getTipoUsuario()){
                         case TipoUsuarioENUM.SALAO:
                             if (cadastroBasico.getNivelUsuario() >= 2.0 && cadastroBasico.getNivelUsuario() < 3.0){
-                                callConfiguracaoIncialActivity(bundle);
+                                callCadastroInicialActivity(bundle);
                             }else if (cadastroBasico.getNivelUsuario() == 3.0){//configuracao inicial completa
                                 callHomeActivity(bundle);
                             }else{
@@ -319,7 +315,7 @@ public class LoginActivity extends CommonActivity implements GoogleApiClient.OnC
                                 mAuth.signOut();
                             }
                             break;
-                        case TipoUsuarioENUM.CABELEIREIRO:
+                        case TipoUsuarioENUM.PROFISSIONAl:
                             if (cadastroBasico.getNivelUsuario() >= 2.0 && cadastroBasico.getNivelUsuario() < 3.0){
                                 callConfiguracaoIncialActivity(bundle);
                             }else if (cadastroBasico.getNivelUsuario() == 3.0){//configuracao inicial completa
@@ -393,9 +389,9 @@ public class LoginActivity extends CommonActivity implements GoogleApiClient.OnC
         }
     }
 
-    public  void irHome(){
-        callHomeActivity(null);
-    }
+
+
+
 
     //TEXT LINK
     public void callSignUp(View view) {

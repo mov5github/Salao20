@@ -133,7 +133,7 @@ public class HomeActivity extends AppCompatActivity {
                         String[] titles = {FragmentHomeSalaoDados.getTitulo(), FragmentHomeSalaoAgendas.getTitulo(), FragmentHomeSalaoPromocoes.getTitulo()};
                         mViewPager.setAdapter(new HomeAdapter(getSupportFragmentManager(),this,titles, cadastroBasico.getTipoUsuario()));
                         break;
-                    case TipoUsuarioENUM.CABELEIREIRO:
+                    case TipoUsuarioENUM.PROFISSIONAl:
                         mToolbar.setSubtitle("Home do cabeleireiro");
                         mToolbar.setLogo(R.mipmap.ic_launcher);
                         String[] titles2 = {FragmentBasicoCabeleireiro.getTitulo()};
