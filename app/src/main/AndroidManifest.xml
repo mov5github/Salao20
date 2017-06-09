@@ -40,7 +40,7 @@
             android:name=".activitys.ErroActivity"
             android:configChanges="orientation|screenSize" />
         <activity
-            android:name=".activitys.CadastroInicialActivity"
+            android:name=".activitys.ConfiguracaoInicialActivity"
             android:configChanges="orientation|screenSize"
             android:windowSoftInputMode="stateHidden" />
         <activity

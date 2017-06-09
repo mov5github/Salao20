@@ -1,0 +1,469 @@
+package com.example.lucas.salao20.fragments.configuracaoInicial.salao;
+
+import android.content.DialogInterface;
+import android.os.Bundle;
+import android.support.annotation.Nullable;
+import android.support.design.widget.FloatingActionButton;
+import android.support.v4.app.Fragment;
+import android.support.v7.app.AlertDialog;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
+import android.text.Editable;
+import android.text.Html;
+import android.text.TextWatcher;
+import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.AutoCompleteTextView;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.ProgressBar;
+import android.widget.Spinner;
+import android.widget.Toast;
+
+import com.example.lucas.salao20.R;
+import com.example.lucas.salao20.activitys.ConfiguracaoInicialActivity;
+import com.example.lucas.salao20.adapters.AdapterSpinnerIcones;
+import com.example.lucas.salao20.adapters.RecyclerAdapter;
+import com.example.lucas.salao20.geral.geral.Servico;
+import com.example.lucas.salao20.interfaces.RecyclerViewOnClickListenerHack;
+import com.google.firebase.database.DatabaseReference;
+
+import java.text.NumberFormat;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+
+/**
+ * Created by Lucas on 21/03/2017.
+ */
+
+public class FragmentConfiguracaoInicialSalaoServicos extends Fragment implements RecyclerViewOnClickListenerHack {
+    //ENUM
+    private static final String TITULO = "Serviços";
+
+    private ProgressBar progressServicos;
+    private FloatingActionButton fabServicos;
+
+    private AdapterSpinnerIcones adapter;
+    private RecyclerView mRecyclerView;
+
+    private AutoCompleteTextView nomeServico;
+    private EditText precoServico;
+    private Spinner spinnerIcones;
+    private Spinner spinnerHoras;
+    private Spinner spinnerMinutos;
+    private AutoCompleteTextView descricaoServico;
+    private Button buttonAddServico;
+
+    //CONTROLES
+    private static boolean fragmentServicosSalaoAtivo;
+    private static boolean mRecyclerViewIniciado;
+    private boolean criandoServico;
+
+    //ARRAYS
+    private List<Servico> mList;
+
+    //private ServicoDAO servicoDAO;
+
+    @Nullable
+    @Override
+    public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+        View view = inflater.inflate(R.layout.fragment_configuracao_inicial_salao_servicos,container,false);
+        initControles();
+        initViews(view);
+        return view;
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        fragmentServicosSalaoAtivo = true;
+        Log.i("fireServicos","FragmentConfiguracaoInicialSalaoServicos onStart");
+        iniciarFormulario();
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+        fragmentServicosSalaoAtivo = false;
+    }
+
+    @Override
+    public void onClickListener(View view, final int position) {
+        //Toast.makeText(getActivity(),"POSITION " + position, Toast.LENGTH_SHORT).show();
+        final int posiçao = position;
+        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+        builder.setPositiveButton("SIM",
+                new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                       // Servico servico = servicoList.get(position);
+                        //removerServico(servico);
+                    }
+                });
+        builder.setNegativeButton("NÃO",
+                new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        //APENAS FECHA O DIALOG
+                    }
+                });
+
+        builder.setTitle("Excluir Serviço ?");
+       // builder.setIcon(this.servicoList.get(position).getIcone());
+        builder.setCancelable(true);
+        //alertDialogBuilderMessage(builder, this.servicoList.get(position).getNome(), this.servicoList.get(position).getPreco().toString(), this.servicoList.get(position).getDuracao().toString(), this.servicoList.get(position).getDescricao());
+
+
+
+        AlertDialog dialog = builder.create();
+        dialog.show();
+    }
+
+    private void initViews(View view){
+        this.fabServicos = (FloatingActionButton) view.findViewById(R.id.fab_fragment_servicos);
+        this.progressServicos = (ProgressBar) view.findViewById(R.id.progress_fragment_servicos);
+        this.nomeServico = (AutoCompleteTextView) view.findViewById(R.id.nome_servico);
+        this.precoServico = (EditText) view.findViewById(R.id.preco_servico);
+        this.precoServico.addTextChangedListener(new MascaraMonetaria(this.precoServico));
+        this.precoServico.setText("0");
+        this.spinnerHoras = (Spinner) view.findViewById(R.id.spinner_duracao_servico_horas);
+        this.spinnerMinutos = (Spinner) view.findViewById(R.id.spinner_duracao_servico_minutos);
+        this.descricaoServico = (AutoCompleteTextView) view.findViewById(R.id.descricao_servico);
+        this.spinnerIcones = (Spinner) view.findViewById(R.id.spinner_icones);
+        this.buttonAddServico = (Button) view.findViewById(R.id.btn_adicionar_servico);
+
+        createSpinnerIcones();
+        createRecyclerViewServicosAdicionados(view);
+    }
+
+    private void initControles(){
+        fragmentServicosSalaoAtivo = false;
+        mRecyclerViewIniciado = false;
+        this.criandoServico = false;
+    }
+
+    private void createSpinnerIcones(){
+        ArrayList<Integer> icones = createArrayListIcones();
+        this.adapter = new AdapterSpinnerIcones(getActivity(),icones);
+        this.spinnerIcones.setAdapter(adapter);
+    }
+
+    private void createRecyclerViewServicosAdicionados(View view){
+        this.mRecyclerView = (RecyclerView) view.findViewById(R.id.servicos_recycler_view);
+        this.mRecyclerView.setHasFixedSize(true);
+
+        LinearLayoutManager llm = new LinearLayoutManager(getActivity());
+        llm.setOrientation(LinearLayoutManager.HORIZONTAL);
+        this.mRecyclerView.setLayoutManager(llm);
+        this.mList = new ArrayList<Servico>();
+        RecyclerAdapter recyclerAdapter = new RecyclerAdapter(this.mList,getContext());
+        this.mRecyclerView.setAdapter(recyclerAdapter);
+    }
+
+    public void iniciarFormulario(){
+       if (ConfiguracaoInicialActivity.getServicosSalao() != null){
+           if (!mRecyclerViewIniciado){
+               mRecyclerViewIniciado = true;
+               for(String key : ConfiguracaoInicialActivity.getServicosSalao().getServicosSalao().keySet()){
+                   this.mList.add(ConfiguracaoInicialActivity.getServicosSalao().getServicosSalao().get(key));
+                   ((RecyclerAdapter) this.mRecyclerView.getAdapter()).addItemList(this.mList.size()-1);
+               }
+           }else{
+               atualizarFormulario();
+           }
+           liberarPreenchimento();
+       }
+    }
+
+    private void atualizarFormulario(){
+        for (Iterator<Servico> iterator = this.mList.iterator(); iterator.hasNext();){
+            if (!ConfiguracaoInicialActivity.getServicosSalao().getServicosSalao().containsKey(iterator.next().getIdServico())){
+                int position = this.mList.indexOf(iterator.next());
+                this.mList.remove(iterator.next());
+                ((RecyclerAdapter)this.mRecyclerView.getAdapter()).removeItemList(position);
+            }
+        }
+        for (String key : ConfiguracaoInicialActivity.getServicosSalao().getServicosSalao().keySet()){
+            if (!this.mList.contains(ConfiguracaoInicialActivity.getServicosSalao().getServicosSalao().get(key))){
+                this.mList.add(ConfiguracaoInicialActivity.getServicosSalao().getServicosSalao().get(key));
+                ((RecyclerAdapter)this.mRecyclerView.getAdapter()).addItemList(this.mList.size()-1);
+            }
+        }
+    }
+
+    private void liberarPreenchimento(){
+        liberarFab();
+        this.buttonAddServico.setClickable(true);
+        this.buttonAddServico.setVisibility(View.VISIBLE);
+        this.progressServicos.setVisibility(View.INVISIBLE);
+    }
+
+    public void servicoAdicionado(String idServico){
+        if (ConfiguracaoInicialActivity.getServicosSalao().getServicosSalao().containsKey(idServico)){
+            if (!this.mList.contains(ConfiguracaoInicialActivity.getServicosSalao().getServicosSalao().get(idServico))){
+                this.mList.add(ConfiguracaoInicialActivity.getServicosSalao().getServicosSalao().get(idServico));
+                ((RecyclerAdapter) this.mRecyclerView.getAdapter()).addItemList(this.mList.size()-1);
+            }
+        }
+        liberarFab();
+    }
+
+    public void servicoRemovido(String idServico){
+        for (Iterator<Servico> iterator = this.mList.iterator(); iterator.hasNext();){
+            if (iterator.next().getIdServico().equals(idServico)){
+                int position = this.mList.indexOf(iterator.next());
+                this.mList.remove(iterator.next());
+                ((RecyclerAdapter) this.mRecyclerView.getAdapter()).removeItemList(position);
+            }
+        }
+        liberarFab();
+    }
+
+    public void servicoAlterado(String idServico){
+        for (Iterator<Servico> iterator = this.mList.iterator(); iterator.hasNext();){
+            if (iterator.next().getIdServico().equals(idServico)){
+                int position = this.mList.indexOf(iterator.next());
+                this.mList.remove(iterator.next());
+                ((RecyclerAdapter) this.mRecyclerView.getAdapter()).removeItemList(position);
+            }
+        }
+        if (ConfiguracaoInicialActivity.getServicosSalao().getServicosSalao().containsKey(idServico)){
+            if (!this.mList.contains(ConfiguracaoInicialActivity.getServicosSalao().getServicosSalao().get(idServico))){
+                this.mList.add(ConfiguracaoInicialActivity.getServicosSalao().getServicosSalao().get(idServico));
+                ((RecyclerAdapter) this.mRecyclerView.getAdapter()).addItemList(this.mList.size()-1);
+            }
+        }
+        liberarFab();
+    }
+
+    private void liberarFab(){
+        if (ConfiguracaoInicialActivity.getServicosSalao().getServicosSalao()!= null && ConfiguracaoInicialActivity.getServicosSalao().getServicosSalao().size() > 0){
+            this.fabServicos.setClickable(true);
+            this.fabServicos.setVisibility(View.VISIBLE);
+        }else{
+            this.fabServicos.setClickable(false);
+            this.fabServicos.setVisibility(View.INVISIBLE);
+        }
+    }
+
+    public void criarServico(){
+        if (preenchimentoIsValid()){
+            if (!criandoServico){
+                criandoServico = true;
+                Servico servico = new Servico();
+                servico.setNome(this.nomeServico.getText().toString());
+                servico.setIcone((Integer) this.adapter.getItem(this.spinnerIcones.getSelectedItemPosition()));
+                servico.setPreco(gerarPrecoFloat());
+                servico.setDuracao(gerarDuracao());
+                servico.setDescricao(this.descricaoServico.getText().toString());
+                servico.setIdServico(((ConfiguracaoInicialActivity)getActivity()).getRefServicosSalao().push().getKey());
+                ConfiguracaoInicialActivity.getServicosSalao().getServicosSalao().put(servico.getIdServico(),servico);
+                this.mList.add(ConfiguracaoInicialActivity.getServicosSalao().getServicosSalao().get(servico.getIdServico()));
+                ((RecyclerAdapter) this.mRecyclerView.getAdapter()).addItemList(this.mList.size()-1);
+                ((ConfiguracaoInicialActivity)getActivity()).adicionarServicoFirebase(servico.getIdServico());
+                limparCampos();
+                criandoServico = false;
+            }
+        }
+    }
+
+    //AUXILIARES
+    private ArrayList<Integer> createArrayListIcones(){
+        ArrayList<Integer> icones = new ArrayList<Integer>();
+        icones.add(R.mipmap.ic_launcher);
+        icones.add(R.mipmap.ic_launcher);
+        icones.add(R.mipmap.ic_launcher);
+
+        return icones;
+    }
+
+    private boolean preenchimentoIsValid(){
+        if (this.nomeServico.getText().toString().isEmpty() || this.nomeServico.getText().toString().matches("[^\\S]+")){
+            Toast.makeText(getActivity(),"Adicione um nome ao serviço !",Toast.LENGTH_SHORT).show();
+            return false;
+        }
+        if (this.spinnerIcones.getSelectedItemPosition() == 0){
+            Toast.makeText(getActivity(),"Adicione um icone ao serviço !",Toast.LENGTH_SHORT).show();
+            return false;
+        }
+        if (this.precoServico.getText().toString().isEmpty() || this.precoServico.getText().toString().equals("R$0,00")){
+            Toast.makeText(getActivity(),"Adicione um preço ao serviço !",Toast.LENGTH_SHORT).show();
+            return false;
+        }
+        if (this.spinnerHoras.getSelectedItemPosition() == 0 && spinnerMinutos.getSelectedItemPosition() == 0){
+            Toast.makeText(getActivity(),"Adicione um tempo de duração ao serviço !",Toast.LENGTH_SHORT).show();
+            return false;
+        }
+        if (this.descricaoServico.getText().toString().isEmpty() || this.descricaoServico.getText().toString().matches("[^\\S]+")){
+            Toast.makeText(getActivity(),"Adicione uma descrição ao serviço !",Toast.LENGTH_SHORT).show();
+            return false;
+        }
+
+        return true;
+    }
+
+    private int gerarDuracao(){
+        int tempoMinutos = 0;
+        String horas = (String) this.spinnerHoras.getSelectedItem();
+        String horasConvertida = horas.replaceAll("[^0-9]*", "");
+        String minutos = (String) this.spinnerMinutos.getSelectedItem();
+        String minutosConvertido = minutos.replaceAll("[^0-9]*", "");
+
+        tempoMinutos = ((Integer.valueOf(horasConvertida)) * 60) + Integer.valueOf(minutosConvertido);
+
+        return tempoMinutos;
+    }
+
+    private Double gerarPrecoFloat(){
+        String preco = this.precoServico.getText().toString();
+        String precoConvertido = preco.replaceAll("[^0-9,]*", "");
+        precoConvertido = precoConvertido.replace(",", ".");
+        return Double.valueOf(precoConvertido);
+    }
+
+    private void limparCampos(){
+        this.nomeServico.setText("");
+        this.precoServico.setText("0");
+        this.descricaoServico.setText("");
+        this.spinnerIcones.setSelection(0);
+        this.spinnerMinutos.setSelection(0);
+        this.spinnerHoras.setSelection(0);
+        this.nomeServico.requestFocus();
+    }
+
+    //GETTERS AND SETTERS
+    public static String getTITULO() {
+        return TITULO;
+    }
+
+    public static boolean isFragmentServicosSalaoAtivo() {
+        return fragmentServicosSalaoAtivo;
+    }
+
+    public static boolean ismRecyclerViewIniciado() {
+        return mRecyclerViewIniciado;
+    }
+
+    //CLASSES
+    private class MascaraMonetaria implements TextWatcher {
+        EditText campo;
+
+        public MascaraMonetaria(EditText campo) {
+            super();
+            this.campo = campo;
+        }
+
+        private boolean isUpdating = false;
+        // Pega a formatacao do sistema, se for brasil R$ se EUA US$
+        private NumberFormat nf = NumberFormat.getCurrencyInstance();
+
+        @Override
+        public void onTextChanged(CharSequence s, int start, int before, int after) {
+            // Evita que o método seja executado varias vezes.
+            // Se tirar ele entre em loop
+            if (isUpdating) {
+                isUpdating = false;
+                return;
+            }
+            isUpdating = true;
+            String str = s.toString();
+            // Verifica se já existe a máscara no texto.
+            boolean hasMask = ((str.indexOf("R$") > -1 || str.indexOf("$") > -1) && (str.indexOf(".") > -1 || str.indexOf(",") > -1));
+            // Verificamos se existe máscara
+            if (hasMask) {
+                // Retiramos a máscara.
+                str = str.replaceAll("[R$]", "").replaceAll("[,]", "").replaceAll("[.]", "");
+            }
+            try {
+                // Transformamos o número que está escrito no EditText em
+                // monetário.
+                str = nf.format(Double.parseDouble(str) / 100);
+                campo.setText(str);
+                campo.setSelection(campo.getText().length());
+            } catch (NumberFormatException e) {
+                s = "";
+            }
+        }
+
+        @Override
+        public void afterTextChanged(Editable s) {
+            // Não utilizado
+        }
+
+        @Override
+        public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            // Não utilizado
+        }
+
+
+
+    }
+
+
+
+
+
+
+    public void addServico(Servico servico) {
+       /* if (this.servicoList == null) {
+            this.servicoList = new ArrayList<Servico>();
+        }
+        this.servicoList.add(servico);
+        this.nomesServicos.add(servico.getNome());
+        RecyclerAdapter recyclerAdapter = (RecyclerAdapter) this.mRecyclerView.getAdapter();
+        recyclerAdapter.addItemList(this.servicoList.size());
+        limparCampos();*/
+    }
+
+    public void removerServico(Servico servico){
+       /* RecyclerAdapter recyclerAdapter = (RecyclerAdapter) this.mRecyclerView.getAdapter();
+        int position = this.servicoList.indexOf(servico);
+        nomesServicos.remove(servico.getNome());
+        servicoList.remove(servico);
+        recyclerAdapter.removeItemList(position);*/
+    }
+
+
+
+    public void alertDialogBuilderMessage(AlertDialog.Builder builder, String nomeServico, String precoServico, String duracaoServico, String descricaoServico){
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
+            builder.setMessage(Html.fromHtml("<p><b>" + getString(R.string.nome_servico_bold_html) +
+                    "</b><br>" + nomeServico + "</p><p><b>" +
+                    getString(R.string.preco_servico_bold_html) +
+                    "</b><br>" + precoServico + "</p><p><b>" +
+                    getString(R.string.duracao_servico_bold_html) +
+                    "</b><br>" + duracaoServico + "</p><p><b>" +
+                    getString(R.string.descricao_servico_bold_html) +
+                    "</b><br>" + descricaoServico + "</p>", Html.FROM_HTML_MODE_LEGACY));
+        } else {
+            builder.setMessage(Html.fromHtml("<p><b>" + getString(R.string.nome_servico_bold_html) +
+                    "</b><br>" + nomeServico + "</p><p><b>" +
+                    getString(R.string.preco_servico_bold_html) +
+                    "</b><br>" + precoServico + "</p><p><b>" +
+                    getString(R.string.duracao_servico_bold_html) +
+                    "</b><br>" + duracaoServico + "</p><p><b>" +
+                    getString(R.string.descricao_servico_bold_html) +
+                    "</b><br>" + descricaoServico + "</p>"));
+        }
+    }
+
+
+
+
+    public void addList(){
+        Servico servico = new Servico();
+        servico.setIdServico("1");
+        servico.setIcone(R.mipmap.ic_launcher);
+        this.mList.add(servico);
+        ((RecyclerAdapter) this.mRecyclerView.getAdapter()).exibirList();
+    }
+
+    public void removeList(){
+        this.mList.remove(0);
+        ((RecyclerAdapter) this.mRecyclerView.getAdapter()).exibirList();
+    }
+
+}

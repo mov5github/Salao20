@@ -1,7 +1,6 @@
 package com.example.lucas.salao20.activitys;
 
 import android.app.ProgressDialog;
-import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -22,7 +21,7 @@ import com.example.lucas.salao20.domain.User;
 import com.example.lucas.salao20.domain.util.LibraryClass;
 import com.example.lucas.salao20.enumeradores.GeralENUM;
 import com.example.lucas.salao20.enumeradores.TipoUsuarioENUM;
-import com.example.lucas.salao20.geral.CadastroBasico;
+import com.example.lucas.salao20.geral.geral.CadastroBasico;
 import com.example.lucas.salao20.geral.Teste;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;

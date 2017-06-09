@@ -2,15 +2,18 @@ package com.example.lucas.salao20.adapters;
 
 import android.content.Context;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 
 import com.example.lucas.salao20.R;
-import com.example.lucas.salao20.dao.model.Servico;
+import com.example.lucas.salao20.geral.geral.Servico;
 import com.example.lucas.salao20.interfaces.RecyclerViewOnClickListenerHack;
 
+import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -36,7 +39,13 @@ public class RecyclerAdapter extends RecyclerView.Adapter<RecyclerAdapter.MyView
 
     @Override
     public void onBindViewHolder(MyViewHolder myViewHolder, int position) {
-        myViewHolder.ivIcone.setImageResource(mList.get(position).getIcone());
+        //myViewHolder.ivIcone.setImageResource(mList.get(position).getIcone());
+        Log.i("testeteste","size = " + String.valueOf(mList.size()));
+        if (this.mList.get(position) != null){
+            Log.i("testeteste","position = " + String.valueOf(position) + " ## mList contains");
+        }else{
+            Log.i("testeteste","position = " + String.valueOf(position) + " ## mList NOcontains");
+        }
     }
 
     @Override
@@ -70,6 +79,13 @@ public class RecyclerAdapter extends RecyclerView.Adapter<RecyclerAdapter.MyView
             if (mRecyclerViewOnClickListenerHack != null){
                 mRecyclerViewOnClickListenerHack.onClickListener(v, getAdapterPosition());
             }
+        }
+    }
+
+    public void exibirList(){
+        for (Iterator<Servico> iterator = this.mList.iterator(); iterator.hasNext();){
+            int position = this.mList.indexOf(iterator.next());
+            Log.i("testeteste","mList recycler position = " + position);
         }
     }
 }

@@ -1,6 +1,7 @@
 package com.example.lucas.salao20.domain.util;
 
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 
 import com.google.firebase.database.DatabaseReference;
@@ -35,6 +36,15 @@ public class LibraryClass {
         SharedPreferences sp = context.getSharedPreferences(PREF, Context.MODE_PRIVATE);
         String token = sp.getString(key, "");
         return( token );
+    }
+
+    public static String formatarCodUnico(Integer codUnico){
+        String codUnicoFormatado = "";
+        for (int i = 0; i < (6 - codUnico.toString().length()); i++){
+            codUnicoFormatado += "0";
+        }
+        codUnicoFormatado += codUnico.toString();
+        return codUnicoFormatado;
     }
 
 }

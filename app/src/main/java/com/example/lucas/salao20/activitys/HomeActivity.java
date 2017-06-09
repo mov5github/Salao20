@@ -16,12 +16,16 @@ import android.widget.Toast;
 import com.example.lucas.salao20.R;
 import com.example.lucas.salao20.adapters.HomeAdapter;
 import com.example.lucas.salao20.enumeradores.TipoUsuarioENUM;
-import com.example.lucas.salao20.fragments.configuracaoInicial.FragmentBasicoCabeleireiro;
-import com.example.lucas.salao20.fragments.configuracaoInicial.FragmentBasicoCliente;
-import com.example.lucas.salao20.fragments.home.FragmentHomeSalaoAgendas;
-import com.example.lucas.salao20.fragments.home.FragmentHomeSalaoDados;
-import com.example.lucas.salao20.fragments.home.FragmentHomeSalaoPromocoes;
-import com.example.lucas.salao20.geral.CadastroBasico;
+import com.example.lucas.salao20.fragments.home.cliente.FragmentHomeClienteAgenda;
+import com.example.lucas.salao20.fragments.home.cliente.FragmentHomeClientePromocoes;
+import com.example.lucas.salao20.fragments.home.cliente.FragmentHomeClienteSaloes;
+import com.example.lucas.salao20.fragments.home.profissional.FragmentHomeProfissionalAgendas;
+import com.example.lucas.salao20.fragments.home.profissional.FragmentHomeProfissionalCadeiras;
+import com.example.lucas.salao20.fragments.home.profissional.FragmentHomeProfissionalDados;
+import com.example.lucas.salao20.fragments.home.salao.FragmentHomeSalaoAgendas;
+import com.example.lucas.salao20.fragments.home.salao.FragmentHomeSalaoDados;
+import com.example.lucas.salao20.fragments.home.salao.FragmentHomeSalaoPromocoes;
+import com.example.lucas.salao20.geral.geral.CadastroBasico;
 import com.example.lucas.salao20.slidingTabLayout.SlidingTabLayout;
 import com.google.firebase.auth.FirebaseAuth;
 
@@ -136,13 +140,13 @@ public class HomeActivity extends AppCompatActivity {
                     case TipoUsuarioENUM.PROFISSIONAl:
                         mToolbar.setSubtitle("Home do cabeleireiro");
                         mToolbar.setLogo(R.mipmap.ic_launcher);
-                        String[] titles2 = {FragmentBasicoCabeleireiro.getTitulo()};
+                        String[] titles2 = {FragmentHomeProfissionalDados.getTITULO(), FragmentHomeProfissionalAgendas.getTITULO(), FragmentHomeProfissionalCadeiras.getTITULO()};
                         mViewPager.setAdapter(new HomeAdapter(getSupportFragmentManager(),this,titles2, cadastroBasico.getTipoUsuario()));
                         break;
                     case TipoUsuarioENUM.CLIENTE:
                         mToolbar.setSubtitle("Home do cliente");
                         mToolbar.setLogo(R.mipmap.ic_launcher);
-                        String[] titles3 = {FragmentBasicoCliente.getTitulo()};
+                        String[] titles3 = {FragmentHomeClienteSaloes.getTITULO(), FragmentHomeClienteAgenda.getTITULO(), FragmentHomeClientePromocoes.getTITULO()};
                         mViewPager.setAdapter(new HomeAdapter(getSupportFragmentManager(),this,titles3, cadastroBasico.getTipoUsuario()));
                         break;
                     default:

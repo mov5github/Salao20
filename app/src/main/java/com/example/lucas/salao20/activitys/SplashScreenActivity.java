@@ -13,7 +13,7 @@ import com.example.lucas.salao20.R;
 import com.example.lucas.salao20.domain.util.LibraryClass;
 import com.example.lucas.salao20.enumeradores.GeralENUM;
 import com.example.lucas.salao20.enumeradores.TipoUsuarioENUM;
-import com.example.lucas.salao20.geral.CadastroBasico;
+import com.example.lucas.salao20.geral.geral.CadastroBasico;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;

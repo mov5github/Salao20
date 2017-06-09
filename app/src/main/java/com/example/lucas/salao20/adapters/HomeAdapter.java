@@ -7,11 +7,15 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 
 import com.example.lucas.salao20.enumeradores.TipoUsuarioENUM;
-import com.example.lucas.salao20.fragments.configuracaoInicial.FragmentBasicoCabeleireiro;
-import com.example.lucas.salao20.fragments.configuracaoInicial.FragmentBasicoCliente;
-import com.example.lucas.salao20.fragments.home.FragmentHomeSalaoAgendas;
-import com.example.lucas.salao20.fragments.home.FragmentHomeSalaoDados;
-import com.example.lucas.salao20.fragments.home.FragmentHomeSalaoPromocoes;
+import com.example.lucas.salao20.fragments.home.cliente.FragmentHomeClienteAgenda;
+import com.example.lucas.salao20.fragments.home.cliente.FragmentHomeClientePromocoes;
+import com.example.lucas.salao20.fragments.home.cliente.FragmentHomeClienteSaloes;
+import com.example.lucas.salao20.fragments.home.profissional.FragmentHomeProfissionalAgendas;
+import com.example.lucas.salao20.fragments.home.profissional.FragmentHomeProfissionalCadeiras;
+import com.example.lucas.salao20.fragments.home.profissional.FragmentHomeProfissionalDados;
+import com.example.lucas.salao20.fragments.home.salao.FragmentHomeSalaoAgendas;
+import com.example.lucas.salao20.fragments.home.salao.FragmentHomeSalaoDados;
+import com.example.lucas.salao20.fragments.home.salao.FragmentHomeSalaoPromocoes;
 
 /**
  * Created by Lucas on 21/03/2017.
@@ -56,7 +60,16 @@ public class HomeAdapter extends FragmentPagerAdapter {
             case TipoUsuarioENUM.CLIENTE:
                 switch (position) {
                     case 0:
-                        frag = new FragmentBasicoCliente();
+                        frag = new FragmentHomeClienteSaloes();
+                        mFragments[position] = frag;
+                        break;
+                    case 1:
+                        frag = new FragmentHomeClienteAgenda();
+                        mFragments[position] = frag;
+                        break;
+                    case 2:
+                        frag = new FragmentHomeClientePromocoes();
+                        mFragments[position] = frag;
                         break;
                     default:
                         break;
@@ -65,7 +78,16 @@ public class HomeAdapter extends FragmentPagerAdapter {
             case TipoUsuarioENUM.PROFISSIONAl:
                 switch (position) {
                     case 0:
-                        frag = new FragmentBasicoCabeleireiro();
+                        frag = new FragmentHomeProfissionalDados();
+                        mFragments[position] = frag;
+                        break;
+                    case 1:
+                        frag = new FragmentHomeProfissionalAgendas();
+                        mFragments[position] = frag;
+                        break;
+                    case 2:
+                        frag = new FragmentHomeProfissionalCadeiras();
+                        mFragments[position] = frag;
                         break;
                     default:
                         break;

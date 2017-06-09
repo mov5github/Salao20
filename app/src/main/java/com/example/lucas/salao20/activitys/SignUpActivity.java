@@ -9,7 +9,6 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v7.widget.Toolbar;
-import android.util.Base64;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -24,31 +23,20 @@ import com.example.lucas.salao20.domain.User;
 import com.example.lucas.salao20.domain.util.LibraryClass;
 import com.example.lucas.salao20.enumeradores.GeralENUM;
 import com.example.lucas.salao20.fragments.signUp.FragmentCadastroBasico;
-import com.example.lucas.salao20.geral.Acount;
-import com.example.lucas.salao20.geral.CadastroBasico;
-import com.example.lucas.salao20.geral.Criptografia;
-import com.example.lucas.salao20.intentServices.BackgroundIntentService;
+import com.example.lucas.salao20.geral.geral.Acount;
+import com.example.lucas.salao20.geral.geral.CadastroBasico;
+import com.example.lucas.salao20.geral.geral.Criptografia;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.crash.FirebaseCrash;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.ServerValue;
 
-import java.security.KeyPair;
-import java.security.KeyPairGenerator;
-import java.security.PrivateKey;
-import java.security.PublicKey;
-import java.security.SecureRandom;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
-
-import javax.crypto.Cipher;
 
 
 /**

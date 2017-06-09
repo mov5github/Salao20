@@ -4,7 +4,6 @@ import android.app.Activity;
 import android.content.Context;
 
 import com.example.lucas.salao20.activitys.SignUpActivity;
-import com.example.lucas.salao20.dao.DatabaseHelper;
 import com.example.lucas.salao20.domain.util.LibraryClass;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.ServerValue;

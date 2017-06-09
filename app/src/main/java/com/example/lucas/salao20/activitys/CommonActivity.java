@@ -6,14 +6,11 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 import android.view.View;
 import android.widget.AutoCompleteTextView;
 import android.widget.EditText;
 import android.widget.ProgressBar;
 import android.widget.Toast;
-
-import com.example.lucas.salao20.geral.CadastroBasico;
 
 /**
  * Created by Lucas on 17/03/2017.
@@ -112,7 +109,7 @@ public abstract class CommonActivity extends AppCompatActivity{
     }
 
     protected void callCadastroInicialActivity(Bundle bundle){
-        Intent intent = new Intent(this, CadastroInicialActivity.class);
+        Intent intent = new Intent(this, ConfiguracaoInicialActivity.class);
         if (bundle != null){
             intent.putExtras(bundle);
         }
@@ -121,7 +118,7 @@ public abstract class CommonActivity extends AppCompatActivity{
     }
 
     protected void callConfiguracaoIncialActivity(Bundle bundle){
-        Intent intent = new Intent(this, CadastroInicialActivity.class);
+        Intent intent = new Intent(this, ConfiguracaoInicialActivity.class);
         if (bundle != null){
             intent.putExtras(bundle);
         }

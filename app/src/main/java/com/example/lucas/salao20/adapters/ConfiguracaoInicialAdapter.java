@@ -7,12 +7,12 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 
 import com.example.lucas.salao20.enumeradores.TipoUsuarioENUM;
-import com.example.lucas.salao20.fragments.configuracaoInicial.FragmentBasicoCabeleireiro;
-import com.example.lucas.salao20.fragments.configuracaoInicial.FragmentBasicoCliente;
-import com.example.lucas.salao20.fragments.configuracaoInicial.FragmentProfissionais;
-import com.example.lucas.salao20.fragments.configuracaoInicial.FragmentFuncionamento;
-import com.example.lucas.salao20.fragments.configuracaoInicial.FragmentServicos;
-import com.example.lucas.salao20.fragments.configuracaoInicial.FragmentTipoCadastro;
+import com.example.lucas.salao20.fragments.configuracaoInicial.profissional.FragmentConfiguracaoInicialProfissionalBasico;
+import com.example.lucas.salao20.fragments.configuracaoInicial.cliente.FragmentConfiguracaoInicialClienteBasico;
+import com.example.lucas.salao20.fragments.configuracaoInicial.salao.FragmentConfiguracaoInicialSalaoProfissionais;
+import com.example.lucas.salao20.fragments.configuracaoInicial.salao.FragmentConfiguracaoInicialSalaoFuncionamento;
+import com.example.lucas.salao20.fragments.configuracaoInicial.salao.FragmentConfiguracaoInicialSalaoServicos;
+import com.example.lucas.salao20.fragments.configuracaoInicial.FragmentConfiguracaoInicialTipoCadastro;
 
 /**
  * Created by Lucas on 21/03/2017.
@@ -55,7 +55,7 @@ public class ConfiguracaoInicialAdapter extends FragmentPagerAdapter {
         if (this.tipoUsuario == null){
             switch (position){
                 case 0:
-                    frag = new FragmentTipoCadastro();
+                    frag = new FragmentConfiguracaoInicialTipoCadastro();
                     break;
                 default:
                     break;
@@ -63,15 +63,15 @@ public class ConfiguracaoInicialAdapter extends FragmentPagerAdapter {
         }else if (tipoUsuario.equals(TipoUsuarioENUM.SALAO)){
             switch (position){
                 case 0:
-                    frag = new FragmentFuncionamento();
+                    frag = new FragmentConfiguracaoInicialSalaoFuncionamento();
                     mFragments[position] = frag;
                     break;
                 case 1:
-                    frag = new FragmentServicos();
+                    frag = new FragmentConfiguracaoInicialSalaoServicos();
                     mFragments[position] = frag;
                     break;
                 case 2:
-                    frag = new FragmentProfissionais();
+                    frag = new FragmentConfiguracaoInicialSalaoProfissionais();
                     mFragments[position] = frag;
                     break;
                 default:
@@ -80,7 +80,7 @@ public class ConfiguracaoInicialAdapter extends FragmentPagerAdapter {
         }else if (tipoUsuario.equals(TipoUsuarioENUM.CLIENTE)){
             switch (position){
                 case 0:
-                    frag = new FragmentBasicoCliente();
+                    frag = new FragmentConfiguracaoInicialClienteBasico();
                     break;
                 default:
                     break;
@@ -89,7 +89,7 @@ public class ConfiguracaoInicialAdapter extends FragmentPagerAdapter {
         else if (tipoUsuario.equals(TipoUsuarioENUM.PROFISSIONAl)){
             switch (position){
                 case 0:
-                    frag = new FragmentBasicoCabeleireiro();
+                    frag = new FragmentConfiguracaoInicialProfissionalBasico();
                     break;
                 default:
                     break;
