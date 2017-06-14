@@ -104,7 +104,7 @@ public class ConfiguracaoInicialActivity extends AppCompatActivity{
     private static boolean etapa2Salva;
     private static boolean etapa3Preenchida;
     private static boolean etapa3Salva;
-    private static boolean codUnicoObtido;
+
 
 
 
@@ -161,7 +161,6 @@ public class ConfiguracaoInicialActivity extends AppCompatActivity{
         Log.i("script","ConfiguracaoInicialActivity() onStart()");
         cadastroInicialActivityAtiva = true;
         mAuth.addAuthStateListener(mAuthListener);
-        liberarPreenchimentoFragmentFuncionamento();
     }
 
     @Override
@@ -199,8 +198,6 @@ public class ConfiguracaoInicialActivity extends AppCompatActivity{
         }
         return super.onOptionsItemSelected(item);
     }
-
-
 
     private void initView() {
         //TOOLBAR
@@ -275,7 +272,6 @@ public class ConfiguracaoInicialActivity extends AppCompatActivity{
         etapa2Salva = false;
         etapa3Preenchida = false;
         etapa3Salva = false;
-        codUnicoObtido = false;
     }
 
     private void initDados(){
@@ -305,9 +301,6 @@ public class ConfiguracaoInicialActivity extends AppCompatActivity{
                             }
                             if (dataSnapshot.hasChild(CadastroBasico.getNIVEL_USUARIO())){
                                 cadastroBasico.setNivelUsuario(dataSnapshot.child(CadastroBasico.getNIVEL_USUARIO()).getValue(Double.class));
-                                if (dataSnapshot.child(CadastroBasico.getNIVEL_USUARIO()).getValue(Double.class) >= 2.1){
-                                    codUnicoObtido = true;
-                                }
                             }
                             if (dataSnapshot.hasChild(CadastroBasico.getCODIGO_UNICO())){
                                 cadastroBasico.setCodigoUnico(dataSnapshot.child(CadastroBasico.getCODIGO_UNICO()).getValue(String.class));
@@ -323,62 +316,6 @@ public class ConfiguracaoInicialActivity extends AppCompatActivity{
             }
             this.refCadastroBasico.addValueEventListener(this.valueEventListenerCadastroBasico);
 
-            if (this.childEventListenerCadastroComplementar == null){
-                this.childEventListenerCadastroComplementar = new ChildEventListener() {
-                    @Override
-                    public void onChildAdded(DataSnapshot dataSnapshot, String s) {
-                        if (dataSnapshot.exists()){
-                            if (cadastroComplementar == null){
-                                cadastroComplementar = new CadastroComplementar();
-                            }
-                            if (dataSnapshot.hasChild(CadastroComplementar.getNOME())){
-                               cadastroComplementar.setNome(dataSnapshot.child(CadastroComplementar.getNOME()).getValue(String.class));
-                           }
-                        }else{
-                            if (cadastroComplementar == null){
-                                cadastroComplementar = new CadastroComplementar();
-                            }
-                        }
-                        if (mViewPager != null && mViewPager.getCurrentItem() == 0){
-                            ((FragmentConfiguracaoInicialSalaoFuncionamento)((ConfiguracaoInicialAdapter)mViewPager.getAdapter()).getFragment(0)).aplicarDadosFormulario();
-                        }
-                    }
-
-                    @Override
-                    public void onChildChanged(DataSnapshot dataSnapshot, String s) {
-                        if (dataSnapshot.exists()){
-                            if (dataSnapshot.hasChild(CadastroComplementar.getNOME())){
-                                cadastroComplementar.setNome(dataSnapshot.child(CadastroComplementar.getNOME()).getValue(String.class));
-                            }
-                            if (mViewPager != null && mViewPager.getCurrentItem() == 0){
-                                ((FragmentConfiguracaoInicialSalaoFuncionamento)((ConfiguracaoInicialAdapter)mViewPager.getAdapter()).getFragment(0)).aplicarDadosFormulario();
-                            }
-                        }
-                    }
-
-                    @Override
-                    public void onChildRemoved(DataSnapshot dataSnapshot) {
-                        if (dataSnapshot.exists()){
-                            if (dataSnapshot.hasChild(CadastroComplementar.getNOME())){
-                                cadastroComplementar.setNome(null);
-                            }
-                            if (mViewPager != null && mViewPager.getCurrentItem() == 0){
-                                ((FragmentConfiguracaoInicialSalaoFuncionamento)((ConfiguracaoInicialAdapter)mViewPager.getAdapter()).getFragment(0)).aplicarDadosFormulario();
-                            }
-                        }
-                    }
-
-                    @Override
-                    public void onChildMoved(DataSnapshot dataSnapshot, String s) {
-
-                    }
-
-                    @Override
-                    public void onCancelled(DatabaseError databaseError) {
-
-                    }
-                };
-            }
             if (this.valueEventListenerCadastroComplementar == null){
                 this.valueEventListenerCadastroComplementar = new ValueEventListener() {
                     @Override
@@ -389,14 +326,15 @@ public class ConfiguracaoInicialActivity extends AppCompatActivity{
                             }
                             if (dataSnapshot.hasChild(CadastroComplementar.getNOME())){
                                 cadastroComplementar.setNome(dataSnapshot.child(CadastroComplementar.getNOME()).getValue(String.class));
+                                if (mViewPager != null && FragmentConfiguracaoInicialSalaoFuncionamento.isFragmentFuncionamentoSalaoAtivo()){
+                                    ((FragmentConfiguracaoInicialSalaoFuncionamento)((ConfiguracaoInicialAdapter)mViewPager.getAdapter()).getFragment(0)).nomeAtualizado();
+                                }
                             }
                         }else{
                             if (cadastroComplementar == null){
                                 cadastroComplementar = new CadastroComplementar();
                             }
                         }
-                        cadastroComplementarObtido = true;
-                        liberarPreenchimentoFragmentFuncionamento();
                     }
 
                     @Override
@@ -411,7 +349,7 @@ public class ConfiguracaoInicialActivity extends AppCompatActivity{
                 switch (cadastroBasico.getTipoUsuario()){
                     case TipoUsuarioENUM.SALAO:
                         if (this.refFuncionamentoSalao == null){
-                            this.refFuncionamentoSalao = LibraryClass.getFirebase().child(GeralENUM.USERS).child(TipoUsuarioENUM.SALAO).child(mAuth.getCurrentUser().getUid());
+                            this.refFuncionamentoSalao = LibraryClass.getFirebase().child(GeralENUM.USERS).child(mAuth.getCurrentUser().getUid()).child(GeralENUM.FUNCIONAMENTO);
                             this.refFuncionamentoSalao.keepSynced(true);
                         }
                         if (this.refServicosSalao == null){
@@ -422,42 +360,27 @@ public class ConfiguracaoInicialActivity extends AppCompatActivity{
                             this.refProfissionaisSalao = LibraryClass.getFirebase().child(GeralENUM.USERS).child(mAuth.getCurrentUser().getUid()).child(GeralENUM.PROFISSIONAIS);
                             this.refProfissionaisSalao.keepSynced(true);
                         }
-                        if (cadastroBasico.getNivelUsuario() != null && cadastroBasico.getNivelUsuario() == 2.0){
-                            gerarCodigoUnico(TipoUsuarioENUM.SALAO);
-                        }else if (cadastroBasico.getNivelUsuario() != null && cadastroBasico.getNivelUsuario() > 2.0){
-                            codUnicoObtido = true;
-                        }
 
+                        //FUNCIONAMNENTO SALAO
                         if (this.childEventListenerFuncionamentoSalao == null){
                             this.childEventListenerFuncionamentoSalao = new ChildEventListener() {
                                 @Override
                                 public void onChildAdded(DataSnapshot dataSnapshot, String s) {
                                     if (dataSnapshot.exists()){
-                                        if (funcionamentoSalao == null){
-                                            funcionamentoSalao = new FuncionamentoSalao();
-                                            funcionamentoSalao.setFuncionamentoDoSalao(new HashMap<String, Funcionamento>());
+                                        Funcionamento funcionamento = new Funcionamento();
+                                        funcionamento.setDia(dataSnapshot.getKey());
+                                        if (dataSnapshot.hasChild(DiasENUM.ABRE)){
+                                            funcionamento.setAbre(dataSnapshot.child(DiasENUM.ABRE).getValue(String.class));
                                         }
+                                        if (dataSnapshot.hasChild(DiasENUM.FECHA)){
+                                            funcionamento.setFecha(dataSnapshot.child(DiasENUM.FECHA).getValue(String.class));
+                                        }
+                                        funcionamentoSalao.addFuncionamento(funcionamento);
+                                        if (mViewPager != null && FragmentConfiguracaoInicialSalaoFuncionamento.isFragmentFuncionamentoSalaoAtivo()){
+                                            ((FragmentConfiguracaoInicialSalaoFuncionamento)((ConfiguracaoInicialAdapter)mViewPager.getAdapter()).getFragment(0)).funcionamentoAdicionado(funcionamento.getDia());
+                                        }
+                                    }
 
-                                        for (DataSnapshot child : dataSnapshot.getChildren()) {
-                                            Funcionamento funcionamento = new Funcionamento();
-                                            funcionamento.setDia(child.getKey());
-                                            if (child.hasChild(DiasENUM.ABRE)){
-                                                funcionamento.setAbre(child.child(DiasENUM.ABRE).getValue(String.class));
-                                            }
-                                            if (child.hasChild(DiasENUM.FECHA)){
-                                                funcionamento.setFecha(child.child(DiasENUM.FECHA).getValue(String.class));
-                                            }
-                                            funcionamentoSalao.addFuncionamento(funcionamento);
-                                        }
-                                    }else{
-                                        if (funcionamentoSalao == null){
-                                            funcionamentoSalao = new FuncionamentoSalao();
-                                            funcionamentoSalao.setFuncionamentoDoSalao(new HashMap<String, Funcionamento>());
-                                        }
-                                    }
-                                    if (mViewPager != null && mViewPager.getCurrentItem() == 0){
-                                        ((FragmentConfiguracaoInicialSalaoFuncionamento)((ConfiguracaoInicialAdapter)mViewPager.getAdapter()).getFragment(0)).aplicarDadosFormulario();
-                                    }
                                 }
 
                                 @Override
@@ -465,17 +388,15 @@ public class ConfiguracaoInicialActivity extends AppCompatActivity{
                                     if (dataSnapshot.exists()){
                                         Funcionamento funcionamento = new Funcionamento();
                                         funcionamento.setDia(dataSnapshot.getKey());
-                                        for (DataSnapshot child : dataSnapshot.getChildren()) {
-                                            if (child.getKey().equals(DiasENUM.ABRE)){
-                                                funcionamento.setAbre(child.getValue(String.class));
-                                            }
-                                            if (child.getKey().equals(DiasENUM.FECHA)){
-                                                funcionamento.setFecha(child.getValue(String.class));
-                                            }
+                                        if (dataSnapshot.hasChild(DiasENUM.ABRE)){
+                                            funcionamento.setAbre(dataSnapshot.child(DiasENUM.ABRE).getValue(String.class));
+                                        }
+                                        if (dataSnapshot.hasChild(DiasENUM.FECHA)){
+                                            funcionamento.setFecha(dataSnapshot.child(DiasENUM.FECHA).getValue(String.class));
                                         }
                                         funcionamentoSalao.addFuncionamento(funcionamento);
-                                        if (mViewPager != null && mViewPager.getCurrentItem() == 0){
-                                            ((FragmentConfiguracaoInicialSalaoFuncionamento)((ConfiguracaoInicialAdapter)mViewPager.getAdapter()).getFragment(0)).aplicarDadosFormulario();
+                                        if (mViewPager != null && FragmentConfiguracaoInicialSalaoFuncionamento.isFragmentFuncionamentoSalaoAtivo()){
+                                            ((FragmentConfiguracaoInicialSalaoFuncionamento)((ConfiguracaoInicialAdapter)mViewPager.getAdapter()).getFragment(0)).funcionamentoAlterado(funcionamento.getDia());
                                         }
                                     }
                                 }
@@ -484,8 +405,8 @@ public class ConfiguracaoInicialActivity extends AppCompatActivity{
                                 public void onChildRemoved(DataSnapshot dataSnapshot) {
                                     if (dataSnapshot.exists()){
                                         funcionamentoSalao.removerFuncionamento(dataSnapshot.getKey());
-                                        if (mViewPager != null && mViewPager.getCurrentItem() == 0){
-                                            ((FragmentConfiguracaoInicialSalaoFuncionamento)((ConfiguracaoInicialAdapter)mViewPager.getAdapter()).getFragment(0)).aplicarDadosFormulario();
+                                        if (mViewPager != null && FragmentConfiguracaoInicialSalaoFuncionamento.isFragmentFuncionamentoSalaoAtivo()){
+                                            ((FragmentConfiguracaoInicialSalaoFuncionamento)((ConfiguracaoInicialAdapter)mViewPager.getAdapter()).getFragment(0)).funcionamentoRemovido(dataSnapshot.getKey());
                                         }
                                     }
                                 }
@@ -505,31 +426,23 @@ public class ConfiguracaoInicialActivity extends AppCompatActivity{
                             this.valueEventListenerFuncionamentoSalao = new ValueEventListener() {
                                 @Override
                                 public void onDataChange(DataSnapshot dataSnapshot) {
+                                    Log.i("testeteste","valueEventListenerFuncionamentoSalao onDataChange");
+                                    if (funcionamentoSalao == null){
+                                        funcionamentoSalao = new FuncionamentoSalao();
+                                        funcionamentoSalao.setFuncionamentoDoSalao(new HashMap<String, Funcionamento>());
+                                    }
                                     if (dataSnapshot.exists()){
-                                        if (funcionamentoSalao == null){
-                                            funcionamentoSalao = new FuncionamentoSalao();
-                                            funcionamentoSalao.setFuncionamentoDoSalao(new HashMap<String, Funcionamento>());
-                                        }
-
-                                        for (DataSnapshot child : dataSnapshot.getChildren()) {
-                                            Funcionamento funcionamento = new Funcionamento();
-                                            funcionamento.setDia(child.getKey());
-                                            if (child.hasChild(DiasENUM.ABRE)){
-                                                funcionamento.setAbre(child.child(DiasENUM.ABRE).getValue(String.class));
+                                        if (dataSnapshot.getChildrenCount() == 0){
+                                            if (mViewPager != null && FragmentConfiguracaoInicialSalaoFuncionamento.isFragmentFuncionamentoSalaoAtivo()){
+                                                ((FragmentConfiguracaoInicialSalaoFuncionamento)((ConfiguracaoInicialAdapter)mViewPager.getAdapter()).getFragment(0)).liberarFormulario();
                                             }
-                                            if (child.hasChild(DiasENUM.FECHA)){
-                                                funcionamento.setFecha(child.child(DiasENUM.FECHA).getValue(String.class));
-                                            }
-                                            funcionamentoSalao.addFuncionamento(funcionamento);
                                         }
                                     }else{
-                                        if (funcionamentoSalao == null){
-                                            funcionamentoSalao = new FuncionamentoSalao();
-                                            funcionamentoSalao.setFuncionamentoDoSalao(new HashMap<String, Funcionamento>());
+                                        if (mViewPager != null && FragmentConfiguracaoInicialSalaoFuncionamento.isFragmentFuncionamentoSalaoAtivo()){
+                                            ((FragmentConfiguracaoInicialSalaoFuncionamento)((ConfiguracaoInicialAdapter)mViewPager.getAdapter()).getFragment(0)).liberarFormulario();
                                         }
                                     }
-                                    funcionamentoSalaoObtido = true;
-                                    liberarPreenchimentoFragmentFuncionamento();
+                                    refFuncionamentoSalao.addChildEventListener(childEventListenerFuncionamentoSalao);
                                 }
 
                                 @Override
@@ -539,6 +452,7 @@ public class ConfiguracaoInicialActivity extends AppCompatActivity{
                             };
                         }
                         this.refFuncionamentoSalao.addListenerForSingleValueEvent(this.valueEventListenerFuncionamentoSalao);
+
                         //SERVICOS SALAO
                         if (this.childEventListenerServicosSalao == null){
                             this.childEventListenerServicosSalao = new ChildEventListener() {
@@ -546,33 +460,29 @@ public class ConfiguracaoInicialActivity extends AppCompatActivity{
                                 public void onChildAdded(DataSnapshot dataSnapshot, String s) {
                                     Log.i("fireServicos","onChildAdded");
                                     if (dataSnapshot.exists()){
-                                        for (DataSnapshot child : dataSnapshot.getChildren()) {
-                                            if (!servicosSalao.getServicosSalao().containsKey(child.getKey())){
-                                                Servico servico = new Servico();
-                                                servico.setIdServico(child.getKey());
-                                                if (child.hasChild(Servico.getNOME())){
-                                                    servico.setNome(child.child(Servico.getNOME()).getValue(String.class));
-                                                }
-                                                if (child.hasChild(Servico.getICONE())){
-                                                    servico.setIcone(child.child(Servico.getICONE()).getValue(Integer.class));
-                                                }
-                                                if (child.hasChild(Servico.getDURACAO())){
-                                                    servico.setDuracao(child.child(Servico.getDURACAO()).getValue(Integer.class));
-                                                }
-                                                if (child.hasChild(Servico.getPRECO())){
-                                                    servico.setPreco(child.child(Servico.getPRECO()).getValue(Double.class));
-                                                }
-                                                if (child.hasChild(Servico.getDESCRICAO())){
-                                                    servico.setDescricao(child.child(Servico.getDESCRICAO()).getValue(String.class));
-                                                }
-                                                if (child.hasChild(Servico.getDataDeInsercao())){
-                                                    servico.setDataInsercao(child.child(Servico.getDataDeInsercao()).getValue(Long.class));
-                                                }
-                                                servicosSalao.addServico(servico);
-                                                if (mViewPager != null && FragmentConfiguracaoInicialSalaoServicos.isFragmentServicosSalaoAtivo()){
-                                                    ((FragmentConfiguracaoInicialSalaoServicos)((ConfiguracaoInicialAdapter)mViewPager.getAdapter()).getFragment(1)).servicoAdicionado(servico.getIdServico());
-                                                }
-                                            }
+                                        Servico servico = new Servico();
+                                        servico.setIdServico(dataSnapshot.getKey());
+                                        if (dataSnapshot.hasChild(Servico.getNOME())){
+                                            servico.setNome(dataSnapshot.child(Servico.getNOME()).getValue(String.class));
+                                        }
+                                        if (dataSnapshot.hasChild(Servico.getICONE())){
+                                            servico.setIcone(dataSnapshot.child(Servico.getICONE()).getValue(Integer.class));
+                                        }
+                                        if (dataSnapshot.hasChild(Servico.getDURACAO())){
+                                            servico.setDuracao(dataSnapshot.child(Servico.getDURACAO()).getValue(Integer.class));
+                                        }
+                                        if (dataSnapshot.hasChild(Servico.getPRECO())){
+                                            servico.setPreco(dataSnapshot.child(Servico.getPRECO()).getValue(Double.class));
+                                        }
+                                        if (dataSnapshot.hasChild(Servico.getDESCRICAO())){
+                                            servico.setDescricao(dataSnapshot.child(Servico.getDESCRICAO()).getValue(String.class));
+                                        }
+                                        if (dataSnapshot.hasChild(Servico.getDataDeInsercao())){
+                                            servico.setDataInsercao(dataSnapshot.child(Servico.getDataDeInsercao()).getValue(Long.class));
+                                        }
+                                        servicosSalao.addServico(servico);
+                                        if (mViewPager != null && FragmentConfiguracaoInicialSalaoServicos.isFragmentServicosSalaoAtivo()){
+                                            ((FragmentConfiguracaoInicialSalaoServicos)((ConfiguracaoInicialAdapter)mViewPager.getAdapter()).getFragment(1)).servicoAdicionado(servico.getIdServico());
                                         }
                                     }
 
@@ -584,25 +494,23 @@ public class ConfiguracaoInicialActivity extends AppCompatActivity{
                                     if (dataSnapshot.exists()){
                                         Servico servico = new Servico();
                                         servico.setIdServico(dataSnapshot.getKey());
-                                        for (DataSnapshot child : dataSnapshot.getChildren()) {
-                                            if (child.getKey().equals(Servico.getNOME())){
-                                                servico.setNome(child.getValue(String.class));
-                                            }
-                                            if (child.getKey().equals(Servico.getICONE())){
-                                                servico.setIcone(child.getValue(Integer.class));
-                                            }
-                                            if (child.getKey().equals(Servico.getDURACAO())){
-                                                servico.setDuracao(child.getValue(Integer.class));
-                                            }
-                                            if (child.getKey().equals(Servico.getPRECO())){
-                                                servico.setPreco(child.getValue(Double.class));
-                                            }
-                                            if (child.getKey().equals(Servico.getDESCRICAO())){
-                                                servico.setDescricao(child.getValue(String.class));
-                                            }
-                                            if (child.getKey().equals(Servico.getDataDeInsercao())){
-                                                servico.setDataInsercao(child.getValue(Long.class));
-                                            }
+                                        if (dataSnapshot.hasChild(Servico.getNOME())){
+                                            servico.setNome(dataSnapshot.child(Servico.getNOME()).getValue(String.class));
+                                        }
+                                        if (dataSnapshot.hasChild(Servico.getICONE())){
+                                            servico.setIcone(dataSnapshot.child(Servico.getICONE()).getValue(Integer.class));
+                                        }
+                                        if (dataSnapshot.hasChild(Servico.getDURACAO())){
+                                            servico.setDuracao(dataSnapshot.child(Servico.getDURACAO()).getValue(Integer.class));
+                                        }
+                                        if (dataSnapshot.hasChild(Servico.getPRECO())){
+                                            servico.setPreco(dataSnapshot.child(Servico.getPRECO()).getValue(Double.class));
+                                        }
+                                        if (dataSnapshot.hasChild(Servico.getDESCRICAO())){
+                                            servico.setDescricao(dataSnapshot.child(Servico.getDESCRICAO()).getValue(String.class));
+                                        }
+                                        if (dataSnapshot.hasChild(Servico.getDataDeInsercao())){
+                                            servico.setDataInsercao(dataSnapshot.child(Servico.getDataDeInsercao()).getValue(Long.class));
                                         }
                                         servicosSalao.addServico(servico);
                                         if (mViewPager != null && FragmentConfiguracaoInicialSalaoServicos.isFragmentServicosSalaoAtivo()){
@@ -638,37 +546,21 @@ public class ConfiguracaoInicialActivity extends AppCompatActivity{
                             this.valueEventListenerServicosSalao = new ValueEventListener() {
                                 @Override
                                 public void onDataChange(DataSnapshot dataSnapshot) {
+                                    Log.i("testeteste","valueEventListenerServicosSalao onDataChange");
                                     if (servicosSalao == null){
                                         servicosSalao = new ServicosSalao();
                                         servicosSalao.setServicosSalao(new HashMap<String, Servico>());
                                     }
                                     if (dataSnapshot.exists()){
-                                        for (DataSnapshot child : dataSnapshot.getChildren()) {
-                                            Servico servico = new Servico();
-                                            servico.setIdServico(child.getKey());
-                                            if (child.hasChild(Servico.getNOME())){
-                                                servico.setNome(child.child(Servico.getNOME()).getValue(String.class));
+                                        if (dataSnapshot.getChildrenCount() == 0){
+                                            if (mViewPager != null && FragmentConfiguracaoInicialSalaoServicos.isFragmentServicosSalaoAtivo()){
+                                                ((FragmentConfiguracaoInicialSalaoServicos)((ConfiguracaoInicialAdapter)mViewPager.getAdapter()).getFragment(1)).liberarFormulario();
                                             }
-                                            if (child.hasChild(Servico.getICONE())){
-                                                servico.setIcone(child.child(Servico.getICONE()).getValue(Integer.class));
-                                            }
-                                            if (child.hasChild(Servico.getDURACAO())){
-                                                servico.setDuracao(child.child(Servico.getDURACAO()).getValue(Integer.class));
-                                            }
-                                            if (child.hasChild(Servico.getPRECO())){
-                                                servico.setPreco(child.child(Servico.getPRECO()).getValue(Double.class));
-                                            }
-                                            if (child.hasChild(Servico.getDESCRICAO())){
-                                                servico.setDescricao(child.child(Servico.getDESCRICAO()).getValue(String.class));
-                                            }
-                                            if (child.hasChild(Servico.getDataDeInsercao())){
-                                                servico.setDataInsercao(child.child(Servico.getDataDeInsercao()).getValue(Long.class));
-                                            }
-                                            servicosSalao.addServico(servico);
                                         }
-                                    }
-                                    if (mViewPager != null && FragmentConfiguracaoInicialSalaoServicos.isFragmentServicosSalaoAtivo() && !FragmentConfiguracaoInicialSalaoServicos.ismRecyclerViewIniciado()){
-                                        ((FragmentConfiguracaoInicialSalaoServicos)((ConfiguracaoInicialAdapter)mViewPager.getAdapter()).getFragment(1)).iniciarFormulario();
+                                    }else {
+                                        if (mViewPager != null && FragmentConfiguracaoInicialSalaoServicos.isFragmentServicosSalaoAtivo()){
+                                            ((FragmentConfiguracaoInicialSalaoServicos)((ConfiguracaoInicialAdapter)mViewPager.getAdapter()).getFragment(1)).liberarFormulario();
+                                        }
                                     }
                                     refServicosSalao.addChildEventListener(childEventListenerServicosSalao);
                                 }
@@ -680,10 +572,134 @@ public class ConfiguracaoInicialActivity extends AppCompatActivity{
                             };
                         }
                         this.refServicosSalao.addListenerForSingleValueEvent(this.valueEventListenerServicosSalao);
+                        //PROFISSIONAIS SALAO
+                        if (this.childEventListenerProfissionaisSalao == null){
+                            this.childEventListenerProfissionaisSalao = new ChildEventListener() {
+                                @Override
+                                public void onChildAdded(DataSnapshot dataSnapshot, String s) {
+                                    Log.i("fireServicos","onChildAdded");
+                                    if (dataSnapshot.exists()){
+                                        Servico servico = new Servico();
+                                        servico.setIdServico(dataSnapshot.getKey());
+                                        if (dataSnapshot.hasChild(Servico.getNOME())){
+                                            servico.setNome(dataSnapshot.child(Servico.getNOME()).getValue(String.class));
+                                        }
+                                        if (dataSnapshot.hasChild(Servico.getICONE())){
+                                            servico.setIcone(dataSnapshot.child(Servico.getICONE()).getValue(Integer.class));
+                                        }
+                                        if (dataSnapshot.hasChild(Servico.getDURACAO())){
+                                            servico.setDuracao(dataSnapshot.child(Servico.getDURACAO()).getValue(Integer.class));
+                                        }
+                                        if (dataSnapshot.hasChild(Servico.getPRECO())){
+                                            servico.setPreco(dataSnapshot.child(Servico.getPRECO()).getValue(Double.class));
+                                        }
+                                        if (dataSnapshot.hasChild(Servico.getDESCRICAO())){
+                                            servico.setDescricao(dataSnapshot.child(Servico.getDESCRICAO()).getValue(String.class));
+                                        }
+                                        if (dataSnapshot.hasChild(Servico.getDataDeInsercao())){
+                                            servico.setDataInsercao(dataSnapshot.child(Servico.getDataDeInsercao()).getValue(Long.class));
+                                        }
+                                        servicosSalao.addServico(servico);
+                                        if (mViewPager != null && FragmentConfiguracaoInicialSalaoServicos.isFragmentServicosSalaoAtivo()){
+                                            ((FragmentConfiguracaoInicialSalaoServicos)((ConfiguracaoInicialAdapter)mViewPager.getAdapter()).getFragment(1)).servicoAdicionado(servico.getIdServico());
+                                        }
+                                    }
+
+                                }
+
+                                @Override
+                                public void onChildChanged(DataSnapshot dataSnapshot, String s) {
+                                    Log.i("fireServicos","onChildChanged");
+                                    if (dataSnapshot.exists()){
+                                        Servico servico = new Servico();
+                                        servico.setIdServico(dataSnapshot.getKey());
+                                        if (dataSnapshot.hasChild(Servico.getNOME())){
+                                            servico.setNome(dataSnapshot.child(Servico.getNOME()).getValue(String.class));
+                                        }
+                                        if (dataSnapshot.hasChild(Servico.getICONE())){
+                                            servico.setIcone(dataSnapshot.child(Servico.getICONE()).getValue(Integer.class));
+                                        }
+                                        if (dataSnapshot.hasChild(Servico.getDURACAO())){
+                                            servico.setDuracao(dataSnapshot.child(Servico.getDURACAO()).getValue(Integer.class));
+                                        }
+                                        if (dataSnapshot.hasChild(Servico.getPRECO())){
+                                            servico.setPreco(dataSnapshot.child(Servico.getPRECO()).getValue(Double.class));
+                                        }
+                                        if (dataSnapshot.hasChild(Servico.getDESCRICAO())){
+                                            servico.setDescricao(dataSnapshot.child(Servico.getDESCRICAO()).getValue(String.class));
+                                        }
+                                        if (dataSnapshot.hasChild(Servico.getDataDeInsercao())){
+                                            servico.setDataInsercao(dataSnapshot.child(Servico.getDataDeInsercao()).getValue(Long.class));
+                                        }
+                                        servicosSalao.addServico(servico);
+                                        if (mViewPager != null && FragmentConfiguracaoInicialSalaoServicos.isFragmentServicosSalaoAtivo()){
+                                            ((FragmentConfiguracaoInicialSalaoServicos)((ConfiguracaoInicialAdapter)mViewPager.getAdapter()).getFragment(1)).servicoAlterado(servico.getIdServico());
+                                        }
+                                    }
+                                }
+
+                                @Override
+                                public void onChildRemoved(DataSnapshot dataSnapshot) {
+                                    Log.i("fireServicos","onChildRemoved");
+                                    if (dataSnapshot.exists()){
+                                        servicosSalao.removerServico(dataSnapshot.getKey());
+                                        if (mViewPager != null && FragmentConfiguracaoInicialSalaoServicos.isFragmentServicosSalaoAtivo()){
+                                            ((FragmentConfiguracaoInicialSalaoServicos)((ConfiguracaoInicialAdapter)mViewPager.getAdapter()).getFragment(1)).servicoRemovido(dataSnapshot.getKey());
+                                        }
+                                    }
+
+                                }
+
+                                @Override
+                                public void onChildMoved(DataSnapshot dataSnapshot, String s) {
+
+                                }
+
+                                @Override
+                                public void onCancelled(DatabaseError databaseError) {
+                                    Log.i("fireServicos","onCancelled");
+                                }
+                            };
+                        }
+                        if (this.valueEventListenerProfissionaisSalao == null){
+                            this.valueEventListenerProfissionaisSalao = new ValueEventListener() {
+                                @Override
+                                public void onDataChange(DataSnapshot dataSnapshot) {
+                                    if (servicosSalao == null){
+                                        servicosSalao = new ServicosSalao();
+                                        servicosSalao.setServicosSalao(new HashMap<String, Servico>());
+                                    }
+                                    if (dataSnapshot.exists()){
+                                        if (dataSnapshot.getChildrenCount() == 0){
+                                            if (mViewPager != null && FragmentConfiguracaoInicialSalaoServicos.isFragmentServicosSalaoAtivo()){
+                                                ((FragmentConfiguracaoInicialSalaoServicos)((ConfiguracaoInicialAdapter)mViewPager.getAdapter()).getFragment(1)).liberarFormulario();
+                                            }
+                                        }
+                                    }else {
+                                        if (mViewPager != null && FragmentConfiguracaoInicialSalaoServicos.isFragmentServicosSalaoAtivo()){
+                                            ((FragmentConfiguracaoInicialSalaoServicos)((ConfiguracaoInicialAdapter)mViewPager.getAdapter()).getFragment(1)).liberarFormulario();
+                                        }
+                                    }
+                                    refServicosSalao.addChildEventListener(childEventListenerServicosSalao);
+                                }
+
+                                @Override
+                                public void onCancelled(DatabaseError databaseError) {
+
+                                }
+                            };
+                        }
+                        this.refProfissionaisSalao.addListenerForSingleValueEvent(this.valueEventListenerProfissionaisSalao);
+
+                        if (cadastroBasico.getNivelUsuario() != null && cadastroBasico.getNivelUsuario() == 2.0){
+                            gerarCodigoUnico(TipoUsuarioENUM.SALAO);
+                        }
                         break;
                     case TipoUsuarioENUM.PROFISSIONAl:
                         //TODO
-                        gerarCodigoUnico(TipoUsuarioENUM.PROFISSIONAl);
+                        if (cadastroBasico.getNivelUsuario() != null && cadastroBasico.getNivelUsuario() == 2.0){
+                            gerarCodigoUnico(TipoUsuarioENUM.PROFISSIONAl);
+                        }
                         break;
                     case TipoUsuarioENUM.CLIENTE:
                         //TODO
@@ -787,9 +803,9 @@ public class ConfiguracaoInicialActivity extends AppCompatActivity{
                 this.refServicosSalao.removeEventListener(this.childEventListenerServicosSalao);
             }
         }
-        if (this.valueEventListenerProfissionaisSalao != null){
-            if (this.refProfissionaisSalao != null) {
-                this.refProfissionaisSalao.removeEventListener(this.valueEventListenerProfissionaisSalao);
+        if (this.valueEventListenerServicosSalao != null){
+            if (this.refServicosSalao != null) {
+                this.refServicosSalao.removeEventListener(this.valueEventListenerServicosSalao);
             }
         }
         if (this.valueEventListenerRegrasDeNegocio != null){
@@ -811,6 +827,7 @@ public class ConfiguracaoInicialActivity extends AppCompatActivity{
                 this.valueEventListenerRegrasDeNegocio = new ValueEventListener() {
                     @Override
                     public void onDataChange(DataSnapshot dataSnapshot) {
+                        Log.i("testeteste","valueEventListenerRegrasDeNegocio onDataChange");
                         if (dataSnapshot.exists()){
                             if (dataSnapshot.hasChild("ControladorCodigoProfissional")){
                                 if (regrasDeNegocio.containsKey("ControladorCodigoProfissional")){
@@ -824,6 +841,12 @@ public class ConfiguracaoInicialActivity extends AppCompatActivity{
                                 }
                                 regrasDeNegocio.put("ControladorCodigoSalao",dataSnapshot.child("ControladorCodigoSalao").getValue(Integer.class));
                             }
+                            handler.post(new Runnable() {
+                                @Override
+                                public void run() {
+                                    atualizarControladorCodigoUnico(cadastroBasico.getTipoUsuario());
+                                }
+                            });
                         }
                     }
 
@@ -835,8 +858,10 @@ public class ConfiguracaoInicialActivity extends AppCompatActivity{
             }
             this.refRegrasDeNegocio.addValueEventListener(this.valueEventListenerRegrasDeNegocio);
         }
+    }
 
-        switch (tipoUsuario){
+    private void atualizarControladorCodigoUnico(String tipoUsuario){
+       /* switch (tipoUsuario){
             case TipoUsuarioENUM.SALAO:
                 if (regrasDeNegocio.containsKey("ControladorCodigoSalao")){
                     auxCodUnico = regrasDeNegocio.get("ControladorCodigoSalao") + 1;
@@ -847,7 +872,7 @@ public class ConfiguracaoInicialActivity extends AppCompatActivity{
                                 handler.postDelayed(new Runnable() {
                                     @Override
                                     public void run() {
-                                        gerarCodigoUnico(TipoUsuarioENUM.SALAO);
+                                        // gerarCodigoUnico(TipoUsuarioENUM.SALAO);
                                     }
                                 },500);
                             }else {
@@ -865,9 +890,8 @@ public class ConfiguracaoInicialActivity extends AppCompatActivity{
                                     public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference) {
                                         if (databaseError != null){
                                             cadastroBasico.setNivelUsuario(2.0);
-                                            gerarCodigoUnico(TipoUsuarioENUM.SALAO);
+                                            // gerarCodigoUnico(TipoUsuarioENUM.SALAO);
                                         }else{
-                                            codUnicoObtido = true;
                                             if (cadastroBasico.getNivelUsuario() != null && cadastroBasico.getNivelUsuario() == 2.1){
                                                 if (etapa1Salva && etapa2Salva && etapa3Salva){
                                                     salvarCadastroBasico();
@@ -886,7 +910,7 @@ public class ConfiguracaoInicialActivity extends AppCompatActivity{
                     this.handler.postDelayed(new Runnable() {
                         @Override
                         public void run() {
-                            gerarCodigoUnico(TipoUsuarioENUM.SALAO);
+                            //gerarCodigoUnico(TipoUsuarioENUM.SALAO);
                         }
                     },500);
                 }
@@ -901,7 +925,7 @@ public class ConfiguracaoInicialActivity extends AppCompatActivity{
                                 handler.postDelayed(new Runnable() {
                                     @Override
                                     public void run() {
-                                        gerarCodigoUnico(TipoUsuarioENUM.PROFISSIONAl);
+                                        //gerarCodigoUnico(TipoUsuarioENUM.PROFISSIONAl);
                                     }
                                 },500);
                             }else {
@@ -919,9 +943,8 @@ public class ConfiguracaoInicialActivity extends AppCompatActivity{
                                     public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference) {
                                         if (databaseError != null){
                                             cadastroBasico.setNivelUsuario(2.0);
-                                            gerarCodigoUnico(TipoUsuarioENUM.PROFISSIONAl);
+                                            // gerarCodigoUnico(TipoUsuarioENUM.PROFISSIONAl);
                                         }else{
-                                            codUnicoObtido = true;
                                             if (cadastroBasico.getNivelUsuario() != null && cadastroBasico.getNivelUsuario() == 2.1){
                                                 if (etapa1Salva && etapa2Salva && etapa3Salva){
                                                     salvarCadastroBasico();
@@ -940,15 +963,12 @@ public class ConfiguracaoInicialActivity extends AppCompatActivity{
                     this.handler.postDelayed(new Runnable() {
                         @Override
                         public void run() {
-                            gerarCodigoUnico(TipoUsuarioENUM.PROFISSIONAl);
+                            //gerarCodigoUnico(TipoUsuarioENUM.PROFISSIONAl);
                         }
                     },500);
                 }
                 break;
-            default:
-                mAuth.signOut();
-                break;
-        }
+        }*/
     }
 
     public void manterObjetosAtualizados(){
@@ -1005,7 +1025,7 @@ public class ConfiguracaoInicialActivity extends AppCompatActivity{
         this.refFuncionamentoSalao.child(dia).removeValue();
     }
 
-    public void saveEtapaFirebase(int etapa){
+    /*public void saveEtapaFirebase(int etapa){
         if (this.mAuth.getCurrentUser() != null && !this.mAuth.getCurrentUser().getUid().isEmpty()){
             switch (etapa){
                 case 1:
@@ -1052,7 +1072,7 @@ public class ConfiguracaoInicialActivity extends AppCompatActivity{
             }
 
         }
-    }
+    }*/
 
     private void salvarCadastroBasico(){
         cadastroBasico.setNivelUsuario(3.0);
@@ -1081,17 +1101,6 @@ public class ConfiguracaoInicialActivity extends AppCompatActivity{
             this.refServicosSalao.updateChildren(childUpdates);
         }
     }
-
-
-    //LIBERARDOR DE FORMULARIOS
-    private  void liberarPreenchimentoFragmentFuncionamento(){
-        if (funcionamentoSalaoObtido && cadastroComplementarObtido){
-            if (this.mViewPager != null && this.mViewPager.getCurrentItem() == 0){
-                ((FragmentConfiguracaoInicialSalaoFuncionamento)((ConfiguracaoInicialAdapter)this.mViewPager.getAdapter()).getFragment(0)).aplicarDadosFormulario();
-            }
-        }
-    }
-
 
     //PROGRESS DIALOG
     public void showProgressDialog(boolean exibir){
@@ -1336,10 +1345,7 @@ public class ConfiguracaoInicialActivity extends AppCompatActivity{
     }
 
     public void addServico(View view) {
-        /*if (FragmentConfiguracaoInicialSalaoServicos.isFragmentServicosSalaoAtivo()){
-            ((FragmentConfiguracaoInicialSalaoServicos)((ConfiguracaoInicialAdapter)mViewPager.getAdapter()).getFragment(1)).criarServico();
-        }*/
-        ((FragmentConfiguracaoInicialSalaoServicos)((ConfiguracaoInicialAdapter)mViewPager.getAdapter()).getFragment(1)).addList();
+        ((FragmentConfiguracaoInicialSalaoServicos)((ConfiguracaoInicialAdapter)mViewPager.getAdapter()).getFragment(1)).criarServico();
     }
 
     public void removerServico(View view) {

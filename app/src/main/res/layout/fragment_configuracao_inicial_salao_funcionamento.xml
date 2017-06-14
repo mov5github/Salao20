@@ -34,8 +34,7 @@
         android:layout_height="wrap_content"
         android:id="@+id/form_nome_salao"
         android:layout_alignParentTop="true"
-        android:layout_marginTop="5dp"
-        android:visibility="invisible">
+        android:layout_marginTop="5dp">
 
         <AutoCompleteTextView
             android:id="@+id/nome_salao"
@@ -55,9 +54,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_below="@+id/form_nome_salao"
-        android:layout_marginTop="15dp"
-        android:visibility="invisible"
-        android:clickable="false">
+        android:layout_marginTop="15dp">
 
         <TableLayout
             android:id="@+id/email_sign_up_form"

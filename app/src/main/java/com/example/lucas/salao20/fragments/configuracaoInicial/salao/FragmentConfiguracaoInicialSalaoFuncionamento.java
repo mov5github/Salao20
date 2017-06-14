@@ -2,6 +2,7 @@ package com.example.lucas.salao20.fragments.configuracaoInicial.salao;
 
 import android.content.Context;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.TextInputLayout;
@@ -20,8 +21,10 @@ import android.widget.Toast;
 
 import com.example.lucas.salao20.R;
 import com.example.lucas.salao20.activitys.ConfiguracaoInicialActivity;
+import com.example.lucas.salao20.adapters.RecyclerAdapter;
 import com.example.lucas.salao20.enumeradores.DiasENUM;
 import com.example.lucas.salao20.geral.geral.Funcionamento;
+import com.example.lucas.salao20.geral.geral.Servico;
 import com.google.firebase.auth.FirebaseAuth;
 
 /**
@@ -31,6 +34,9 @@ import com.google.firebase.auth.FirebaseAuth;
 public class FragmentConfiguracaoInicialSalaoFuncionamento extends Fragment{
     //ENUM
     private static final String TITULO = "Funcionamento";
+
+    //HANDLER
+    private Handler handler;
 
     private ProgressBar progressFuncionamento;
     private FloatingActionButton fabFuncionamento;
@@ -65,7 +71,6 @@ public class FragmentConfiguracaoInicialSalaoFuncionamento extends Fragment{
     private FirebaseAuth mAuth;
 
     //CONTROLE
-    private static boolean formularioLiberado;
     private static boolean fragmentFuncionamentoSalaoAtivo;
 
 
@@ -74,7 +79,8 @@ public class FragmentConfiguracaoInicialSalaoFuncionamento extends Fragment{
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         Log.i("frag","onCreateView");
         View view = inflater.inflate(R.layout.fragment_configuracao_inicial_salao_funcionamento,container,false);
-        formularioLiberado = false;
+        this.handler = new Handler();
+        initControles();
         initViews(view);
         return view;
     }
@@ -92,6 +98,7 @@ public class FragmentConfiguracaoInicialSalaoFuncionamento extends Fragment{
         super.onStart();
         Log.i("frag","onStart");
         fragmentFuncionamentoSalaoAtivo = true;
+        iniciarFormulario();
     }
 
     @Override
@@ -99,11 +106,11 @@ public class FragmentConfiguracaoInicialSalaoFuncionamento extends Fragment{
         super.onStop();
         Log.i("frag","onStop");
         fragmentFuncionamentoSalaoAtivo = false;
+        this.handler.removeCallbacksAndMessages(null);
     }
 
     private void initViews(View view){
         progressFuncionamento = (ProgressBar) view.findViewById(R.id.progress_fragment_funcionamento);
-        progressFuncionamento.setVisibility(View.VISIBLE);
         fabFuncionamento = (FloatingActionButton) view.findViewById(R.id.fab_fragment_funcionamento);
         fabFuncionamento.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -117,6 +124,7 @@ public class FragmentConfiguracaoInicialSalaoFuncionamento extends Fragment{
         fabFuncionamento.setClickable(false);
         formFuncionamento = (ScrollView) view.findViewById(R.id.form_funcionamento);
         formFuncionamento.setVisibility(View.INVISIBLE);
+        formFuncionamento.setClickable(false);
         formNomeSalao = (TextInputLayout) view.findViewById(R.id.form_nome_salao);
         formNomeSalao.setVisibility(View.INVISIBLE);
         labelHorario = (TextView) view.findViewById(R.id.label_horario_funcionamento);
@@ -142,13 +150,14 @@ public class FragmentConfiguracaoInicialSalaoFuncionamento extends Fragment{
         sexta =(CheckBox) view.findViewById(R.id.sexta);
         sabado =(CheckBox) view.findViewById(R.id.sabado);
         domingo =(CheckBox) view.findViewById(R.id.domingo);
+    }
 
-        fragmentFuncionamentoSalaoAtivo = true;
-        aplicarDadosFormulario();
+    private void initControles(){
+        fragmentFuncionamentoSalaoAtivo = false;
     }
 
     private void proximaEtapa(){
-        if (formularioIsValid()){
+        /*if (formularioIsValid()){
             showToast("Formulario valido");
             this.fabFuncionamento.setClickable(true);
             this.fabFuncionamento.setVisibility(View.VISIBLE);
@@ -168,137 +177,7 @@ public class FragmentConfiguracaoInicialSalaoFuncionamento extends Fragment{
         }else {
             this.fabFuncionamento.setClickable(true);
             this.fabFuncionamento.setVisibility(View.VISIBLE);
-        }
-    }
-
-    public void aplicarDadosFormulario(){
-        if (ConfiguracaoInicialActivity.isCadastroComplementarObtido() && ConfiguracaoInicialActivity.isFuncionamentoSalaoObtido() && fragmentFuncionamentoSalaoAtivo){
-            if (ConfiguracaoInicialActivity.getCadastroComplementar() != null && ConfiguracaoInicialActivity.getCadastroComplementar().getNome() != null && !ConfiguracaoInicialActivity.getCadastroComplementar().getNome().isEmpty()){
-                this.nomeSalao.setText(ConfiguracaoInicialActivity.getCadastroComplementar().getNome());
-            }
-            if (ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao() != null){
-                if (ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().keySet().contains(DiasENUM.SEGUNDA)){
-                    this.segunda.setChecked(true);
-                    if (ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(DiasENUM.SEGUNDA).getAbre() != null && !ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(DiasENUM.SEGUNDA).getAbre().isEmpty()){
-                        this.abreSegunda.setText(ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(DiasENUM.SEGUNDA).getAbre());
-                    }else{
-                        this.abreSegunda.setText("--:--");
-                    }
-                    if (ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(DiasENUM.SEGUNDA).getFecha() != null && !ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(DiasENUM.SEGUNDA).getFecha().isEmpty()){
-                        this.fechaSegunda.setText(ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(DiasENUM.SEGUNDA).getFecha());
-                    }
-                    else{
-                        this.fechaSegunda.setText("--:--");
-                    }
-                }else {
-                    this.segunda.setChecked(false);
-                }
-                aplicaVisibilidadeHorarios(this.segunda);
-
-                if (ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().keySet().contains(DiasENUM.TERCA)){
-                    this.terca.setChecked(true);
-                    if (ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(DiasENUM.TERCA).getAbre() != null && !ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(DiasENUM.TERCA).getAbre().isEmpty()){
-                        this.abreTerca.setText(ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(DiasENUM.TERCA).getAbre());
-                    }else{
-                        this.abreTerca.setText("--:--");
-                    }
-                    if (ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(DiasENUM.TERCA).getFecha() != null && !ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(DiasENUM.TERCA).getFecha().isEmpty()){
-                        this.fechaTerca.setText(ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(DiasENUM.TERCA).getFecha());
-                    }else{
-                        this.fechaTerca.setText("--:--");
-                    }
-                }else {
-                    this.terca.setChecked(false);
-                }
-                aplicaVisibilidadeHorarios(this.terca);
-
-                if (ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().keySet().contains(DiasENUM.QUARTA)){
-                    this.quarta.setChecked(true);
-                    if (ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(DiasENUM.QUARTA).getAbre() != null && !ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(DiasENUM.QUARTA).getAbre().isEmpty()){
-                        this.abreQuarta.setText(ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(DiasENUM.QUARTA).getAbre());
-                    }else{
-                        this.abreQuarta.setText("--:--");
-                    }
-                    if (ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(DiasENUM.QUARTA).getFecha() != null && !ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(DiasENUM.QUARTA).getFecha().isEmpty()){
-                        this.fechaQuarta.setText(ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(DiasENUM.QUARTA).getFecha());
-                    }else{
-                        this.fechaQuarta.setText("--:--");
-                    }
-                }else {
-                    this.quarta.setChecked(false);
-                }
-                aplicaVisibilidadeHorarios(this.quarta);
-
-                if (ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().keySet().contains(DiasENUM.QUINTA)){
-                    this.quinta.setChecked(true);
-                    if (ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(DiasENUM.QUINTA).getAbre() != null && !ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(DiasENUM.QUINTA).getAbre().isEmpty()){
-                        this.abreQuinta.setText(ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(DiasENUM.QUINTA).getAbre());
-                    }else{
-                        this.abreQuinta.setText("--:--");
-                    }
-                    if (ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(DiasENUM.QUINTA).getFecha() != null && !ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(DiasENUM.QUINTA).getFecha().isEmpty()){
-                        this.fechaQuinta.setText(ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(DiasENUM.QUINTA).getFecha());
-                    }else{
-                        this.fechaQuinta.setText("--:--");
-                    }
-                }else {
-                    this.quinta.setChecked(false);
-                }
-                aplicaVisibilidadeHorarios(this.quinta);
-
-                if (ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().keySet().contains(DiasENUM.SEXTA)){
-                    this.sexta.setChecked(true);
-                    if (ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(DiasENUM.SEXTA).getAbre() != null && !ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(DiasENUM.SEXTA).getAbre().isEmpty()){
-                        this.abreSexta.setText(ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(DiasENUM.SEXTA).getAbre());
-                    }else{
-                        this.abreSexta.setText("--:--");
-                    }
-                    if (ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(DiasENUM.SEXTA).getFecha() != null && !ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(DiasENUM.SEXTA).getFecha().isEmpty()){
-                        this.fechaSexta.setText(ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(DiasENUM.SEXTA).getFecha());
-                    }else{
-                        this.fechaSexta.setText("--:--");
-                    }
-                }else {
-                    this.sexta.setChecked(false);
-                }
-                aplicaVisibilidadeHorarios(this.sexta);
-
-                if (ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().keySet().contains(DiasENUM.SABADO)){
-                    this.sabado.setChecked(true);
-                    if (ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(DiasENUM.SABADO).getAbre() != null && !ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(DiasENUM.SABADO).getAbre().isEmpty()){
-                        this.abreSabado.setText(ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(DiasENUM.SABADO).getAbre());
-                    }else{
-                        this.abreSabado.setText("--:--");
-                    }
-                    if (ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(DiasENUM.SABADO).getFecha() != null && !ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(DiasENUM.SABADO).getFecha().isEmpty()){
-                        this.fechaSabado.setText(ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(DiasENUM.SABADO).getFecha());
-                    }else{
-                        this.fechaSabado.setText("--:--");
-                    }
-                }else {
-                    this.sabado.setChecked(false);
-                }
-                aplicaVisibilidadeHorarios(this.sabado);
-
-                if (ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().keySet().contains(DiasENUM.DOMINGO)){
-                    this.domingo.setChecked(true);
-                    if (ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(DiasENUM.DOMINGO).getAbre() != null && !ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(DiasENUM.DOMINGO).getAbre().isEmpty()){
-                        this.abreDomingo.setText(ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(DiasENUM.DOMINGO).getAbre());
-                    }else{
-                        this.abreDomingo.setText("--:--");
-                    }
-                    if (ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(DiasENUM.DOMINGO).getFecha() != null && !ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(DiasENUM.DOMINGO).getFecha().isEmpty()){
-                        this.fechaDomingo.setText(ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(DiasENUM.DOMINGO).getFecha());
-                    }else{
-                        this.fechaDomingo.setText("--:--");
-                    }
-                }else {
-                    this.domingo.setChecked(false);
-                }
-                aplicaVisibilidadeHorarios(this.domingo);
-            }
-            liberarPreenchimento();
-        }
+        }*/
     }
 
     public void diaSelecionado(CheckBox checkBox){
@@ -321,7 +200,7 @@ public class FragmentConfiguracaoInicialSalaoFuncionamento extends Fragment{
                     abreTerca.setVisibility(View.VISIBLE);
                     fechaTerca.setVisibility(View.VISIBLE);
                     ConfiguracaoInicialActivity.getFuncionamentoSalao().addFuncionamento(new Funcionamento(DiasENUM.TERCA,this.abreTerca.getText().toString(),this.fechaTerca.getText().toString()));
-                    ((ConfiguracaoInicialActivity) getActivity()).adicionaFuncionamentoFirebase(DiasENUM.SEGUNDA);
+                    ((ConfiguracaoInicialActivity) getActivity()).adicionaFuncionamentoFirebase(DiasENUM.TERCA);
                 }else {
                     abreTerca.setVisibility(View.INVISIBLE);
                     fechaTerca.setVisibility(View.INVISIBLE);
@@ -519,23 +398,6 @@ public class FragmentConfiguracaoInicialSalaoFuncionamento extends Fragment{
         }
     }
 
-    private void liberarPreenchimento(){
-        if (!formularioLiberado){
-            if (!(ConfiguracaoInicialActivity.isEtapa1Preenchida() && !ConfiguracaoInicialActivity.isEtapa1Salva())){
-                this.fabFuncionamento.setVisibility(View.VISIBLE);
-                this.fabFuncionamento.setClickable(true);
-            }
-            this.labelHorario.setVisibility(View.VISIBLE);
-            this.formFuncionamento.setClickable(true);
-            this.formFuncionamento.setVisibility(View.VISIBLE);
-            this.progressFuncionamento.setVisibility(View.INVISIBLE);
-            this.nomeSalao.setVisibility(View.VISIBLE);
-            this.formNomeSalao.setVisibility(View.VISIBLE);
-            formularioLiberado = true;
-            ((ConfiguracaoInicialActivity)getActivity()).manterObjetosAtualizados();
-        }
-    }
-
     private boolean formularioIsValid(){
         if (this.nomeSalao.getText().toString().isEmpty() || this.nomeSalao.getText().toString().matches("[^\\S]+")){
             showToast("Preencher o nome do salão!");
@@ -621,9 +483,450 @@ public class FragmentConfiguracaoInicialSalaoFuncionamento extends Fragment{
                 .show();
     }
 
-    public void liberarFab(){
-        this.fabFuncionamento.setVisibility(View.VISIBLE);
-        this.fabFuncionamento.setClickable(true);
+    private void iniciarFormulario(){
+        handler.post(new Runnable() {
+            @Override
+            public void run() {
+                segunda.setChecked(false);
+                aplicaVisibilidadeHorarios(segunda);
+                terca.setChecked(false);
+                aplicaVisibilidadeHorarios(terca);
+                quarta.setChecked(false);
+                aplicaVisibilidadeHorarios(quarta);
+                quinta.setChecked(false);
+                aplicaVisibilidadeHorarios(quinta);
+                sexta.setChecked(false);
+                aplicaVisibilidadeHorarios(sexta);
+                sabado.setChecked(false);
+                aplicaVisibilidadeHorarios(sabado);
+                domingo.setChecked(false);
+                aplicaVisibilidadeHorarios(domingo);
+
+                if (ConfiguracaoInicialActivity.getFuncionamentoSalao() != null && ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao() != null){
+                    if (ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().size() > 0){
+                        for (String key : ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().keySet()){
+                            switch (key){
+                                case DiasENUM.SEGUNDA:
+                                    segunda.setChecked(true);
+                                    if(ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(key).getAbre() != null && ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(key).getAbre().length() > 0){
+                                        abreSegunda.setText(ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(key).getAbre());
+                                    }
+                                    if(ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(key).getFecha() != null && ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(key).getFecha().length() > 0){
+                                        fechaSegunda.setText(ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(key).getFecha());
+                                    }
+                                    aplicaVisibilidadeHorarios(segunda);
+                                    break;
+                                case DiasENUM.TERCA:
+                                    terca.setChecked(true);
+                                    if(ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(key).getAbre() != null && ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(key).getAbre().length() > 0){
+                                        abreTerca.setText(ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(key).getAbre());
+                                    }
+                                    if(ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(key).getFecha() != null && ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(key).getFecha().length() > 0){
+                                        fechaTerca.setText(ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(key).getFecha());
+                                    }
+                                    aplicaVisibilidadeHorarios(terca);
+                                    break;
+                                case DiasENUM.QUARTA:
+                                    quarta.setChecked(true);
+                                    if(ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(key).getAbre() != null && ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(key).getAbre().length() > 0){
+                                        abreQuarta.setText(ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(key).getAbre());
+                                    }
+                                    if(ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(key).getFecha() != null && ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(key).getFecha().length() > 0){
+                                        fechaQuarta.setText(ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(key).getFecha());
+                                    }
+                                    aplicaVisibilidadeHorarios(quarta);
+                                    break;
+                                case DiasENUM.QUINTA:
+                                    quinta.setChecked(true);
+                                    if(ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(key).getAbre() != null && ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(key).getAbre().length() > 0){
+                                        abreQuinta.setText(ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(key).getAbre());
+                                    }
+                                    if(ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(key).getFecha() != null && ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(key).getFecha().length() > 0){
+                                        fechaQuinta.setText(ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(key).getFecha());
+                                    }
+                                    aplicaVisibilidadeHorarios(quinta);
+                                    break;
+                                case DiasENUM.SEXTA:
+                                    sexta.setChecked(true);
+                                    if(ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(key).getAbre() != null && ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(key).getAbre().length() > 0){
+                                        abreSexta.setText(ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(key).getAbre());
+                                    }
+                                    if(ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(key).getFecha() != null && ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(key).getFecha().length() > 0){
+                                        fechaSexta.setText(ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(key).getFecha());
+                                    }
+                                    aplicaVisibilidadeHorarios(sexta);
+                                    break;
+                                case DiasENUM.SABADO:
+                                    sabado.setChecked(true);
+                                    if(ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(key).getAbre() != null && ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(key).getAbre().length() > 0){
+                                        abreSabado.setText(ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(key).getAbre());
+                                    }
+                                    if(ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(key).getFecha() != null && ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(key).getFecha().length() > 0){
+                                        fechaSabado.setText(ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(key).getFecha());
+                                    }
+                                    aplicaVisibilidadeHorarios(sabado);
+                                    break;
+                                case DiasENUM.DOMINGO:
+                                    domingo.setChecked(true);
+                                    if(ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(key).getAbre() != null && ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(key).getAbre().length() > 0){
+                                        abreDomingo.setText(ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(key).getAbre());
+                                    }
+                                    if(ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(key).getFecha() != null && ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(key).getFecha().length() > 0){
+                                        fechaDomingo.setText(ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(key).getFecha());
+                                    }
+                                    aplicaVisibilidadeHorarios(domingo);
+                                    break;
+                                default:
+                                    break;
+                            }
+                        }
+                    }
+                    liberarFormulario();
+                }else{
+                    Log.i("testeteste","iniciarFormulario funcionamentoSalao == null");
+                }
+                if (ConfiguracaoInicialActivity.getCadastroComplementar() != null && ConfiguracaoInicialActivity.getCadastroComplementar().getNome() != null && ConfiguracaoInicialActivity.getCadastroComplementar().getNome().length() > 0){
+                    nomeSalao.setText(ConfiguracaoInicialActivity.getCadastroComplementar().getNome());
+                }else{
+                    nomeSalao.setText("");
+                }
+            }
+        });
+    }
+
+    public void funcionamentoAdicionado(final String dia){
+        if(this.handler != null){
+            this.handler.post(new Runnable() {
+                @Override
+                public void run() {
+                    if (ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().containsKey(dia)){
+                        switch (dia){
+                            case DiasENUM.SEGUNDA:
+                                segunda.setChecked(true);
+                                if(ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(dia).getAbre() != null && ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(dia).getAbre().length() > 0){
+                                    abreSegunda.setText(ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(dia).getAbre());
+                                }else{
+                                    abreSegunda.setText("--:--");
+                                }
+                                if(ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(dia).getFecha() != null && ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(dia).getFecha().length() > 0){
+                                    fechaSegunda.setText(ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(dia).getFecha());
+                                }else{
+                                    fechaSegunda.setText("--:--");
+                                }
+                                aplicaVisibilidadeHorarios(segunda);
+                                break;
+                            case DiasENUM.TERCA:
+                                terca.setChecked(true);
+                                if(ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(dia).getAbre() != null && ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(dia).getAbre().length() > 0){
+                                    abreTerca.setText(ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(dia).getAbre());
+                                }else{
+                                    abreTerca.setText("--:--");
+                                }
+                                if(ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(dia).getFecha() != null && ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(dia).getFecha().length() > 0){
+                                    fechaTerca.setText(ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(dia).getFecha());
+                                }else{
+                                    fechaTerca.setText("--:--");
+                                }
+                                aplicaVisibilidadeHorarios(terca);
+                                break;
+                            case DiasENUM.QUARTA:
+                                quarta.setChecked(true);
+                                if(ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(dia).getAbre() != null && ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(dia).getAbre().length() > 0){
+                                    abreQuarta.setText(ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(dia).getAbre());
+                                }else{
+                                    abreQuarta.setText("--:--");
+                                }
+                                if(ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(dia).getFecha() != null && ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(dia).getFecha().length() > 0){
+                                    fechaQuarta.setText(ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(dia).getFecha());
+                                }else{
+                                    fechaQuarta.setText("--:--");
+                                }
+                                aplicaVisibilidadeHorarios(quarta);
+                                break;
+                            case DiasENUM.QUINTA:
+                                quinta.setChecked(true);
+                                if(ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(dia).getAbre() != null && ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(dia).getAbre().length() > 0){
+                                    abreQuinta.setText(ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(dia).getAbre());
+                                }else{
+                                    abreQuinta.setText("--:--");
+                                }
+                                if(ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(dia).getFecha() != null && ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(dia).getFecha().length() > 0){
+                                    fechaQuinta.setText(ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(dia).getFecha());
+                                }else{
+                                    fechaQuinta.setText("--:--");
+                                }
+                                aplicaVisibilidadeHorarios(quinta);
+                                break;
+                            case DiasENUM.SEXTA:
+                                sexta.setChecked(true);
+                                if(ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(dia).getAbre() != null && ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(dia).getAbre().length() > 0){
+                                    abreSexta.setText(ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(dia).getAbre());
+                                }else{
+                                    abreSexta.setText("--:--");
+                                }
+                                if(ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(dia).getFecha() != null && ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(dia).getFecha().length() > 0){
+                                    fechaSexta.setText(ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(dia).getFecha());
+                                }else{
+                                    fechaSexta.setText("--:--");
+                                }
+                                aplicaVisibilidadeHorarios(sexta);
+                                break;
+                            case DiasENUM.SABADO:
+                                sabado.setChecked(true);
+                                if(ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(dia).getAbre() != null && ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(dia).getAbre().length() > 0){
+                                    abreSabado.setText(ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(dia).getAbre());
+                                }else{
+                                    abreSabado.setText("--:--");
+                                }
+                                if(ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(dia).getFecha() != null && ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(dia).getFecha().length() > 0){
+                                    fechaSabado.setText(ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(dia).getFecha());
+                                }else{
+                                    fechaSabado.setText("--:--");
+                                }
+                                aplicaVisibilidadeHorarios(sabado);
+                                break;
+                            case DiasENUM.DOMINGO:
+                                domingo.setChecked(true);
+                                if(ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(dia).getAbre() != null && ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(dia).getAbre().length() > 0){
+                                    abreDomingo.setText(ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(dia).getAbre());
+                                }else{
+                                    abreDomingo.setText("--:--");
+                                }
+                                if(ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(dia).getFecha() != null && ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(dia).getFecha().length() > 0){
+                                    fechaDomingo.setText(ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(dia).getFecha());
+                                }else{
+                                    fechaDomingo.setText("--:--");
+                                }
+                                aplicaVisibilidadeHorarios(domingo);
+                                break;
+                            default:
+                                break;
+                        }
+                    }
+                    liberarFormulario();
+                }
+            });
+        }
+    }
+
+    public void funcionamentoRemovido(final String dia){
+        if(this.handler != null){
+            this.handler.post(new Runnable() {
+                @Override
+                public void run() {
+                    switch (dia){
+                        case DiasENUM.SEGUNDA:
+                            segunda.setChecked(false);
+                            aplicaVisibilidadeHorarios(segunda);
+                            break;
+                        case DiasENUM.TERCA:
+                            terca.setChecked(false);
+                            aplicaVisibilidadeHorarios(terca);
+                            break;
+                        case DiasENUM.QUARTA:
+                            quarta.setChecked(false);
+                            aplicaVisibilidadeHorarios(quarta);
+                            break;
+                        case DiasENUM.QUINTA:
+                            quinta.setChecked(false);
+                            aplicaVisibilidadeHorarios(quinta);
+                            break;
+                        case DiasENUM.SEXTA:
+                            sexta.setChecked(false);
+                            aplicaVisibilidadeHorarios(sexta);
+                            break;
+                        case DiasENUM.SABADO:
+                            sabado.setChecked(false);
+                            aplicaVisibilidadeHorarios(sabado);
+                            break;
+                        case DiasENUM.DOMINGO:
+                            domingo.setChecked(false);
+                            aplicaVisibilidadeHorarios(domingo);
+                            break;
+                        default:
+                            break;
+                    }
+                    liberarFab();
+                }
+            });
+        }
+    }
+
+    public void funcionamentoAlterado(final String dia){
+        if(this.handler != null){
+            this.handler.post(new Runnable() {
+                @Override
+                public void run() {
+                    if (ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().containsKey(dia)){
+                        switch (dia){
+                            case DiasENUM.SEGUNDA:
+                                segunda.setChecked(true);
+                                if(ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(dia).getAbre() != null && ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(dia).getAbre().length() > 0){
+                                    abreSegunda.setText(ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(dia).getAbre());
+                                }else{
+                                    abreSegunda.setText("--:--");
+                                }
+                                if(ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(dia).getFecha() != null && ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(dia).getFecha().length() > 0){
+                                    fechaSegunda.setText(ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(dia).getFecha());
+                                }else{
+                                    fechaSegunda.setText("--:--");
+                                }
+                                aplicaVisibilidadeHorarios(segunda);
+                                break;
+                            case DiasENUM.TERCA:
+                                terca.setChecked(true);
+                                if(ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(dia).getAbre() != null && ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(dia).getAbre().length() > 0){
+                                    abreTerca.setText(ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(dia).getAbre());
+                                }else{
+                                    abreTerca.setText("--:--");
+                                }
+                                if(ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(dia).getFecha() != null && ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(dia).getFecha().length() > 0){
+                                    fechaTerca.setText(ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(dia).getFecha());
+                                }else{
+                                    fechaTerca.setText("--:--");
+                                }
+                                aplicaVisibilidadeHorarios(terca);
+                                break;
+                            case DiasENUM.QUARTA:
+                                quarta.setChecked(true);
+                                if(ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(dia).getAbre() != null && ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(dia).getAbre().length() > 0){
+                                    abreQuarta.setText(ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(dia).getAbre());
+                                }else{
+                                    abreQuarta.setText("--:--");
+                                }
+                                if(ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(dia).getFecha() != null && ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(dia).getFecha().length() > 0){
+                                    fechaQuarta.setText(ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(dia).getFecha());
+                                }else{
+                                    fechaQuarta.setText("--:--");
+                                }
+                                aplicaVisibilidadeHorarios(quarta);
+                                break;
+                            case DiasENUM.QUINTA:
+                                quinta.setChecked(true);
+                                if(ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(dia).getAbre() != null && ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(dia).getAbre().length() > 0){
+                                    abreQuinta.setText(ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(dia).getAbre());
+                                }else{
+                                    abreQuinta.setText("--:--");
+                                }
+                                if(ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(dia).getFecha() != null && ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(dia).getFecha().length() > 0){
+                                    fechaQuinta.setText(ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(dia).getFecha());
+                                }else{
+                                    fechaQuinta.setText("--:--");
+                                }
+                                aplicaVisibilidadeHorarios(quinta);
+                                break;
+                            case DiasENUM.SEXTA:
+                                sexta.setChecked(true);
+                                if(ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(dia).getAbre() != null && ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(dia).getAbre().length() > 0){
+                                    abreSexta.setText(ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(dia).getAbre());
+                                }else{
+                                    abreSexta.setText("--:--");
+                                }
+                                if(ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(dia).getFecha() != null && ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(dia).getFecha().length() > 0){
+                                    fechaSexta.setText(ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(dia).getFecha());
+                                }else{
+                                    fechaSexta.setText("--:--");
+                                }
+                                aplicaVisibilidadeHorarios(sexta);
+                                break;
+                            case DiasENUM.SABADO:
+                                sabado.setChecked(true);
+                                if(ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(dia).getAbre() != null && ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(dia).getAbre().length() > 0){
+                                    abreSabado.setText(ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(dia).getAbre());
+                                }else{
+                                    abreSabado.setText("--:--");
+                                }
+                                if(ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(dia).getFecha() != null && ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(dia).getFecha().length() > 0){
+                                    fechaSabado.setText(ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(dia).getFecha());
+                                }else{
+                                    fechaSabado.setText("--:--");
+                                }
+                                aplicaVisibilidadeHorarios(sabado);
+                                break;
+                            case DiasENUM.DOMINGO:
+                                domingo.setChecked(true);
+                                if(ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(dia).getAbre() != null && ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(dia).getAbre().length() > 0){
+                                    abreDomingo.setText(ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(dia).getAbre());
+                                }else{
+                                    abreDomingo.setText("--:--");
+                                }
+                                if(ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(dia).getFecha() != null && ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(dia).getFecha().length() > 0){
+                                    fechaDomingo.setText(ConfiguracaoInicialActivity.getFuncionamentoSalao().getFuncionamentoDoSalao().get(dia).getFecha());
+                                }else{
+                                    fechaDomingo.setText("--:--");
+                                }
+                                aplicaVisibilidadeHorarios(domingo);
+                                break;
+                            default:
+                                break;
+                        }
+                    }else{
+                        switch (dia){
+                            case DiasENUM.SEGUNDA:
+                                segunda.setChecked(false);
+                                aplicaVisibilidadeHorarios(segunda);
+                                break;
+                            case DiasENUM.TERCA:
+                                terca.setChecked(false);
+                                aplicaVisibilidadeHorarios(terca);
+                                break;
+                            case DiasENUM.QUARTA:
+                                quarta.setChecked(false);
+                                aplicaVisibilidadeHorarios(quarta);
+                                break;
+                            case DiasENUM.QUINTA:
+                                quinta.setChecked(false);
+                                aplicaVisibilidadeHorarios(quinta);
+                                break;
+                            case DiasENUM.SEXTA:
+                                sexta.setChecked(false);
+                                aplicaVisibilidadeHorarios(sexta);
+                                break;
+                            case DiasENUM.SABADO:
+                                sabado.setChecked(false);
+                                aplicaVisibilidadeHorarios(sabado);
+                                break;
+                            case DiasENUM.DOMINGO:
+                                domingo.setChecked(false);
+                                aplicaVisibilidadeHorarios(domingo);
+                                break;
+                            default:
+                                break;
+                        }
+                    }
+                    liberarFab();
+                }
+            });
+        }
+    }
+
+    public void nomeAtualizado(){
+        if (ConfiguracaoInicialActivity.getCadastroComplementar() != null && ConfiguracaoInicialActivity.getCadastroComplementar().getNome() != null && ConfiguracaoInicialActivity.getCadastroComplementar().getNome().length() > 0){
+            this.nomeSalao.setText(ConfiguracaoInicialActivity.getCadastroComplementar().getNome());
+        }
+    }
+
+    public void liberarFormulario(){
+        this.handler.post(new Runnable() {
+            @Override
+            public void run() {
+                formFuncionamento.setClickable(true);
+                formFuncionamento.setVisibility(View.VISIBLE);
+                formNomeSalao.setVisibility(View.VISIBLE);
+                progressFuncionamento.setVisibility(View.INVISIBLE);
+                liberarFab();
+            }
+        });
+    }
+
+    private void liberarFab(){
+        if (this.nomeSalao.getText().toString().length() > 0 || this.segunda.isChecked() || this.terca.isChecked() || this.quarta.isChecked() || this.quinta.isChecked() || this.sexta.isChecked() || this.sabado.isChecked() || this.domingo.isChecked()){
+            this.fabFuncionamento.setClickable(true);
+            this.fabFuncionamento.setVisibility(View.VISIBLE);
+        }else{
+            this.fabFuncionamento.setClickable(false);
+            this.fabFuncionamento.setVisibility(View.INVISIBLE);
+        }
     }
 
 

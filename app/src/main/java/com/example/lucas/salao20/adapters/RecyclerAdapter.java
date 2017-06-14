@@ -39,13 +39,7 @@ public class RecyclerAdapter extends RecyclerView.Adapter<RecyclerAdapter.MyView
 
     @Override
     public void onBindViewHolder(MyViewHolder myViewHolder, int position) {
-        //myViewHolder.ivIcone.setImageResource(mList.get(position).getIcone());
-        Log.i("testeteste","size = " + String.valueOf(mList.size()));
-        if (this.mList.get(position) != null){
-            Log.i("testeteste","position = " + String.valueOf(position) + " ## mList contains");
-        }else{
-            Log.i("testeteste","position = " + String.valueOf(position) + " ## mList NOcontains");
-        }
+        myViewHolder.ivIcone.setImageResource(mList.get(position).getIcone());
     }
 
     @Override

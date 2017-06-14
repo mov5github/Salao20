@@ -2,6 +2,7 @@ package com.example.lucas.salao20.fragments.configuracaoInicial.salao;
 
 import android.content.DialogInterface;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
@@ -28,7 +29,6 @@ import com.example.lucas.salao20.adapters.AdapterSpinnerIcones;
 import com.example.lucas.salao20.adapters.RecyclerAdapter;
 import com.example.lucas.salao20.geral.geral.Servico;
 import com.example.lucas.salao20.interfaces.RecyclerViewOnClickListenerHack;
-import com.google.firebase.database.DatabaseReference;
 
 import java.text.NumberFormat;
 import java.util.ArrayList;
@@ -42,6 +42,8 @@ import java.util.List;
 public class FragmentConfiguracaoInicialSalaoServicos extends Fragment implements RecyclerViewOnClickListenerHack {
     //ENUM
     private static final String TITULO = "Serviços";
+
+    private Handler handler;
 
     private ProgressBar progressServicos;
     private FloatingActionButton fabServicos;
@@ -59,18 +61,18 @@ public class FragmentConfiguracaoInicialSalaoServicos extends Fragment implement
 
     //CONTROLES
     private static boolean fragmentServicosSalaoAtivo;
-    private static boolean mRecyclerViewIniciado;
     private boolean criandoServico;
 
     //ARRAYS
     private List<Servico> mList;
+    private List<String> mListKeyIdServicos;
 
-    //private ServicoDAO servicoDAO;
 
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_configuracao_inicial_salao_servicos,container,false);
+        this.handler = new Handler();
         initControles();
         initViews(view);
         return view;
@@ -80,7 +82,8 @@ public class FragmentConfiguracaoInicialSalaoServicos extends Fragment implement
     public void onStart() {
         super.onStart();
         fragmentServicosSalaoAtivo = true;
-        Log.i("fireServicos","FragmentConfiguracaoInicialSalaoServicos onStart");
+        criandoServico = false;
+        Log.i("testeteste","FragmentConfiguracaoInicialSalaoServicos onStart");
         iniciarFormulario();
     }
 
@@ -88,6 +91,8 @@ public class FragmentConfiguracaoInicialSalaoServicos extends Fragment implement
     public void onStop() {
         super.onStop();
         fragmentServicosSalaoAtivo = false;
+        Log.i("testeteste","FragmentConfiguracaoInicialSalaoServicos onStop");
+        this.handler.removeCallbacksAndMessages(null);
     }
 
     @Override
@@ -141,7 +146,6 @@ public class FragmentConfiguracaoInicialSalaoServicos extends Fragment implement
 
     private void initControles(){
         fragmentServicosSalaoAtivo = false;
-        mRecyclerViewIniciado = false;
         this.criandoServico = false;
     }
 
@@ -159,88 +163,120 @@ public class FragmentConfiguracaoInicialSalaoServicos extends Fragment implement
         llm.setOrientation(LinearLayoutManager.HORIZONTAL);
         this.mRecyclerView.setLayoutManager(llm);
         this.mList = new ArrayList<Servico>();
+        this.mListKeyIdServicos = new ArrayList<String>();
         RecyclerAdapter recyclerAdapter = new RecyclerAdapter(this.mList,getContext());
         this.mRecyclerView.setAdapter(recyclerAdapter);
     }
 
-    public void iniciarFormulario(){
-       if (ConfiguracaoInicialActivity.getServicosSalao() != null){
-           if (!mRecyclerViewIniciado){
-               mRecyclerViewIniciado = true;
-               for(String key : ConfiguracaoInicialActivity.getServicosSalao().getServicosSalao().keySet()){
-                   this.mList.add(ConfiguracaoInicialActivity.getServicosSalao().getServicosSalao().get(key));
-                   ((RecyclerAdapter) this.mRecyclerView.getAdapter()).addItemList(this.mList.size()-1);
-               }
-           }else{
-               atualizarFormulario();
-           }
-           liberarPreenchimento();
-       }
+    private void iniciarFormulario(){
+        handler.post(new Runnable() {
+            @Override
+            public void run() {
+                if (ConfiguracaoInicialActivity.getServicosSalao() != null && ConfiguracaoInicialActivity.getServicosSalao().getServicosSalao() != null){
+                    Log.i("testeteste","iniciarFormulario servicosSalao != null");
+                    if (mList.size() > 0){
+                        do{
+                            int position = mList.size()-1;
+                            mListKeyIdServicos.remove(mList.get(position).getIdServico());
+                            mList.remove(position);
+                            ((RecyclerAdapter) mRecyclerView.getAdapter()).removeItemList(position);
+                        }while(mList.size() > 0);
+                    }
+                    for (String key : ConfiguracaoInicialActivity.getServicosSalao().getServicosSalao().keySet()){
+                        mList.add(ConfiguracaoInicialActivity.getServicosSalao().getServicosSalao().get(key));
+                        int position = mList.indexOf(ConfiguracaoInicialActivity.getServicosSalao().getServicosSalao().get(key));
+                        mListKeyIdServicos.add(ConfiguracaoInicialActivity.getServicosSalao().getServicosSalao().get(key).getIdServico());
+                        ((RecyclerAdapter) mRecyclerView.getAdapter()).addItemList(position);
+                    }
+                    liberarFormulario();
+                }else{
+                    Log.i("testeteste","iniciarFormulario servicosSalao == null");
+                }
+            }
+        });
     }
 
-    private void atualizarFormulario(){
-        for (Iterator<Servico> iterator = this.mList.iterator(); iterator.hasNext();){
-            if (!ConfiguracaoInicialActivity.getServicosSalao().getServicosSalao().containsKey(iterator.next().getIdServico())){
-                int position = this.mList.indexOf(iterator.next());
-                this.mList.remove(iterator.next());
-                ((RecyclerAdapter)this.mRecyclerView.getAdapter()).removeItemList(position);
-            }
-        }
-        for (String key : ConfiguracaoInicialActivity.getServicosSalao().getServicosSalao().keySet()){
-            if (!this.mList.contains(ConfiguracaoInicialActivity.getServicosSalao().getServicosSalao().get(key))){
-                this.mList.add(ConfiguracaoInicialActivity.getServicosSalao().getServicosSalao().get(key));
-                ((RecyclerAdapter)this.mRecyclerView.getAdapter()).addItemList(this.mList.size()-1);
-            }
+    public void servicoAdicionado(final String idServico){
+        if(this.handler != null){
+            this.handler.post(new Runnable() {
+                @Override
+                public void run() {
+                    if (ConfiguracaoInicialActivity.getServicosSalao().getServicosSalao().containsKey(idServico)){
+                        if (!mListKeyIdServicos.contains(idServico)){
+                            mList.add(ConfiguracaoInicialActivity.getServicosSalao().getServicosSalao().get(idServico));
+                            mListKeyIdServicos.add(idServico);
+                            int position = mList.indexOf(ConfiguracaoInicialActivity.getServicosSalao().getServicosSalao().get(idServico));
+                            ((RecyclerAdapter) mRecyclerView.getAdapter()).addItemList(position);
+                        }
+                    }
+                    liberarFab();
+                }
+            });
         }
     }
 
-    private void liberarPreenchimento(){
-        liberarFab();
-        this.buttonAddServico.setClickable(true);
-        this.buttonAddServico.setVisibility(View.VISIBLE);
-        this.progressServicos.setVisibility(View.INVISIBLE);
+    public void servicoRemovido(final String idServico){
+        if(this.handler != null){
+            this.handler.post(new Runnable() {
+                @Override
+                public void run() {
+                    for (Servico servico : mList) {
+                        if (servico.getIdServico().equals(idServico)){
+                            int position = mList.indexOf(servico);
+                            mList.remove(position);
+                            mListKeyIdServicos.remove(idServico);
+                            ((RecyclerAdapter) mRecyclerView.getAdapter()).removeItemList(position);
+                            break;
+                        }
+                    }
+                    liberarFab();
+                }
+            });
+        }
     }
 
-    public void servicoAdicionado(String idServico){
-        if (ConfiguracaoInicialActivity.getServicosSalao().getServicosSalao().containsKey(idServico)){
-            if (!this.mList.contains(ConfiguracaoInicialActivity.getServicosSalao().getServicosSalao().get(idServico))){
-                this.mList.add(ConfiguracaoInicialActivity.getServicosSalao().getServicosSalao().get(idServico));
-                ((RecyclerAdapter) this.mRecyclerView.getAdapter()).addItemList(this.mList.size()-1);
-            }
+    public void servicoAlterado(final String idServico){
+        if(this.handler != null){
+            this.handler.post(new Runnable() {
+                @Override
+                public void run() {
+                    for (Servico servico : mList) {
+                        if (servico.getIdServico().equals(idServico)){
+                            int position = mList.indexOf(servico);
+                            mList.remove(position);
+                            mListKeyIdServicos.remove(idServico);
+                            ((RecyclerAdapter) mRecyclerView.getAdapter()).removeItemList(position);
+                            break;
+                        }
+                    }
+                    if (ConfiguracaoInicialActivity.getServicosSalao().getServicosSalao().containsKey(idServico)){
+                        if (!mListKeyIdServicos.contains(idServico)){
+                            mList.add(ConfiguracaoInicialActivity.getServicosSalao().getServicosSalao().get(idServico));
+                            int position = mList.indexOf(ConfiguracaoInicialActivity.getServicosSalao().getServicosSalao().get(idServico));
+                            mListKeyIdServicos.add(idServico);
+                            ((RecyclerAdapter) mRecyclerView.getAdapter()).addItemList(position);
+                        }
+                    }
+                    liberarFab();
+                }
+            });
         }
-        liberarFab();
     }
 
-    public void servicoRemovido(String idServico){
-        for (Iterator<Servico> iterator = this.mList.iterator(); iterator.hasNext();){
-            if (iterator.next().getIdServico().equals(idServico)){
-                int position = this.mList.indexOf(iterator.next());
-                this.mList.remove(iterator.next());
-                ((RecyclerAdapter) this.mRecyclerView.getAdapter()).removeItemList(position);
+    public void liberarFormulario(){
+        this.handler.post(new Runnable() {
+            @Override
+            public void run() {
+                liberarFab();
+                buttonAddServico.setClickable(true);
+                buttonAddServico.setVisibility(View.VISIBLE);
+                progressServicos.setVisibility(View.INVISIBLE);
             }
-        }
-        liberarFab();
-    }
-
-    public void servicoAlterado(String idServico){
-        for (Iterator<Servico> iterator = this.mList.iterator(); iterator.hasNext();){
-            if (iterator.next().getIdServico().equals(idServico)){
-                int position = this.mList.indexOf(iterator.next());
-                this.mList.remove(iterator.next());
-                ((RecyclerAdapter) this.mRecyclerView.getAdapter()).removeItemList(position);
-            }
-        }
-        if (ConfiguracaoInicialActivity.getServicosSalao().getServicosSalao().containsKey(idServico)){
-            if (!this.mList.contains(ConfiguracaoInicialActivity.getServicosSalao().getServicosSalao().get(idServico))){
-                this.mList.add(ConfiguracaoInicialActivity.getServicosSalao().getServicosSalao().get(idServico));
-                ((RecyclerAdapter) this.mRecyclerView.getAdapter()).addItemList(this.mList.size()-1);
-            }
-        }
-        liberarFab();
+        });
     }
 
     private void liberarFab(){
-        if (ConfiguracaoInicialActivity.getServicosSalao().getServicosSalao()!= null && ConfiguracaoInicialActivity.getServicosSalao().getServicosSalao().size() > 0){
+        if (ConfiguracaoInicialActivity.getServicosSalao()!= null && ConfiguracaoInicialActivity.getServicosSalao().getServicosSalao()!= null && ConfiguracaoInicialActivity.getServicosSalao().getServicosSalao().size() > 0){
             this.fabServicos.setClickable(true);
             this.fabServicos.setVisibility(View.VISIBLE);
         }else{
@@ -253,19 +289,26 @@ public class FragmentConfiguracaoInicialSalaoServicos extends Fragment implement
         if (preenchimentoIsValid()){
             if (!criandoServico){
                 criandoServico = true;
-                Servico servico = new Servico();
-                servico.setNome(this.nomeServico.getText().toString());
-                servico.setIcone((Integer) this.adapter.getItem(this.spinnerIcones.getSelectedItemPosition()));
-                servico.setPreco(gerarPrecoFloat());
-                servico.setDuracao(gerarDuracao());
-                servico.setDescricao(this.descricaoServico.getText().toString());
-                servico.setIdServico(((ConfiguracaoInicialActivity)getActivity()).getRefServicosSalao().push().getKey());
-                ConfiguracaoInicialActivity.getServicosSalao().getServicosSalao().put(servico.getIdServico(),servico);
-                this.mList.add(ConfiguracaoInicialActivity.getServicosSalao().getServicosSalao().get(servico.getIdServico()));
-                ((RecyclerAdapter) this.mRecyclerView.getAdapter()).addItemList(this.mList.size()-1);
-                ((ConfiguracaoInicialActivity)getActivity()).adicionarServicoFirebase(servico.getIdServico());
-                limparCampos();
-                criandoServico = false;
+                this.handler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        Servico servico = new Servico();
+                        servico.setNome(nomeServico.getText().toString());
+                        servico.setIcone(adapter.getItem(spinnerIcones.getSelectedItemPosition()));
+                        servico.setPreco(gerarPrecoFloat());
+                        servico.setDuracao(gerarDuracao());
+                        servico.setDescricao(descricaoServico.getText().toString());
+                        servico.setIdServico(((ConfiguracaoInicialActivity)getActivity()).getRefServicosSalao().push().getKey());
+                        ConfiguracaoInicialActivity.getServicosSalao().getServicosSalao().put(servico.getIdServico(),servico);
+                        mList.add(ConfiguracaoInicialActivity.getServicosSalao().getServicosSalao().get(servico.getIdServico()));
+                        int position = mList.indexOf(ConfiguracaoInicialActivity.getServicosSalao().getServicosSalao().get(servico.getIdServico()));
+                        mListKeyIdServicos.add(servico.getIdServico());
+                        ((RecyclerAdapter) mRecyclerView.getAdapter()).addItemList(position);
+                        ((ConfiguracaoInicialActivity)getActivity()).adicionarServicoFirebase(servico.getIdServico());
+                        limparCampos();
+                        criandoServico = false;
+                    }
+                });
             }
         }
     }
@@ -343,9 +386,7 @@ public class FragmentConfiguracaoInicialSalaoServicos extends Fragment implement
         return fragmentServicosSalaoAtivo;
     }
 
-    public static boolean ismRecyclerViewIniciado() {
-        return mRecyclerViewIniciado;
-    }
+
 
     //CLASSES
     private class MascaraMonetaria implements TextWatcher {
@@ -404,7 +445,42 @@ public class FragmentConfiguracaoInicialSalaoServicos extends Fragment implement
 
 
 
+    public void criarServico2(){
+        if (preenchimentoIsValid()){
+            if (!criandoServico){
+                criandoServico = true;
+                Servico servico = new Servico();
+                servico.setNome(this.nomeServico.getText().toString());
+                servico.setIcone((Integer) this.adapter.getItem(this.spinnerIcones.getSelectedItemPosition()));
+                servico.setPreco(gerarPrecoFloat());
+                servico.setDuracao(gerarDuracao());
+                servico.setDescricao(this.descricaoServico.getText().toString());
+                servico.setIdServico(((ConfiguracaoInicialActivity)getActivity()).getRefServicosSalao().push().getKey());
+                ConfiguracaoInicialActivity.getServicosSalao().getServicosSalao().put(servico.getIdServico(),servico);
+                this.mList.add(ConfiguracaoInicialActivity.getServicosSalao().getServicosSalao().get(servico.getIdServico()));
+                ((RecyclerAdapter) this.mRecyclerView.getAdapter()).addItemList(this.mList.size()-1);
+                ((ConfiguracaoInicialActivity)getActivity()).adicionarServicoFirebase(servico.getIdServico());
+                limparCampos();
+                criandoServico = false;
+            }
+        }
+    }
 
+    private void atualizarFormulario(){
+        for (Iterator<Servico> iterator = this.mList.iterator(); iterator.hasNext();){
+            if (!ConfiguracaoInicialActivity.getServicosSalao().getServicosSalao().containsKey(iterator.next().getIdServico())){
+                int position = this.mList.indexOf(iterator.next());
+                this.mList.remove(iterator.next());
+                ((RecyclerAdapter)this.mRecyclerView.getAdapter()).removeItemList(position);
+            }
+        }
+        for (String key : ConfiguracaoInicialActivity.getServicosSalao().getServicosSalao().keySet()){
+            if (!this.mList.contains(ConfiguracaoInicialActivity.getServicosSalao().getServicosSalao().get(key))){
+                this.mList.add(ConfiguracaoInicialActivity.getServicosSalao().getServicosSalao().get(key));
+                ((RecyclerAdapter)this.mRecyclerView.getAdapter()).addItemList(this.mList.size()-1);
+            }
+        }
+    }
 
 
     public void addServico(Servico servico) {
@@ -425,8 +501,6 @@ public class FragmentConfiguracaoInicialSalaoServicos extends Fragment implement
         servicoList.remove(servico);
         recyclerAdapter.removeItemList(position);*/
     }
-
-
 
     public void alertDialogBuilderMessage(AlertDialog.Builder builder, String nomeServico, String precoServico, String duracaoServico, String descricaoServico){
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
@@ -450,20 +524,16 @@ public class FragmentConfiguracaoInicialSalaoServicos extends Fragment implement
         }
     }
 
-
-
-
-    public void addList(){
-        Servico servico = new Servico();
-        servico.setIdServico("1");
-        servico.setIcone(R.mipmap.ic_launcher);
-        this.mList.add(servico);
-        ((RecyclerAdapter) this.mRecyclerView.getAdapter()).exibirList();
-    }
-
     public void removeList(){
-        this.mList.remove(0);
-        ((RecyclerAdapter) this.mRecyclerView.getAdapter()).exibirList();
+        List<String> list = new ArrayList<>();
+        list.add("1");
+        list.add("2");
+        Log.i("testeteste","before clear size = " + list.size());
+        list.clear();
+        Log.i("testeteste","after clear size = " + list.size());
+        list.add("3");
+        list.add("4");
+        Log.i("testeteste","index = " + list.indexOf("4"));
     }
 
 }
