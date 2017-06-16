@@ -321,6 +321,7 @@ public class ConfiguracaoInicialActivity extends AppCompatActivity{
                     @Override
                     public void onDataChange(DataSnapshot dataSnapshot) {
                         if (dataSnapshot.exists()){
+                            Log.i("testeteste","valueEventListenerCadastroComplementar onDataChange");
                             if (cadastroComplementar == null){
                                 cadastroComplementar = new CadastroComplementar();
                             }

@@ -16,6 +16,7 @@
     <string name="ajuda">Ajuda</string>
     <string name="link_accounts">Link contas</string>
     <string name="logout">Logout</string>
+    <string name="prompt_adicionar_por_cod_unico">Insira o ID do profissional :</string>
     <string name="prompt_data_nascimento">Data de Nascimento</string>
     <string name="prompt_email">Email</string>
     <string name="prompt_endereco_cidade">Cidade</string>
