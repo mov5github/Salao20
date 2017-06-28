@@ -1,5 +1,7 @@
 package com.example.lucas.salao20.geral.geral;
 
+import android.util.Log;
+
 import com.google.firebase.database.Exclude;
 import com.google.firebase.database.ServerValue;
 
@@ -67,6 +69,85 @@ public class Servico {
             result.put(DATA_DE_INSERCAO,this.dataInsercao);
         }
         return result;
+    }
+
+    public static boolean verificarServicosSaoIguais(Servico servico1, Servico servico2){
+        if (servico1 != null && servico2 != null){
+            //Verifica se id sao iguais
+            if (servico1.getIdServico() != null && servico2.getIdServico() != null){
+                if (!servico1.getIdServico().equals(servico2.getIdServico())){
+                    Log.i("testeteste","id !=");
+                    return false;
+                }
+            }else if (!(servico1.getIdServico() == null && servico2.getIdServico() == null)){
+                Log.i("testeteste","null id !=");
+                return false;
+            }
+            //Verifica se nomes sao iguais
+            if (servico1.getNome() != null && servico2.getNome() != null){
+                if (!servico1.getNome().equals(servico2.getNome())){
+                    Log.i("testeteste","nome !=");
+                    return false;
+                }
+            }else if (!(servico1.getNome() == null && servico2.getNome() == null)){
+                Log.i("testeteste","null nome !=");
+                return false;
+            }
+            //Verifica se icone sao iguais
+            if (servico1.getIcone() != null && servico2.getIcone() != null){
+                if (!servico1.getIcone().equals(servico2.getIcone())){
+                    Log.i("testeteste","icone !=");
+                    return false;
+                }
+            }else if (!(servico1.getIcone() == null && servico2.getIcone() == null)){
+                Log.i("testeteste","null icone !=");
+                return false;
+            }
+            //Verifica se duracao sao iguais
+            if (servico1.getDuracao() != null && servico2.getDuracao() != null){
+                if (!servico1.getDuracao().equals(servico2.getDuracao())){
+                    Log.i("testeteste","duracao !=");
+                    return false;
+                }
+            }else if (!(servico1.getDuracao() == null && servico2.getDuracao() == null)){
+                Log.i("testeteste","null duracao !=");
+                return false;
+            }
+            //Verifica se preço sao iguais
+            if (servico1.getPreco() != null && servico2.getPreco() != null){
+                if (!servico1.getPreco().equals(servico2.getPreco())){
+                    Log.i("testeteste","preco !=");
+                    return false;
+                }
+            }else if (!(servico1.getPreco() == null && servico2.getPreco() == null)){
+                Log.i("testeteste","null preco !=");
+                return false;
+            }
+            //Verifica se descriçao sao iguais
+            if (servico1.getDescricao() != null && servico2.getDescricao() != null){
+                if (!servico1.getDescricao().equals(servico2.getDescricao())){
+                    Log.i("testeteste","desc !=");
+                    return false;
+                }
+            }else if (!(servico1.getDescricao() == null && servico2.getDescricao() == null)){
+                Log.i("testeteste","null desc !=");
+                return false;
+            }
+            //Verifica se data sao iguais
+            if (servico1.getDataInsercao() != null && servico2.getDataInsercao() != null){
+                if (!servico1.getDataInsercao().equals(servico2.getDataInsercao())){
+                    Log.i("testeteste","data !=");
+                    return false;
+                }
+            }else if (!(servico1.getDataInsercao() == null && servico2.getDataInsercao() == null)){
+                Log.i("testeteste","null data !=");
+                return false;
+            }
+            return true;
+        }else{
+            Log.i("testeteste","null");
+            return servico1 == null && servico2 == null;
+        }
     }
 
     //GETTERS AND SETTERS

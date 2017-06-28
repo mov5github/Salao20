@@ -26,14 +26,16 @@ import android.widget.Toast;
 import com.example.lucas.salao20.R;
 import com.example.lucas.salao20.activitys.ConfiguracaoInicialActivity;
 import com.example.lucas.salao20.adapters.AdapterSpinnerIcones;
-import com.example.lucas.salao20.adapters.RecyclerAdapter;
+import com.example.lucas.salao20.adapters.RecyclerAdapterServicos;
 import com.example.lucas.salao20.geral.geral.Servico;
 import com.example.lucas.salao20.interfaces.RecyclerViewOnClickListenerHack;
 
 import java.text.NumberFormat;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created by Lucas on 21/03/2017.
@@ -98,14 +100,19 @@ public class FragmentConfiguracaoInicialSalaoServicos extends Fragment implement
     @Override
     public void onClickListener(View view, final int position) {
         //Toast.makeText(getActivity(),"POSITION " + position, Toast.LENGTH_SHORT).show();
-        final int posiçao = position;
+        //final int posiçao = position;
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
         builder.setPositiveButton("SIM",
                 new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                       // Servico servico = servicoList.get(position);
-                        //removerServico(servico);
+                        String idServico = mList.get(position).getIdServico();
+                        mList.remove(position);
+                        mListKeyIdServicos.remove(idServico);
+                        ConfiguracaoInicialActivity.getServicosSalao().getServicosSalao().remove(idServico);
+                        ((RecyclerAdapterServicos) mRecyclerView.getAdapter()).removeItemList(position);
+                        ((ConfiguracaoInicialActivity)getActivity()).getRefServicosSalao().child(idServico).removeValue();
+
                     }
                 });
         builder.setNegativeButton("NÃO",
@@ -117,12 +124,11 @@ public class FragmentConfiguracaoInicialSalaoServicos extends Fragment implement
                 });
 
         builder.setTitle("Excluir Serviço ?");
-       // builder.setIcon(this.servicoList.get(position).getIcone());
+        if (mList.get(position).getIcone() != null){
+            builder.setIcon(mList.get(position).getIcone());
+        }
         builder.setCancelable(true);
-        //alertDialogBuilderMessage(builder, this.servicoList.get(position).getNome(), this.servicoList.get(position).getPreco().toString(), this.servicoList.get(position).getDuracao().toString(), this.servicoList.get(position).getDescricao());
-
-
-
+        alertDialogBuilderMessage(builder, mList.get(position).getNome(), this.mList.get(position).getPreco().toString(), this.mList.get(position).getDuracao(), this.mList.get(position).getDescricao());
         AlertDialog dialog = builder.create();
         dialog.show();
     }
@@ -158,14 +164,15 @@ public class FragmentConfiguracaoInicialSalaoServicos extends Fragment implement
     private void createRecyclerViewServicosAdicionados(View view){
         this.mRecyclerView = (RecyclerView) view.findViewById(R.id.servicos_recycler_view);
         this.mRecyclerView.setHasFixedSize(true);
-
         LinearLayoutManager llm = new LinearLayoutManager(getActivity());
         llm.setOrientation(LinearLayoutManager.HORIZONTAL);
         this.mRecyclerView.setLayoutManager(llm);
         this.mList = new ArrayList<Servico>();
         this.mListKeyIdServicos = new ArrayList<String>();
-        RecyclerAdapter recyclerAdapter = new RecyclerAdapter(this.mList,getContext());
+        RecyclerAdapterServicos recyclerAdapter = new RecyclerAdapterServicos(this.mList,getContext());
+        recyclerAdapter.setRecyclerViewOnClickListenerHack(this);
         this.mRecyclerView.setAdapter(recyclerAdapter);
+
     }
 
     private void iniciarFormulario(){
@@ -179,14 +186,14 @@ public class FragmentConfiguracaoInicialSalaoServicos extends Fragment implement
                             int position = mList.size()-1;
                             mListKeyIdServicos.remove(mList.get(position).getIdServico());
                             mList.remove(position);
-                            ((RecyclerAdapter) mRecyclerView.getAdapter()).removeItemList(position);
+                            ((RecyclerAdapterServicos) mRecyclerView.getAdapter()).removeItemList(position);
                         }while(mList.size() > 0);
                     }
                     for (String key : ConfiguracaoInicialActivity.getServicosSalao().getServicosSalao().keySet()){
                         mList.add(ConfiguracaoInicialActivity.getServicosSalao().getServicosSalao().get(key));
                         int position = mList.indexOf(ConfiguracaoInicialActivity.getServicosSalao().getServicosSalao().get(key));
                         mListKeyIdServicos.add(ConfiguracaoInicialActivity.getServicosSalao().getServicosSalao().get(key).getIdServico());
-                        ((RecyclerAdapter) mRecyclerView.getAdapter()).addItemList(position);
+                        ((RecyclerAdapterServicos) mRecyclerView.getAdapter()).addItemList(position);
                     }
                     liberarFormulario();
                 }else{
@@ -202,12 +209,31 @@ public class FragmentConfiguracaoInicialSalaoServicos extends Fragment implement
                 @Override
                 public void run() {
                     if (ConfiguracaoInicialActivity.getServicosSalao().getServicosSalao().containsKey(idServico)){
-                        if (!mListKeyIdServicos.contains(idServico)){
+                        if (mListKeyIdServicos.contains(idServico)){
+                            for (Servico servico : mList) {
+                                if (servico.getIdServico().equals(idServico)){
+                                    if (!Servico.verificarServicosSaoIguais(servico,ConfiguracaoInicialActivity.getServicosSalao().getServicosSalao().get(idServico))){
+                                        int position = mList.indexOf(servico);
+                                        mList.remove(position);
+                                        mListKeyIdServicos.remove(idServico);
+                                        ((RecyclerAdapterServicos) mRecyclerView.getAdapter()).removeItemList(position);
+                                        if (!mListKeyIdServicos.contains(idServico)){
+                                            mList.add(ConfiguracaoInicialActivity.getServicosSalao().getServicosSalao().get(idServico));
+                                            mListKeyIdServicos.add(idServico);
+                                            int position2 = mList.indexOf(ConfiguracaoInicialActivity.getServicosSalao().getServicosSalao().get(idServico));
+                                            ((RecyclerAdapterServicos) mRecyclerView.getAdapter()).addItemList(position2);
+                                        }
+                                    }
+                                    break;
+                                }
+                            }
+                        }else{
                             mList.add(ConfiguracaoInicialActivity.getServicosSalao().getServicosSalao().get(idServico));
                             mListKeyIdServicos.add(idServico);
-                            int position = mList.indexOf(ConfiguracaoInicialActivity.getServicosSalao().getServicosSalao().get(idServico));
-                            ((RecyclerAdapter) mRecyclerView.getAdapter()).addItemList(position);
+                            int position2 = mList.indexOf(ConfiguracaoInicialActivity.getServicosSalao().getServicosSalao().get(idServico));
+                            ((RecyclerAdapterServicos) mRecyclerView.getAdapter()).addItemList(position2);
                         }
+
                     }
                     liberarFab();
                 }
@@ -225,7 +251,7 @@ public class FragmentConfiguracaoInicialSalaoServicos extends Fragment implement
                             int position = mList.indexOf(servico);
                             mList.remove(position);
                             mListKeyIdServicos.remove(idServico);
-                            ((RecyclerAdapter) mRecyclerView.getAdapter()).removeItemList(position);
+                            ((RecyclerAdapterServicos) mRecyclerView.getAdapter()).removeItemList(position);
                             break;
                         }
                     }
@@ -240,21 +266,23 @@ public class FragmentConfiguracaoInicialSalaoServicos extends Fragment implement
             this.handler.post(new Runnable() {
                 @Override
                 public void run() {
-                    for (Servico servico : mList) {
-                        if (servico.getIdServico().equals(idServico)){
-                            int position = mList.indexOf(servico);
-                            mList.remove(position);
-                            mListKeyIdServicos.remove(idServico);
-                            ((RecyclerAdapter) mRecyclerView.getAdapter()).removeItemList(position);
-                            break;
+                    if (mListKeyIdServicos.contains(idServico)){
+                        for (Servico servico : mList) {
+                            if (servico.getIdServico().equals(idServico)){
+                                int position = mList.indexOf(servico);
+                                mList.remove(position);
+                                mListKeyIdServicos.remove(idServico);
+                                ((RecyclerAdapterServicos) mRecyclerView.getAdapter()).removeItemList(position);
+                                break;
+                            }
                         }
-                    }
-                    if (ConfiguracaoInicialActivity.getServicosSalao().getServicosSalao().containsKey(idServico)){
-                        if (!mListKeyIdServicos.contains(idServico)){
-                            mList.add(ConfiguracaoInicialActivity.getServicosSalao().getServicosSalao().get(idServico));
-                            int position = mList.indexOf(ConfiguracaoInicialActivity.getServicosSalao().getServicosSalao().get(idServico));
-                            mListKeyIdServicos.add(idServico);
-                            ((RecyclerAdapter) mRecyclerView.getAdapter()).addItemList(position);
+                        if (ConfiguracaoInicialActivity.getServicosSalao().getServicosSalao().containsKey(idServico)){
+                            if (!mListKeyIdServicos.contains(idServico)){
+                                mList.add(ConfiguracaoInicialActivity.getServicosSalao().getServicosSalao().get(idServico));
+                                int position = mList.indexOf(ConfiguracaoInicialActivity.getServicosSalao().getServicosSalao().get(idServico));
+                                mListKeyIdServicos.add(idServico);
+                                ((RecyclerAdapterServicos) mRecyclerView.getAdapter()).addItemList(position);
+                            }
                         }
                     }
                     liberarFab();
@@ -299,12 +327,14 @@ public class FragmentConfiguracaoInicialSalaoServicos extends Fragment implement
                         servico.setDuracao(gerarDuracao());
                         servico.setDescricao(descricaoServico.getText().toString());
                         servico.setIdServico(((ConfiguracaoInicialActivity)getActivity()).getRefServicosSalao().push().getKey());
-                        ConfiguracaoInicialActivity.getServicosSalao().getServicosSalao().put(servico.getIdServico(),servico);
+                        ConfiguracaoInicialActivity.getServicosSalao().addServico(servico);
                         mList.add(ConfiguracaoInicialActivity.getServicosSalao().getServicosSalao().get(servico.getIdServico()));
                         int position = mList.indexOf(ConfiguracaoInicialActivity.getServicosSalao().getServicosSalao().get(servico.getIdServico()));
                         mListKeyIdServicos.add(servico.getIdServico());
-                        ((RecyclerAdapter) mRecyclerView.getAdapter()).addItemList(position);
-                        ((ConfiguracaoInicialActivity)getActivity()).adicionarServicoFirebase(servico.getIdServico());
+                        ((RecyclerAdapterServicos) mRecyclerView.getAdapter()).addItemList(position);
+                        Map<String, Object> childUpdates = new HashMap<>();
+                        childUpdates.put(servico.getIdServico(), ConfiguracaoInicialActivity.getServicosSalao().getServicosSalao().get(servico.getIdServico()).toMap());
+                        ((ConfiguracaoInicialActivity)getActivity()).getRefServicosSalao().updateChildren(childUpdates);
                         limparCampos();
                         criandoServico = false;
                     }
@@ -360,6 +390,20 @@ public class FragmentConfiguracaoInicialSalaoServicos extends Fragment implement
         return tempoMinutos;
     }
 
+    private String converterDuracao(int minutos){
+        int horas = minutos / 60;
+        int min = (minutos - (horas*60));
+        if (horas > 0){
+            return (horas + "h e " + min + "min");
+        }else{
+            if (min > 1){
+                return (min + " minutos");
+            }else{
+                return (min + " minuto");
+            }
+        }
+    }
+
     private Double gerarPrecoFloat(){
         String preco = this.precoServico.getText().toString();
         String precoConvertido = preco.replaceAll("[^0-9,]*", "");
@@ -376,6 +420,29 @@ public class FragmentConfiguracaoInicialSalaoServicos extends Fragment implement
         this.spinnerHoras.setSelection(0);
         this.nomeServico.requestFocus();
     }
+
+    private void alertDialogBuilderMessage(AlertDialog.Builder builder, String nomeServico, String precoServico, int duracaoServico, String descricaoServico){
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
+            builder.setMessage(Html.fromHtml("<p><b>" + getString(R.string.nome_servico_bold_html) +
+                    "</b><br>" + nomeServico + "</p><p><b>" +
+                    getString(R.string.preco_servico_bold_html) +
+                    "</b><br>R$" + precoServico + "</p><p><b>" +
+                    getString(R.string.duracao_servico_bold_html) +
+                    "</b><br>" + converterDuracao(duracaoServico) + "</p><p><b>" +
+                    getString(R.string.descricao_servico_bold_html) +
+                    "</b><br>" + descricaoServico + "</p>", Html.FROM_HTML_MODE_LEGACY));
+        } else {
+            builder.setMessage(Html.fromHtml("<p><b>" + getString(R.string.nome_servico_bold_html) +
+                    "</b><br>" + nomeServico + "</p><p><b>" +
+                    getString(R.string.preco_servico_bold_html) +
+                    "</b><br>R$" + precoServico + "</p><p><b>" +
+                    getString(R.string.duracao_servico_bold_html) +
+                    "</b><br>" + converterDuracao(duracaoServico) + "</p><p><b>" +
+                    getString(R.string.descricao_servico_bold_html) +
+                    "</b><br>" + descricaoServico + "</p>"));
+        }
+    }
+
 
     //GETTERS AND SETTERS
     public static String getTITULO() {
@@ -458,7 +525,7 @@ public class FragmentConfiguracaoInicialSalaoServicos extends Fragment implement
                 servico.setIdServico(((ConfiguracaoInicialActivity)getActivity()).getRefServicosSalao().push().getKey());
                 ConfiguracaoInicialActivity.getServicosSalao().getServicosSalao().put(servico.getIdServico(),servico);
                 this.mList.add(ConfiguracaoInicialActivity.getServicosSalao().getServicosSalao().get(servico.getIdServico()));
-                ((RecyclerAdapter) this.mRecyclerView.getAdapter()).addItemList(this.mList.size()-1);
+                ((RecyclerAdapterServicos) this.mRecyclerView.getAdapter()).addItemList(this.mList.size()-1);
                 ((ConfiguracaoInicialActivity)getActivity()).adicionarServicoFirebase(servico.getIdServico());
                 limparCampos();
                 criandoServico = false;
@@ -471,13 +538,13 @@ public class FragmentConfiguracaoInicialSalaoServicos extends Fragment implement
             if (!ConfiguracaoInicialActivity.getServicosSalao().getServicosSalao().containsKey(iterator.next().getIdServico())){
                 int position = this.mList.indexOf(iterator.next());
                 this.mList.remove(iterator.next());
-                ((RecyclerAdapter)this.mRecyclerView.getAdapter()).removeItemList(position);
+                ((RecyclerAdapterServicos)this.mRecyclerView.getAdapter()).removeItemList(position);
             }
         }
         for (String key : ConfiguracaoInicialActivity.getServicosSalao().getServicosSalao().keySet()){
             if (!this.mList.contains(ConfiguracaoInicialActivity.getServicosSalao().getServicosSalao().get(key))){
                 this.mList.add(ConfiguracaoInicialActivity.getServicosSalao().getServicosSalao().get(key));
-                ((RecyclerAdapter)this.mRecyclerView.getAdapter()).addItemList(this.mList.size()-1);
+                ((RecyclerAdapterServicos)this.mRecyclerView.getAdapter()).addItemList(this.mList.size()-1);
             }
         }
     }
@@ -489,40 +556,19 @@ public class FragmentConfiguracaoInicialSalaoServicos extends Fragment implement
         }
         this.servicoList.add(servico);
         this.nomesServicos.add(servico.getNome());
-        RecyclerAdapter recyclerAdapter = (RecyclerAdapter) this.mRecyclerView.getAdapter();
+        RecyclerAdapterServicos recyclerAdapter = (RecyclerAdapterServicos) this.mRecyclerView.getAdapter();
         recyclerAdapter.addItemList(this.servicoList.size());
         limparCampos();*/
     }
 
     public void removerServico(Servico servico){
-       /* RecyclerAdapter recyclerAdapter = (RecyclerAdapter) this.mRecyclerView.getAdapter();
+       /* RecyclerAdapterServicos recyclerAdapter = (RecyclerAdapterServicos) this.mRecyclerView.getAdapter();
         int position = this.servicoList.indexOf(servico);
         nomesServicos.remove(servico.getNome());
         servicoList.remove(servico);
         recyclerAdapter.removeItemList(position);*/
     }
 
-    public void alertDialogBuilderMessage(AlertDialog.Builder builder, String nomeServico, String precoServico, String duracaoServico, String descricaoServico){
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
-            builder.setMessage(Html.fromHtml("<p><b>" + getString(R.string.nome_servico_bold_html) +
-                    "</b><br>" + nomeServico + "</p><p><b>" +
-                    getString(R.string.preco_servico_bold_html) +
-                    "</b><br>" + precoServico + "</p><p><b>" +
-                    getString(R.string.duracao_servico_bold_html) +
-                    "</b><br>" + duracaoServico + "</p><p><b>" +
-                    getString(R.string.descricao_servico_bold_html) +
-                    "</b><br>" + descricaoServico + "</p>", Html.FROM_HTML_MODE_LEGACY));
-        } else {
-            builder.setMessage(Html.fromHtml("<p><b>" + getString(R.string.nome_servico_bold_html) +
-                    "</b><br>" + nomeServico + "</p><p><b>" +
-                    getString(R.string.preco_servico_bold_html) +
-                    "</b><br>" + precoServico + "</p><p><b>" +
-                    getString(R.string.duracao_servico_bold_html) +
-                    "</b><br>" + duracaoServico + "</p><p><b>" +
-                    getString(R.string.descricao_servico_bold_html) +
-                    "</b><br>" + descricaoServico + "</p>"));
-        }
-    }
 
     public void removeList(){
         List<String> list = new ArrayList<>();

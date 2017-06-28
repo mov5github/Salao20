@@ -4,6 +4,8 @@ import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.text.Editable;
 import android.text.InputFilter;
 import android.text.Spanned;
@@ -18,15 +20,22 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import com.example.lucas.salao20.R;
+import com.example.lucas.salao20.adapters.RecyclerAdapterProfissionais;
+import com.example.lucas.salao20.adapters.RecyclerAdapterServicos;
+import com.example.lucas.salao20.geral.geral.Profissional;
+import com.example.lucas.salao20.geral.geral.Servico;
+import com.example.lucas.salao20.interfaces.RecyclerViewOnClickListenerHack;
 
 import java.text.NumberFormat;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * Created by Lucas on 21/03/2017.
  */
 
-public class FragmentConfiguracaoInicialSalaoProfissionais extends Fragment{
+public class FragmentConfiguracaoInicialSalaoProfissionais extends Fragment implements RecyclerViewOnClickListenerHack {
     //ENUM
     private static final String TITULO = "Profissionais";
 
@@ -36,7 +45,13 @@ public class FragmentConfiguracaoInicialSalaoProfissionais extends Fragment{
     private Button buttonAdicionarProfissional;
     private TextView adicionarProfissionalSemCodigoUnico;
 
-    //CONTROLE
+    //RECYCLERVIEW
+    private RecyclerView mRecyclerView;
+    private List<Profissional> mList;
+    private List<String> mListKeyIdProfissionais;
+
+    //CONTROLES
+    private static boolean fragmentProfissionaisSalaoAtivo;
 
 
     @Nullable
@@ -44,7 +59,25 @@ public class FragmentConfiguracaoInicialSalaoProfissionais extends Fragment{
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_configuracao_inicial_salao_profissionais,container,false);
         initViews(view);
+        initControles();
         return view;
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        fragmentProfissionaisSalaoAtivo = true;
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+        fragmentProfissionaisSalaoAtivo = false;
+    }
+
+    @Override
+    public void onClickListener(View view, int position) {
+
     }
 
     private void initViews(View view){
@@ -145,65 +178,21 @@ public class FragmentConfiguracaoInicialSalaoProfissionais extends Fragment{
         //this.adicionarProfissionalSemCodigoUnico = (TextView) view.findViewById(R.id.label_profissional_sem_cod_unico);
       //  this.adicionarProfissionalSemCodigoUnico.setVisibility(View.INVISIBLE);
        // this.adicionarProfissionalSemCodigoUnico.setClickable(false);
+        this.mRecyclerView = (RecyclerView)view.findViewById(R.id.profissionais_recycler_view);
+        this.mRecyclerView.setHasFixedSize(true);
+        LinearLayoutManager llm = new LinearLayoutManager(getActivity());
+        llm.setOrientation(LinearLayoutManager.VERTICAL);
+        this.mRecyclerView.setLayoutManager(llm);
+        this.mList = new ArrayList<Profissional>();
+        this.mListKeyIdProfissionais = new ArrayList<String>();
+        RecyclerAdapterProfissionais recyclerAdapter = new RecyclerAdapterProfissionais(this.mList,getContext());
+        recyclerAdapter.setRecyclerViewOnClickListenerHack(this);
+        this.mRecyclerView.setAdapter(recyclerAdapter);
     }
 
-    //CLASSES
-    private class MascaraCodigoUnico implements TextWatcher {
-        EditText campo;
-
-        public MascaraCodigoUnico(EditText campo) {
-            super();
-            this.campo = campo;
-        }
-
-        private boolean isUpdating = false;
-        // Pega a formatacao do sistema, se for brasil R$ se EUA US$
-
-
-        @Override
-        public void onTextChanged(CharSequence s, int start, int before, int after) {
-            // Evita que o método seja executado varias vezes.
-            // Se tirar ele entre em loop
-            if (isUpdating) {
-                isUpdating = false;
-                return;
-            }
-            isUpdating = true;
-            String str = s.toString();
-            // Verifica se já existe a máscara no texto.
-            boolean hasMask = (str.indexOf("#") > -1);
-            // Verificamos se existe máscara
-            if (hasMask) {
-                // Retiramos a máscara.
-                str = str.replaceAll("[#]", "");
-            }
-            try {
-                // Transformamos o número que está escrito no EditText em
-                // monetário.
-                campo.setText(str);
-                campo.setSelection(campo.getText().length());
-            } catch (NumberFormatException e) {
-                s = "";
-            }
-        }
-
-        @Override
-        public void afterTextChanged(Editable s) {
-            // Não utilizado
-        }
-
-        @Override
-        public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-            // Não utilizado
-        }
-
-
-
+    private void initControles(){
+        fragmentProfissionaisSalaoAtivo = false;
     }
-
-    public boolean preenchimentoIsValid(){
-            return false;
-        }
 
     //GETTERS SETTERS
     public static String getTITULO() {

@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="7dp">
+
+    <ImageView
+        android:id="@+id/icone_profissional_item"
+        android:layout_width="80dp"
+        android:layout_height="80dp"
+        android:src="@null"
+        android:layout_marginRight="5dp"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"/>
+
+    <TableLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:layout_toRightOf="@+id/icone_profissional_item"
+        android:layout_toEndOf="@+id/icone_profissional_item"
+        android:layout_centerVertical="true">
+
+        <TextView
+            android:id="@+id/nome_profissional_item"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="3dp"
+            android:text="NOME"
+            android:textColor="#ffffff">
+        </TextView >
+
+        <TextView
+            android:id="@+id/codigo_unico_profissional_item"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="COD UNICO"
+            android:textColor="#ffffff">
+        </TextView >
+
+    </TableLayout>
+
+</RelativeLayout>

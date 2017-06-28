@@ -1,6 +1,5 @@
 package com.example.lucas.salao20.fragments.configuracaoInicial.salao;
 
-import android.content.Context;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.annotation.Nullable;
@@ -8,10 +7,10 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.TextInputLayout;
 import android.support.v4.app.Fragment;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.inputmethod.InputMethodManager;
 import android.widget.AutoCompleteTextView;
 import android.widget.CheckBox;
 import android.widget.ProgressBar;
@@ -21,11 +20,13 @@ import android.widget.Toast;
 
 import com.example.lucas.salao20.R;
 import com.example.lucas.salao20.activitys.ConfiguracaoInicialActivity;
-import com.example.lucas.salao20.adapters.RecyclerAdapter;
 import com.example.lucas.salao20.enumeradores.DiasENUM;
+import com.example.lucas.salao20.geral.geral.CadastroComplementar;
 import com.example.lucas.salao20.geral.geral.Funcionamento;
-import com.example.lucas.salao20.geral.geral.Servico;
 import com.google.firebase.auth.FirebaseAuth;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Created by Lucas on 21/03/2017.
@@ -129,6 +130,41 @@ public class FragmentConfiguracaoInicialSalaoFuncionamento extends Fragment{
         formNomeSalao.setVisibility(View.INVISIBLE);
         labelHorario = (TextView) view.findViewById(R.id.label_horario_funcionamento);
         nomeSalao = (AutoCompleteTextView) view.findViewById(R.id.nome_salao) ;
+        nomeSalao.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+            @Override
+            public void onFocusChange(View v, boolean hasFocus) {
+                if (!hasFocus){
+                    if (ConfiguracaoInicialActivity.getCadastroComplementar() == null){
+                        ConfiguracaoInicialActivity.setCadastroComplementar(new CadastroComplementar());
+                    }
+                    if ((ConfiguracaoInicialActivity.getCadastroComplementar().getNome() == null || ConfiguracaoInicialActivity.getCadastroComplementar().getNome().isEmpty() || !ConfiguracaoInicialActivity.getCadastroComplementar().getNome().equals(nomeSalao.getText().toString()))){
+                        ConfiguracaoInicialActivity.getCadastroComplementar().setNome(nomeSalao.getText().toString());
+                        Map<String,Object> updates = new HashMap<String, Object>();
+                        updates.put(CadastroComplementar.getNOME(),ConfiguracaoInicialActivity.getCadastroComplementar().getNome());
+                        ((ConfiguracaoInicialActivity)getActivity()).getRefCadastroComplementar().updateChildren(updates);
+                    }
+                }
+            }
+        });
+        nomeSalao.setOnKeyListener(new View.OnKeyListener() {
+            @Override
+            public boolean onKey(View v, int keyCode, KeyEvent event) {
+                if ((event.getAction() == KeyEvent.ACTION_DOWN) && (keyCode == KeyEvent.KEYCODE_ENTER)) {
+                    if (ConfiguracaoInicialActivity.getCadastroComplementar() == null){
+                        ConfiguracaoInicialActivity.setCadastroComplementar(new CadastroComplementar());
+                    }
+                    if ((ConfiguracaoInicialActivity.getCadastroComplementar().getNome() == null || ConfiguracaoInicialActivity.getCadastroComplementar().getNome().isEmpty() || !ConfiguracaoInicialActivity.getCadastroComplementar().getNome().equals(nomeSalao.getText().toString()))){
+                        ConfiguracaoInicialActivity.getCadastroComplementar().setNome(nomeSalao.getText().toString());
+                        Map<String,Object> updates = new HashMap<String, Object>();
+                        updates.put(CadastroComplementar.getNOME(),ConfiguracaoInicialActivity.getCadastroComplementar().getNome());
+                        ((ConfiguracaoInicialActivity)getActivity()).getRefCadastroComplementar().updateChildren(updates);
+                    }
+                    return true;
+                }else{
+                    return false;
+                }
+            }
+        });
         abreSegunda = (TextView) view.findViewById(R.id.abre_segunda);
         abreTerca =  (TextView) view.findViewById(R.id.abre_terca);
         abreQuarta = (TextView) view.findViewById(R.id.abre_quarta);

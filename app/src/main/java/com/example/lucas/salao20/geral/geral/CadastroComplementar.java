@@ -11,12 +11,15 @@ import java.util.Map;
 
 public class CadastroComplementar {
     private String nome;
+    private int foto;
 
     //ENUM
     @Exclude
     private static final String CADASTRO_COMPLEMENTAR = "cadastroComplementar";
     @Exclude
     private static final String NOME = "nome";
+    @Exclude
+    private static final String FOTO = "foto";
 
     public CadastroComplementar() {
     }
@@ -27,6 +30,9 @@ public class CadastroComplementar {
         if (this.nome != null){
             result.put(NOME, nome);
         }
+        if (this.foto != 0){
+            result.put(FOTO, foto);
+        }
         return result;
     }
 
@@ -36,6 +42,13 @@ public class CadastroComplementar {
     }
     public void setNome(String nome) {
         this.nome = nome;
+    }
+
+    public int getFoto() {
+        return foto;
+    }
+    public void setFoto(int foto) {
+        this.foto = foto;
     }
 
     public static String getCADASTRO_COMPLEMENTAR() {

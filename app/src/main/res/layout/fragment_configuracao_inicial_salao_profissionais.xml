@@ -102,5 +102,21 @@
         android:scrollbars="vertical"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_below="@+id/label_profissionais_adicionados"/>
+        android:layout_below="@+id/label_profissionais_adicionados"
+        android:layout_above="@+id/gravar"/>
+
+    <Button
+        android:id="@+id/gravar"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="gravar"
+        android:onClick="addProf"
+        android:layout_above="@+id/buscar"/>
+    <Button
+        android:id="@+id/buscar"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="buscar"
+        android:onClick="buscarProf"
+        android:layout_alignParentBottom="true"/>
 </RelativeLayout>

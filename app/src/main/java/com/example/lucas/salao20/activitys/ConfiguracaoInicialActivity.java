@@ -32,7 +32,11 @@ import com.example.lucas.salao20.fragments.configuracaoInicial.FragmentConfigura
 import com.example.lucas.salao20.geral.geral.CadastroBasico;
 import com.example.lucas.salao20.adapters.ConfiguracaoInicialAdapter;
 import com.example.lucas.salao20.geral.geral.CadastroComplementar;
+import com.example.lucas.salao20.geral.geral.Profissional;
 import com.example.lucas.salao20.geral.geral.Servico;
+import com.example.lucas.salao20.geral.profissional.ExpedienteProfissional;
+import com.example.lucas.salao20.geral.profissional.ServicoProfissional;
+import com.example.lucas.salao20.geral.profissional.ServicosProfissional;
 import com.example.lucas.salao20.geral.salao.FuncionamentoSalao;
 import com.example.lucas.salao20.geral.salao.ProfissionaisSalao;
 import com.example.lucas.salao20.geral.salao.ServicosSalao;
@@ -72,6 +76,7 @@ public class ConfiguracaoInicialActivity extends AppCompatActivity{
     private DatabaseReference refServicosSalao;
     private DatabaseReference refProfissionaisSalao;
     private DatabaseReference refRegrasDeNegocio;
+    private DatabaseReference refServicosProfissionais;
 
 
     //FIREBASE VEL
@@ -85,6 +90,8 @@ public class ConfiguracaoInicialActivity extends AppCompatActivity{
     private ChildEventListener childEventListenerProfissionaisSalao;
     private ChildEventListener childEventListenerCadastroComplementar;
     private ValueEventListener valueEventListenerCadastroComplementar;
+    private ValueEventListener valueEventListenerServicosProfissional;
+    private ChildEventListener childEventListenerServicosProfissional;
 
     //ALERT DIALOG
     private AlertDialog alertDialog;
@@ -354,13 +361,18 @@ public class ConfiguracaoInicialActivity extends AppCompatActivity{
                             this.refFuncionamentoSalao.keepSynced(true);
                         }
                         if (this.refServicosSalao == null){
-                            this.refServicosSalao = LibraryClass.getFirebase().child(GeralENUM.SERVICOS).child(mAuth.getCurrentUser().getUid());
+                            this.refServicosSalao = LibraryClass.getFirebase().child(GeralENUM.SERVICOS).child(mAuth.getCurrentUser().getUid()).child(TipoUsuarioENUM.SALAO);
                             this.refServicosSalao.keepSynced(true);
                         }
                         if (this.refProfissionaisSalao == null){
-                            this.refProfissionaisSalao = LibraryClass.getFirebase().child(GeralENUM.USERS).child(mAuth.getCurrentUser().getUid()).child(GeralENUM.PROFISSIONAIS);
+                            this.refProfissionaisSalao = LibraryClass.getFirebase().child(GeralENUM.PROFISSIONAIS);
                             this.refProfissionaisSalao.keepSynced(true);
                         }
+                        /*if (this.refServicosProfissionais == null){
+                            this.refServicosProfissionais = LibraryClass.getFirebase().child(GeralENUM.SERVICOS).child(TipoUsuarioENUM.PROFISSIONAl).child(mAuth.getCurrentUser().getUid());
+                            this.refServicosProfissionais.keepSynced(true);
+                        }*/
+
 
                         //FUNCIONAMNENTO SALAO
                         if (this.childEventListenerFuncionamentoSalao == null){
@@ -580,6 +592,171 @@ public class ConfiguracaoInicialActivity extends AppCompatActivity{
                                 public void onChildAdded(DataSnapshot dataSnapshot, String s) {
                                     Log.i("fireServicos","onChildAdded");
                                     if (dataSnapshot.exists()){
+                                        Log.i("testeteste",dataSnapshot.toString());
+                                        /*Profissional profissional = new Profissional();
+                                        profissional.setIdProfissional(dataSnapshot.getKey());
+                                        if (dataSnapshot.hasChild(Profissional.getDataDeInsercao())){
+                                            profissional.setDataInsercao(dataSnapshot.child(Profissional.getDataDeInsercao()).getValue(Long.class));
+                                        }
+                                        if (dataSnapshot.hasChild(Profissional.getUidProfissional())){
+                                            profissional.setuIDProfissional(dataSnapshot.child(Profissional.getUidProfissional()).getValue(String.class));
+                                        }
+                                        if (dataSnapshot.hasChild(Profissional.getEXPEDIENTE())){
+                                            ExpedienteProfissional expedienteProfissional = new ExpedienteProfissional();
+                                            for (DataSnapshot child : dataSnapshot.child(Profissional.getEXPEDIENTE()).getChildren() ){
+                                                Funcionamento funcionamento = new Funcionamento();
+                                                funcionamento.setDia(child.getKey());
+                                                if (child.hasChild(DiasENUM.ABRE)){
+                                                    funcionamento.setAbre(child.child(DiasENUM.ABRE).getValue(String.class));
+                                                }
+                                                if (child.hasChild(DiasENUM.FECHA)){
+                                                    funcionamento.setFecha(child.child(DiasENUM.FECHA).getValue(String.class));
+                                                }
+                                                if (child.hasChild(DiasENUM.INICIO_ALMOCO)){
+                                                    funcionamento.setInicioAlmoco(child.child(DiasENUM.INICIO_ALMOCO).getValue(String.class));
+                                                }
+                                                if (child.hasChild(DiasENUM.DURACAO_ALMOCO)){
+                                                    funcionamento.setDuracaoAlmoco(child.child(DiasENUM.DURACAO_ALMOCO).getValue(Integer.class));
+                                                }
+                                                expedienteProfissional.addFuncionamento(funcionamento);
+                                            }
+                                            profissional.setExpedienteProfissional(expedienteProfissional);
+                                        }
+                                        if (dataSnapshot.hasChild(Profissional.getSERVICOS())){
+                                            ServicosProfissional servicosProfissional = new ServicosProfissional();
+                                            for (DataSnapshot child : dataSnapshot.child(Profissional.getSERVICOS()).getChildren() ){
+                                                ServicoProfissional servicoProfissional = new ServicoProfissional();
+                                                servicoProfissional.setIdServico(child.getKey());
+                                                if (child.hasChild(ServicoProfissional.getDURACAO())){
+                                                    servicoProfissional.setDuracao(child.child(ServicoProfissional.getDURACAO()).getValue(Integer.class));
+                                                }
+                                                if (child.hasChild(ServicoProfissional.getIdAuxServico())){
+                                                    for (DataSnapshot childAux : child.child(ServicoProfissional.getIdAuxServico()).getChildren()){
+                                                        Servico servico = new Servico();
+                                                        servico.setIdServico(childAux.getKey());
+                                                        if (childAux.hasChild(Servico.getNOME())){
+                                                            servico.setNome(childAux.child(Servico.getNOME()).getValue(String.class));
+                                                        }
+                                                        if (childAux.hasChild(Servico.getICONE())){
+                                                            servico.setIcone(childAux.child(Servico.getICONE()).getValue(Integer.class));
+                                                        }
+                                                        if (childAux.hasChild(Servico.getDURACAO())){
+                                                            servico.setDuracao(childAux.child(Servico.getDURACAO()).getValue(Integer.class));
+                                                        }
+                                                        if (childAux.hasChild(Servico.getPRECO())){
+                                                            servico.setPreco(childAux.child(Servico.getPRECO()).getValue(Double.class));
+                                                        }
+                                                        if (childAux.hasChild(Servico.getDESCRICAO())){
+                                                            servico.setDescricao(childAux.child(Servico.getDESCRICAO()).getValue(String.class));
+                                                        }
+                                                        if (childAux.hasChild(Servico.getDataDeInsercao())){
+                                                            servico.setDataInsercao(childAux.child(Servico.getDataDeInsercao()).getValue(Long.class));
+                                                        }
+                                                        servicoProfissional.setServico(servico);
+                                                    }
+                                                }
+                                                servicosProfissional.addServicoProfissional(servicoProfissional);
+                                            }
+                                            profissional.setServicosProfissional(servicosProfissional);
+                                        }
+
+                                        if (mViewPager != null && FragmentConfiguracaoInicialSalaoProfissionais.isFragmentProfissionaisSalaoAtivo()){
+                                            ((FragmentConfiguracaoInicialSalaoProfissionais)((ConfiguracaoInicialAdapter)mViewPager.getAdapter()).getFragment(2)).profissionalAdicionado(profissional.getIdProfissional());
+                                        }*/
+                                    }
+                                }
+
+                                @Override
+                                public void onChildChanged(DataSnapshot dataSnapshot, String s) {
+                                    Log.i("fireServicos","onChildChanged");
+                                    if (dataSnapshot.exists()){
+                                        Servico servico = new Servico();
+                                        servico.setIdServico(dataSnapshot.getKey());
+                                        if (dataSnapshot.hasChild(Servico.getNOME())){
+                                            servico.setNome(dataSnapshot.child(Servico.getNOME()).getValue(String.class));
+                                        }
+                                        if (dataSnapshot.hasChild(Servico.getICONE())){
+                                            servico.setIcone(dataSnapshot.child(Servico.getICONE()).getValue(Integer.class));
+                                        }
+                                        if (dataSnapshot.hasChild(Servico.getDURACAO())){
+                                            servico.setDuracao(dataSnapshot.child(Servico.getDURACAO()).getValue(Integer.class));
+                                        }
+                                        if (dataSnapshot.hasChild(Servico.getPRECO())){
+                                            servico.setPreco(dataSnapshot.child(Servico.getPRECO()).getValue(Double.class));
+                                        }
+                                        if (dataSnapshot.hasChild(Servico.getDESCRICAO())){
+                                            servico.setDescricao(dataSnapshot.child(Servico.getDESCRICAO()).getValue(String.class));
+                                        }
+                                        if (dataSnapshot.hasChild(Servico.getDataDeInsercao())){
+                                            servico.setDataInsercao(dataSnapshot.child(Servico.getDataDeInsercao()).getValue(Long.class));
+                                        }
+                                        servicosSalao.addServico(servico);
+                                        if (mViewPager != null && FragmentConfiguracaoInicialSalaoServicos.isFragmentServicosSalaoAtivo()){
+                                            ((FragmentConfiguracaoInicialSalaoServicos)((ConfiguracaoInicialAdapter)mViewPager.getAdapter()).getFragment(1)).servicoAlterado(servico.getIdServico());
+                                        }
+                                    }
+                                }
+
+                                @Override
+                                public void onChildRemoved(DataSnapshot dataSnapshot) {
+                                    Log.i("fireServicos","onChildRemoved");
+                                    if (dataSnapshot.exists()){
+                                        servicosSalao.removerServico(dataSnapshot.getKey());
+                                        if (mViewPager != null && FragmentConfiguracaoInicialSalaoServicos.isFragmentServicosSalaoAtivo()){
+                                            ((FragmentConfiguracaoInicialSalaoServicos)((ConfiguracaoInicialAdapter)mViewPager.getAdapter()).getFragment(1)).servicoRemovido(dataSnapshot.getKey());
+                                        }
+                                    }
+
+                                }
+
+                                @Override
+                                public void onChildMoved(DataSnapshot dataSnapshot, String s) {
+
+                                }
+
+                                @Override
+                                public void onCancelled(DatabaseError databaseError) {
+                                    Log.i("fireServicos","onCancelled");
+                                }
+                            };
+                        }
+                        if (this.valueEventListenerProfissionaisSalao == null){
+                            this.valueEventListenerProfissionaisSalao = new ValueEventListener() {
+                                @Override
+                                public void onDataChange(DataSnapshot dataSnapshot) {
+                                    if (profissionaisSalao == null){
+                                        profissionaisSalao = new ProfissionaisSalao();
+                                        profissionaisSalao.setProfissionais(new HashMap<String, Profissional>());
+                                    }
+                                    if (dataSnapshot.exists()){
+                                        Log.i("snapshot",dataSnapshot.toString());
+                                        if (dataSnapshot.getChildrenCount() == 0){
+                                            /*if (mViewPager != null && FragmentConfiguracaoInicialSalaoProfissionais.isFragmentProfissionaisSalaoAtivo()){
+                                                ((FragmentConfiguracaoInicialSalaoProfissionais)((ConfiguracaoInicialAdapter)mViewPager.getAdapter()).getFragment(2)).liberarFormulario();
+                                            }*/
+                                        }
+                                    }else {
+                                       /* if (mViewPager != null && FragmentConfiguracaoInicialSalaoProfissionais.isFragmentProfissionaisSalaoAtivo()){
+                                            ((FragmentConfiguracaoInicialSalaoProfissionais)((ConfiguracaoInicialAdapter)mViewPager.getAdapter()).getFragment(2)).liberarFormulario();
+                                        }*/
+                                    }
+                                    refProfissionaisSalao.addChildEventListener(childEventListenerProfissionaisSalao);
+                                }
+
+                                @Override
+                                public void onCancelled(DatabaseError databaseError) {
+
+                                }
+                            };
+                        }
+                        this.refProfissionaisSalao.addListenerForSingleValueEvent(this.valueEventListenerProfissionaisSalao);
+                        /*//SERVICOS PROFISSIONAL
+                        if (this.childEventListenerServicosProfissional == null){
+                            this.childEventListenerServicosProfissional = new ChildEventListener() {
+                                @Override
+                                public void onChildAdded(DataSnapshot dataSnapshot, String s) {
+                                    Log.i("fireServicos","onChildAdded");
+                                    if (dataSnapshot.exists()){
                                         Servico servico = new Servico();
                                         servico.setIdServico(dataSnapshot.getKey());
                                         if (dataSnapshot.hasChild(Servico.getNOME())){
@@ -662,10 +839,11 @@ public class ConfiguracaoInicialActivity extends AppCompatActivity{
                                 }
                             };
                         }
-                        if (this.valueEventListenerProfissionaisSalao == null){
-                            this.valueEventListenerProfissionaisSalao = new ValueEventListener() {
+                        if (this.valueEventListenerServicosProfissional == null){
+                            this.valueEventListenerServicosProfissional = new ValueEventListener() {
                                 @Override
                                 public void onDataChange(DataSnapshot dataSnapshot) {
+                                    Log.i("testeteste","valueEventListenerServicosSalao onDataChange");
                                     if (servicosSalao == null){
                                         servicosSalao = new ServicosSalao();
                                         servicosSalao.setServicosSalao(new HashMap<String, Servico>());
@@ -690,8 +868,7 @@ public class ConfiguracaoInicialActivity extends AppCompatActivity{
                                 }
                             };
                         }
-                        this.refProfissionaisSalao.addListenerForSingleValueEvent(this.valueEventListenerProfissionaisSalao);
-
+                        this.refServicosProfissionais.addListenerForSingleValueEvent(this.valueEventListenerServicosProfissional);*/
                         if (cadastroBasico.getNivelUsuario() != null && cadastroBasico.getNivelUsuario() == 2.0){
                             gerarCodigoUnico(TipoUsuarioENUM.SALAO);
                         }
@@ -1429,6 +1606,14 @@ public class ConfiguracaoInicialActivity extends AppCompatActivity{
         return refServicosSalao;
     }
 
+    public DatabaseReference getRefCadastroComplementar() {
+        return refCadastroComplementar;
+    }
+
+    public static void setCadastroComplementar(CadastroComplementar cadastroComplementar) {
+        ConfiguracaoInicialActivity.cadastroComplementar = cadastroComplementar;
+    }
+
     //TESTES
     public void teste(){
         Map<String, Object> childUpdates = new HashMap<>();
@@ -1489,4 +1674,27 @@ public class ConfiguracaoInicialActivity extends AppCompatActivity{
     }
 
 
+    public void addProf(View view) {
+        Map<String, Object> childUpdates = new HashMap<>();
+        childUpdates.put("nome","lucas");
+        childUpdates.put("aaaa",true);
+        childUpdates.put("uidSalão","xooWyYJq5DVmpDU5CTBioozu3723");
+        this.refProfissionaisSalao.child(this.refProfissionaisSalao.push().getKey()).updateChildren(childUpdates);
+    }
+
+    public void buscarProf(View view) {
+        this.refProfissionaisSalao.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                if (dataSnapshot.exists()){
+                    Log.i("dataSnapshot",dataSnapshot.toString());
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                Log.i("dataSnapshot","onCancelled");
+            }
+        });
+    }
 }

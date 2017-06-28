@@ -13,7 +13,7 @@ public class Funcionamento {
     private String dia;
     private String abre;
     private String fecha;
-    private int inicioAlmoco;
+    private String inicioAlmoco;
     private int duracaoAlmoco;
 
     public Funcionamento() {
@@ -34,7 +34,7 @@ public class Funcionamento {
         if (fecha != null && !fecha.isEmpty()){
             result.put(DiasENUM.FECHA,fecha);
         }
-        if (inicioAlmoco != 0){
+        if (inicioAlmoco != null && !inicioAlmoco.isEmpty()){
             result.put(DiasENUM.INICIO_ALMOCO,inicioAlmoco);
         }
         if (duracaoAlmoco != 0){
@@ -65,10 +65,10 @@ public class Funcionamento {
         this.fecha = fecha;
     }
 
-    public int getInicioAlmoco() {
+    public String getInicioAlmoco() {
         return inicioAlmoco;
     }
-    public void setInicioAlmoco(int inicioAlmoco) {
+    public void setInicioAlmoco(String inicioAlmoco) {
         this.inicioAlmoco = inicioAlmoco;
     }
 
