@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <TextView
+        android:id="@+id/label_tipo"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="18sp"
+        android:text="Selecione o tipo de cadastro :"
+        android:layout_centerHorizontal="true"
+        android:layout_marginBottom="20dp"
+        android:layout_marginTop="10dp"/>
+
+    <TableLayout
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:layout_below="@+id/label_tipo"
+        android:layout_centerHorizontal="true">
+
+        <RelativeLayout
+            android:id="@+id/rl_cadastro_cliente"
+            android:layout_width="wrap_content"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:onClick="confirmarTipoCadastro">
+
+            <ImageButton
+                android:id="@+id/btn_cadastro_cliente"
+                android:layout_width="90dp"
+                android:layout_height="90dp"
+                android:scaleType="fitXY"
+                android:src="@mipmap/icone_usuario_cliente"
+                android:background="#00000000"
+                android:contentDescription="btnChamarCadastroCliente"
+                android:layout_marginRight="5dp"
+                android:layout_centerVertical="true"
+                android:onClick="confirmarTipoCadastro"/>
+
+            <LinearLayout
+                android:id="@+id/ll_descricao_cliente"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_centerVertical="true"
+                android:layout_toRightOf="@+id/btn_cadastro_cliente"
+                android:layout_toEndOf="@id/btn_cadastro_cliente">
+
+                <TextView
+                    android:id="@+id/label_cadastro_cliente"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="16sp"
+                    android:text="Cliente"
+                    android:textStyle="bold"
+                    android:gravity="center_horizontal"/>
+
+                <TextView
+                    android:id="@+id/descricao_cadastro_cliente"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="14sp"
+                    android:text="Para ter acesso a agenda dos salões cadastrados."
+                    android:layout_marginTop="7dp"
+                    android:layout_below="@+id/label_cadastro_cliente"/>
+
+            </LinearLayout>
+
+        </RelativeLayout>
+
+        <RelativeLayout
+            android:id="@+id/rl_cadastro_salao"
+            android:layout_width="wrap_content"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:onClick="confirmarTipoCadastro">
+
+            <ImageButton
+                android:id="@+id/btn_cadastro_salao"
+                android:layout_width="90dp"
+                android:layout_height="90dp"
+                android:scaleType="fitXY"
+                android:src="@mipmap/icone_usuario_salao"
+                android:background="#00000000"
+                android:contentDescription="btnChamarCadastroSalao"
+                android:layout_marginRight="5dp"
+                android:layout_centerVertical="true"
+                android:onClick="confirmarTipoCadastro"/>
+
+            <LinearLayout
+                android:id="@+id/ll_descricao_salao"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_centerVertical="true"
+                android:layout_toRightOf="@+id/btn_cadastro_salao"
+                android:layout_toEndOf="@id/btn_cadastro_salao">
+
+                <TextView
+                    android:id="@+id/label_cadastro_salao"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="16sp"
+                    android:text="Salão"
+                    android:textStyle="bold"
+                    android:gravity="center_horizontal"/>
+
+                <TextView
+                    android:id="@+id/descricao_cadastro_Salao"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="14sp"
+                    android:text="Para abrir um salão online."
+                    android:layout_marginTop="7dp"
+                    android:layout_below="@+id/label_cadastro_salao"/>
+
+            </LinearLayout>
+
+        </RelativeLayout>
+
+        <RelativeLayout
+            android:id="@+id/rl_cadastro_profissional"
+            android:layout_width="wrap_content"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:onClick="confirmarTipoCadastro">
+
+            <ImageButton
+                android:id="@+id/btn_cadastro_profissional"
+                android:layout_width="90dp"
+                android:layout_height="90dp"
+                android:scaleType="fitXY"
+                android:src="@mipmap/icone_usuario_profissional"
+                android:background="#00000000"
+                android:contentDescription="btnChamarCadastroProfissional"
+                android:layout_marginRight="5dp"
+                android:layout_centerVertical="true"
+                android:onClick="confirmarTipoCadastro"/>
+
+            <LinearLayout
+                android:id="@+id/ll_descricao_profissional"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_centerVertical="true"
+                android:layout_toRightOf="@+id/btn_cadastro_profissional"
+                android:layout_toEndOf="@id/btn_cadastro_profissional">
+
+                <TextView
+                    android:id="@+id/label_cadastro_profissional"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="16sp"
+                    android:text="Profissional"
+                    android:textStyle="bold"
+                    android:gravity="center_horizontal"/>
+
+                <TextView
+                    android:id="@+id/descricao_cadastro_profissional"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="14sp"
+                    android:text="Para profissionais que ocuparam uma vaga em um salão online."
+                    android:layout_marginTop="7dp"
+                    android:layout_below="@+id/label_cadastro_profissional"/>
+
+            </LinearLayout>
+
+        </RelativeLayout>
+
+    </TableLayout>
+
+</RelativeLayout>
+
+

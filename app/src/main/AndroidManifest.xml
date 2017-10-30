@@ -18,36 +18,71 @@
 
         <!-- ACTIVITYS -->
         <activity
-            android:name=".activitys.SplashScreenActivity"
-            android:configChanges="orientation|screenSize"
-            android:launchMode="singleInstance">
-        </activity>
-        <activity
             android:name=".activitys.LoginActivity"
             android:configChanges="orientation|screenSize"
-            android:windowSoftInputMode="stateHidden" >
+            android:windowSoftInputMode="stateHidden"
+            android:launchMode="singleInstance">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
         <activity
             android:name=".activitys.SignUpActivity"
             android:configChanges="orientation|screenSize"
-            android:windowSoftInputMode="stateHidden" />
-        <activity
-            android:name=".activitys.ErroActivity"
-            android:configChanges="orientation|screenSize" />
-        <activity
-            android:name=".activitys.ConfiguracaoInicialActivity"
-            android:configChanges="orientation|screenSize"
-            android:windowSoftInputMode="stateHidden" />
-        <activity
-            android:name=".activitys.HomeActivity"
-            android:configChanges="orientation|screenSize" />
+            android:windowSoftInputMode="stateHidden"
+            android:launchMode="singleInstance"/>
 
-        <!-- SERVICES -->
+        <activity
+            android:name=".activitys.SplashScreenActivity"
+            android:configChanges="orientation|screenSize"
+            android:launchMode="singleInstance" />
+
+
+        <activity
+        android:name=".activitys.ConfiguracaoInicialSalaoActivity"
+        android:configChanges="orientation|screenSize"
+        android:windowSoftInputMode="stateHidden"
+        android:launchMode="singleInstance"/>
+
+        <activity
+            android:name=".activitys.ConfiguracaoInicialProfissionalActivity"
+            android:configChanges="orientation|screenSize"
+            android:windowSoftInputMode="stateHidden"
+            android:launchMode="singleInstance"/>
+
+        <activity
+            android:name=".activitys.ConfiguracaoInicialClienteActivity"
+            android:configChanges="orientation|screenSize"
+            android:windowSoftInputMode="stateHidden"
+            android:launchMode="singleInstance"/>
+
+        <activity
+            android:name=".activitys.HomeClienteActivity"
+            android:configChanges="orientation|screenSize"
+            android:windowSoftInputMode="stateHidden"
+            android:launchMode="singleInstance"/>
+
+        <activity
+            android:name=".activitys.HomeSalaoActivity"
+            android:configChanges="orientation|screenSize"
+            android:windowSoftInputMode="stateHidden"
+            android:launchMode="singleInstance"/>
+
+        <activity
+            android:name=".activitys.HomeProfissionalActivity"
+            android:configChanges="orientation|screenSize"
+            android:windowSoftInputMode="stateHidden"
+            android:launchMode="singleInstance"/>
+
+
+        <activity android:name=".activitys.TipoUsuarioActivity" />
+
+        <activity android:name=".activitys.TesteActivity" />
+
+
 
     </application>
 

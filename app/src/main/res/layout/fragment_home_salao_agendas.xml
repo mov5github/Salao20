@@ -7,10 +7,149 @@ android:paddingLeft="@dimen/activity_horizontal_margin"
 android:paddingRight="@dimen/activity_horizontal_margin"
 android:paddingTop="@dimen/activity_vertical_margin">
 
-<TextView
-    android:layout_width="wrap_content"
-    android:layout_height="wrap_content"
-    android:text="home salao agendas"/>
+    <LinearLayout
+        android:id="@+id/ll_filtros_fragment_home_salao_agenda"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:layout_centerHorizontal="true"
+        android:layout_marginBottom="15dp"
+        android:layout_marginTop="6dp"
+        android:visibility="visible"
+        android:clickable="false">
 
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Filtros"
+            android:textSize="15sp"
+            android:textStyle="bold"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginBottom="7dp"/>
+
+        <TableRow
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="10dp">
+
+            <ImageView
+                android:id="@+id/icone_filtro_profissionais_fragment_home_salao_agenda"
+                android:layout_width="30dp"
+                android:layout_height="30dp"
+                android:src="@mipmap/ic_content_cut_white_48dp"
+                android:layout_marginRight="10dp"
+                android:layout_marginEnd="10dp"/>
+
+            <Spinner
+                android:id="@+id/spinner_filtro_profissionais_fragment_home_salao_agenda"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="bottom">
+            </Spinner>
+
+        </TableRow>
+
+        <TableRow
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="4dp">
+
+            <ImageView
+                android:id="@+id/icone_filtro_data_fragment_home_salao_agenda"
+                android:layout_width="30dp"
+                android:layout_height="30dp"
+                android:src="@mipmap/ic_event_white_48dp"
+                android:layout_marginRight="10dp"
+                android:layout_marginEnd="10dp"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="de"
+                android:textSize="15sp"
+                android:layout_marginRight="6dp"
+                android:layout_marginEnd="6dp"
+                android:layout_gravity="bottom"/>
+
+            <TextView
+                android:id="@+id/label_filtro_data_inicial_fragment_home_salao_agenda"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="00-00-0000"
+                android:textSize="21sp"
+                android:layout_marginRight="15dp"
+                android:layout_marginEnd="15dp"
+                android:layout_gravity="bottom"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="até"
+                android:textSize="15sp"
+                android:layout_marginRight="6dp"
+                android:layout_marginEnd="6dp"
+                android:layout_gravity="bottom"/>
+
+            <TextView
+                android:id="@+id/label_filtro_data_final_fragment_home_salao_agenda"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="00-00-0000"
+                android:textSize="21sp"
+                android:layout_gravity="bottom"/>
+        </TableRow>
+
+    </LinearLayout>
+
+
+    <TextView
+        android:id="@+id/label_agendamentos_fragment_home_salao_agenda"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Agendamentos existentes :"
+        android:layout_centerHorizontal="true"
+        android:layout_marginBottom="20dp"
+        android:visibility="invisible"
+        android:layout_below="@+id/tr_filtros_fragment_home_salao_agenda"/>
+
+    <TextView
+        android:id="@+id/label_nao_ha_agendamentos_fragment_home_salao_agenda"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Não ha agendamentos."
+        android:layout_centerInParent="true"
+        android:visibility="invisible"/>
+
+    <android.support.v7.widget.RecyclerView
+        android:id="@+id/recycler_view_fragment_home_salao_agenda"
+        android:scrollbars="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_centerVertical="true"
+        android:layout_below="@+id/label_agendamentos_fragment_home_salao_agenda"
+        android:visibility="invisible"
+        android:clickable="false"/>
+
+    <!-- Fragment funcionamento progress -->
+    <ProgressBar
+        android:layout_centerInParent="true"
+        android:id="@+id/progress_fragment_home_salao_agenda"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="8dp"
+        android:visibility="invisible"/>
+
+    <!-- Fragment funcionamento FloatingActionButton -->
+    <android.support.design.widget.FloatingActionButton
+        android:id="@+id/fab_fragment_home_salao_agenda"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentEnd="true"
+        android:layout_margin="@dimen/fab_margin"
+        android:src="@android:drawable/ic_input_add"
+        android:clickable="false"
+        android:visibility="invisible"/>
 
 </RelativeLayout>

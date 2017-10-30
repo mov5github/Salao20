@@ -18,6 +18,10 @@ import java.util.HashMap;
 public class FuncionamentoSalao {
     private HashMap<String,Funcionamento> funcionamentoDoSalao;
 
+    //ENUM
+    @Exclude
+    private static final String FUNCIONAMENTO_DO_SALAO = "funcionamentoDoSalão";
+
     public FuncionamentoSalao() {
     }
 
@@ -48,5 +52,10 @@ public class FuncionamentoSalao {
     public void setFuncionamentoDoSalao(HashMap<String, Funcionamento> funcionamentoDoSalao) {
         this.funcionamentoDoSalao = funcionamentoDoSalao;
     }
+
+    public static String getFUNCIONAMENTO_DO_SALAO(){
+        return FUNCIONAMENTO_DO_SALAO;
+    }
+
 
 }

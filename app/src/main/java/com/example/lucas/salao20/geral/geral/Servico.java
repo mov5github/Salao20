@@ -1,11 +1,11 @@
 package com.example.lucas.salao20.geral.geral;
 
+import android.content.res.Resources;
 import android.util.Log;
 
 import com.google.firebase.database.Exclude;
 import com.google.firebase.database.ServerValue;
 
-import java.security.Timestamp;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -16,6 +16,7 @@ import java.util.Map;
 public class Servico {
     private String nome;
     private Integer icone;
+    private String iconeNome;
     private Integer duracao;
     private Double preco;
     private String descricao;
@@ -27,6 +28,8 @@ public class Servico {
     private static final String NOME = "nome";
     @Exclude
     private static final String ICONE = "icone";
+    @Exclude
+    private static final String ICONE_NOME = "iconeNome";
     @Exclude
     private static final String DURACAO = "duração";
     @Exclude
@@ -40,12 +43,14 @@ public class Servico {
     public Servico() {
     }
 
-    public Servico(String nome, Integer icone, Integer duracao, Double preco, String descricao) {
+    public Servico(String nome, Integer icone, Integer duracao, Double preco, String descricao, Long dataInsercao) {
         this.nome = nome;
         this.icone = icone;
         this.duracao = duracao;
         this.preco = preco;
         this.descricao = descricao;
+        this.iconeNome = Resources.getSystem().getResourceEntryName(icone);
+        this.dataInsercao = dataInsercao;
     }
 
     public Map<String,Object> toMap(){
@@ -53,8 +58,8 @@ public class Servico {
         if (this.nome != null && !this.nome.isEmpty()){
             result.put(NOME,this.nome);
         }
-        if (this.icone != null){
-            result.put(ICONE,this.icone);
+        if (this.iconeNome != null){
+            result.put(ICONE_NOME,this.iconeNome);
         }
         if (this.duracao != null){
             result.put(DURACAO,this.duracao);
@@ -67,6 +72,8 @@ public class Servico {
         }
         if (this.dataInsercao != null){
             result.put(DATA_DE_INSERCAO,this.dataInsercao);
+        }else {
+            result.put(DATA_DE_INSERCAO, ServerValue.TIMESTAMP);
         }
         return result;
     }
@@ -186,6 +193,13 @@ public class Servico {
         this.icone = icone;
     }
 
+    public String getIconeNome() {
+        return iconeNome;
+    }
+    public void setIconeNome(String iconeNome) {
+        this.iconeNome = iconeNome;
+    }
+
     public Long getDataInsercao() {
         return dataInsercao;
     }
@@ -204,6 +218,10 @@ public class Servico {
         return ICONE;
     }
 
+    public static String getICONE_NOME() {
+        return ICONE_NOME;
+    }
+
     public static String getDURACAO() {
         return DURACAO;
     }
@@ -216,11 +234,12 @@ public class Servico {
         return DESCRICAO;
     }
 
-    public static String getDataDeInsercao() {
+    public static String getDATA_INSERCAO() {
         return DATA_DE_INSERCAO;
     }
 
     public static String getNOME() {
         return NOME;
     }
+
 }

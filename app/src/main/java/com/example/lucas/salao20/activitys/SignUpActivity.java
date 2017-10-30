@@ -1,10 +1,13 @@
 package com.example.lucas.salao20.activitys;
 
+import android.app.ProgressDialog;
 import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
+import android.support.design.widget.TextInputEditText;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
@@ -15,17 +18,15 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.AutoCompleteTextView;
 import android.widget.EditText;
-import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import com.example.lucas.salao20.R;
 import com.example.lucas.salao20.domain.User;
 import com.example.lucas.salao20.domain.util.LibraryClass;
 import com.example.lucas.salao20.enumeradores.GeralENUM;
-import com.example.lucas.salao20.fragments.signUp.FragmentCadastroBasico;
+import com.example.lucas.salao20.fragments.signUp.FragmentSignUp;
 import com.example.lucas.salao20.geral.geral.Acount;
 import com.example.lucas.salao20.geral.geral.CadastroBasico;
-import com.example.lucas.salao20.geral.geral.Criptografia;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.Task;
@@ -47,15 +48,19 @@ public class SignUpActivity extends CommonActivity{
     private Toolbar mToolbar;
     private FloatingActionButton fab;
     private FirebaseAuth mAuth;
-    private FirebaseAuth.AuthStateListener mAuthStateListener;
     private User user;
+    private Handler handler;
+
+    private AutoCompleteTextView nome;
+    private AutoCompleteTextView sobrenome;
 
     private String emailRecebido;
 
-    //CONTROLE
-    private boolean fabProcessando;
-    private boolean mAuthStateListenerProcessando;
+    //ALERT DIALOG
+    private ProgressDialog progressDialog;
 
+    //FIREBASE REF
+    private DatabaseReference ref;
 
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -66,8 +71,8 @@ public class SignUpActivity extends CommonActivity{
         initUser();
         initControles();
 
-        mAuth = FirebaseAuth.getInstance();
-        mAuthStateListener = getFirebaseAuthResultHandler();
+        this.handler = new Handler();
+        this.mAuth = FirebaseAuth.getInstance();
     }
 
     @Override
@@ -84,18 +89,26 @@ public class SignUpActivity extends CommonActivity{
     protected void onStart() {
         super.onStart();
         Log.i("script","onStart() SIGNUP");
-        mAuth.addAuthStateListener(mAuthStateListener);
-
-        if (email == null && password == null && passwordAgain == null){
-            //VIEWS
-            FragmentManager fragmentManager = getSupportFragmentManager();
-            FragmentCadastroBasico frag = (FragmentCadastroBasico) fragmentManager.findFragmentById(R.id.content_sign_up);
+        //VIEWS
+        FragmentSignUp frag = (FragmentSignUp) getSupportFragmentManager().findFragmentById(R.id.content_sign_up);
+        if (email == null){
             email = (AutoCompleteTextView) frag.getEmail();
+        }
+        if (password == null){
             password = (EditText) frag.getPassword();
+        }
+        if(passwordAgain == null){
             passwordAgain = (EditText) frag.getPasswordAgain();
-            if (emailRecebido != null && !emailRecebido.isEmpty()){
-                email.setText(emailRecebido);
-            }
+        }
+        if(nome == null){
+            nome = (AutoCompleteTextView) frag.getNome();
+        }
+        if(sobrenome == null){
+            sobrenome = (AutoCompleteTextView) frag.getSobrenome();
+        }
+
+        if (emailRecebido != null && !emailRecebido.isEmpty()){
+            email.setText(emailRecebido);
         }
     }
 
@@ -103,10 +116,12 @@ public class SignUpActivity extends CommonActivity{
     protected void onStop() {
         super.onStop();
         Log.i("script","onStop() SIGNUP");
+    }
 
-        if( mAuthStateListener != null ){
-            mAuth.removeAuthStateListener(mAuthStateListener);
-        }
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        handler.removeCallbacks(null);
     }
 
     @Override
@@ -129,14 +144,9 @@ public class SignUpActivity extends CommonActivity{
     @Override
     protected void initViews() {
         Log.i("script","initViews()");
-        if (progressBar == null){
-            progressBar = (ProgressBar) findViewById(R.id.sign_up_progress);
-        }
-
-        //EDITTEXT
-        email = (AutoCompleteTextView)findViewById(R.id.email);
-        password = (EditText)findViewById(R.id.password);
-        passwordAgain = (EditText)findViewById(R.id.password_again);
+        this.progressDialog = new ProgressDialog(this);
+        this.progressDialog.setMessage("Criando conta ...");
+        this.progressDialog.setCancelable(false);
 
         //TOOLBAR
         if (mToolbar == null){
@@ -150,8 +160,8 @@ public class SignUpActivity extends CommonActivity{
         //FRAGMENT
         if (getSupportFragmentManager().getFragments() == null || getSupportFragmentManager().getFragments().size() == 0){
             Log.i("script","getSupportFragmentManager()== null set fragment cadastro basico  ");
-            FragmentCadastroBasico fragmentCadastroBasico = new FragmentCadastroBasico();
-            replaceFragment(fragmentCadastroBasico);
+            FragmentSignUp fragmentSignUp= new FragmentSignUp();
+            replaceFragment(fragmentSignUp);
         }
 
         //FLOATING ACTION BUTTON
@@ -160,28 +170,19 @@ public class SignUpActivity extends CommonActivity{
             fab.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-                    if (!fabProcessando){
-                        fabProcessando = true;
-                        fab.setClickable(false);
-                        fab.setVisibility(View.INVISIBLE);
-                        openProgressBar();
-                        if (formularioIsValid()) {
-                            initUser();
-                            saveUser();
-
-                        }else {
-                            fabProcessando = false;
-                            fab.setClickable(true);
-                            fab.setVisibility(View.VISIBLE);
-                            closeProgressBar();
-                        }
+                    fab.setClickable(false);
+                    fab.setVisibility(View.INVISIBLE);
+                    progressDialog.show();
+                    if (formularioIsValid()) {
+                        saveUser();
+                    }else {
+                        fab.setClickable(true);
+                        fab.setVisibility(View.VISIBLE);
+                        progressDialog.dismiss();
                     }
                 }
             });
         }
-
-
-
     }
 
     @Override
@@ -198,129 +199,139 @@ public class SignUpActivity extends CommonActivity{
         }
     }
 
-
-    private FirebaseAuth.AuthStateListener getFirebaseAuthResultHandler(){
-        Log.i("script","getFirebaseAuthResultHandler() login ");
-
-        final FirebaseAuth.AuthStateListener callback = new FirebaseAuth.AuthStateListener() {
+    private void deletarUsuario(){
+        handler.post(new Runnable() {
             @Override
-            public void onAuthStateChanged(@NonNull FirebaseAuth firebaseAuth) {
-                if (mAuth.getCurrentUser() != null && !mAuth.getCurrentUser().getUid().isEmpty()){
-                    Log.i("script","getFirebaseAuthResultHandler() signup  user logado");
-                    if (!mAuthStateListenerProcessando){
-                        mAuthStateListenerProcessando = true;
-                        DatabaseReference firebase = LibraryClass.getFirebase().child(GeralENUM.USERS).child( mAuth.getCurrentUser().getUid() );
-
-                        Criptografia crip = new Criptografia();
-                        crip.gerarChave();
-                        Acount acount = new Acount();
-                        acount.setEmail(user.getEmail());
-                        acount.setSenha(user.getPassword());
-                        CadastroBasico cadastroBasico = new CadastroBasico();
-                        cadastroBasico.setNivelUsuario(1.0);
-
-                        Map<String, Object> childUpdates = new HashMap<>();
-                        childUpdates.put(Acount.getACOUNT(), acount.toMap());
-                        childUpdates.put(Criptografia.getCRIPTOGRAFIA(), crip.toMap());
-                        childUpdates.put(CadastroBasico.getCADASTRO_BASICO(), cadastroBasico.toMap());
-                        firebase.updateChildren(childUpdates, new DatabaseReference.CompletionListener() {
+            public void run() {
+                mAuth.getCurrentUser().delete()
+                        .addOnCompleteListener(new OnCompleteListener<Void>() {
                             @Override
-                            public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference) {
-                                if (databaseError != null){
-                                    Log.i("script","onComplete() erro != null");
-                                    removerUsuarioCriado();
-                                }else{
-                                    Log.i("script","onComplete() erro == null");
+                            public void onComplete(@NonNull Task<Void> task) {
+                                if (task.isSuccessful()) {
+                                    Log.i("script","removerUsuarioCriado() task.isSuccessful()");
+                                    showToast( "Erro, tentar novamente!" );
                                     mAuth.signOut();
-                                    showToast( "Conta criada com sucesso!" );
-                                    closeProgressBar();
-                                    finish();
+                                    fab.setVisibility(View.VISIBLE);
+                                    fab.setClickable(true);
+                                    progressDialog.dismiss();
+                                }else{
+                                    deletarUsuario();
                                 }
                             }
                         });
-                    }
-                }
             }
-        };
-        return( callback );
-    }
+        });
 
-    private void removerUsuarioCriado(){
-        if ( mAuth.getCurrentUser() != null){
-            DatabaseReference firebase = LibraryClass.getFirebase().child( mAuth.getCurrentUser().getUid() );
-            firebase.setValue(null);
-            mAuth.getCurrentUser().delete()
-                    .addOnCompleteListener(new OnCompleteListener<Void>() {
-                        @Override
-                        public void onComplete(@NonNull Task<Void> task) {
-                            if (task.isSuccessful()) {
-                                Log.i("script","removerUsuarioCriado() task.isSuccessful()");
-                                showToast( "Erro, tentar novamente!" );
-                                mAuth.signOut();
-                                mAuthStateListenerProcessando = false;
-                                fabProcessando = false;
-                                fab.setVisibility(View.VISIBLE);
-                                fab.setClickable(true);
-                                closeProgressBar();
-                            }else{
-                                removerUsuarioCriado();
-                            }
-                        }
-                    });
-        }
     }
 
     private void initControles(){
-        this.fabProcessando = false;
-        this.mAuthStateListenerProcessando = false;
-
-        Intent intent = getIntent();
-        this.emailRecebido = intent.getStringExtra("email");
+        if (getIntent().hasExtra("email")){
+            this.emailRecebido = getIntent().getStringExtra("email");
+        }
     }
 
     private void saveUser(){
+        handler.post(new Runnable() {
+            @Override
+            public void run() {
+                initUser();
+                if (user.getEmail() == null || user.getEmail().isEmpty() || user.getPassword() == null || user.getPassword().isEmpty()){
+                    Log.w("BrokenLogic","Nao foi possivel saveUser getEmail || getPassword");
+                    progressDialog.dismiss();
+                    fab.setClickable(true);
+                    fab.setVisibility(View.VISIBLE);
+                    showToast("Tentar novamente !");
+                }else {
+                    mAuth.createUserWithEmailAndPassword(
+                            user.getEmail(),
+                            user.getPassword()
+                    ).addOnCompleteListener(new OnCompleteListener<AuthResult>() {
+                        @Override
+                        public void onComplete(@NonNull Task<AuthResult> task) {
 
-        if (user.getEmail() == null || user.getEmail().isEmpty() || user.getPassword() == null || user.getPassword().isEmpty()){
-            Log.w("BrokenLogic","Nao foi possivel saveUser getEmail || getPassword");
-            closeProgressBar();
-            fabProcessando = false;
-            fab.setClickable(true);
-            fab.setVisibility(View.VISIBLE);
-        }else {
-            mAuth.createUserWithEmailAndPassword(
-                    user.getEmail(),
-                    user.getPassword()
-            ).addOnCompleteListener(new OnCompleteListener<AuthResult>() {
-                @Override
-                public void onComplete(@NonNull Task<AuthResult> task) {
+                            if( !task.isSuccessful() ){
+                                progressDialog.dismiss();
+                                fab.setClickable(true);
+                                fab.setVisibility(View.VISIBLE);
+                                showToast("Tentar novamente !");
+                            }else{
+                                if (ref == null){
+                                    ref = LibraryClass.getFirebase();
+                                }
+                                if (mAuth.getCurrentUser() == null || mAuth.getCurrentUser().getUid() == null || mAuth.getCurrentUser().getUid().isEmpty()){
+                                    deletarUsuario();
+                                }else {
+                                    Acount acount = new Acount();
+                                    acount.setEmail(user.getEmail());
+                                    acount.setSenha(user.getPassword());
+                                    CadastroBasico cadastroBasico = new CadastroBasico();
+                                    cadastroBasico.setNivelUsuario(1.0);
+                                    cadastroBasico.setNome(nome.getText().toString());
+                                    cadastroBasico.setSobrenome(sobrenome.getText().toString());
+                                    Map<String, Object> updates = new HashMap<>();
+                                    updates.put("users/"+mAuth.getCurrentUser().getUid()+"/acount",acount.toMap());
+                                    updates.put("users/"+mAuth.getCurrentUser().getUid()+"/cadastroBasico",cadastroBasico.toMap());
+                                    ref.updateChildren(updates, new DatabaseReference.CompletionListener() {
+                                        @Override
+                                        public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference) {
+                                            if (databaseError != null){
+                                                Log.i("script","onComplete() erro != null");
+                                                deletarUsuario();
+                                            }else{
+                                                Log.i("script","onComplete() erro == null");
+                                                mAuth.signOut();
+                                                showToast( "Conta criada com sucesso!" );
+                                                progressDialog.dismiss();
+                                                finish();
+                                            }
+                                        }
+                                    });
 
-                    if( !task.isSuccessful() ){
-                        closeProgressBar();
-                        fabProcessando = false;
-                        fab.setClickable(true);
-                        fab.setVisibility(View.VISIBLE);
-                    }
-                }
-            }).addOnFailureListener(this, new OnFailureListener() {
+                                }
+                            }
+                        }
+                    }).addOnFailureListener(new OnFailureListener() {
                         @Override
                         public void onFailure(@NonNull Exception e) {
                             FirebaseCrash.report( e );
-                            showSnackbar( e.getMessage() );
-                            fabProcessando = false;
+                            //showSnackbar( "ERRO" );
+                            showToast(e.getMessage());
+                            //showSnackbar( e.getMessage() );
                             fab.setClickable(true);
                             fab.setVisibility(View.VISIBLE);
                         }
                     });
-        }
+                }
 
 
+            }
+        });
     }
 
-
     private Boolean formularioIsValid(){
-        if (emailIsValid() && passwordIsvalid() && passwordAgainIsvalid()){
+        if (emailIsValid() && passwordIsvalid() && passwordAgainIsvalid() && nomeIsvalid() && sobrenomeIsvalid()){
             return true;
         }else return false;
+    }
+
+    private Boolean nomeIsvalid(){
+        if (nome.getText().length() < 3){
+            nome.setError("Insira seu nome");
+            nome.requestFocus();
+            return false;
+        }else{
+            return true;
+        }
+    }
+
+    private Boolean sobrenomeIsvalid(){
+        if (sobrenome.getText().toString().isEmpty()){
+            sobrenome.setError("Insira seu sobrenome");
+            sobrenome.requestFocus();
+            return false;
+        }else{
+            return true;
+        }
     }
 
     private void replaceFragment(Fragment fragment) {

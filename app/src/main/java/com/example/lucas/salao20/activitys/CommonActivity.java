@@ -3,7 +3,6 @@ package com.example.lucas.salao20.activitys;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.os.Bundle;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
@@ -11,6 +10,7 @@ import android.widget.AutoCompleteTextView;
 import android.widget.EditText;
 import android.widget.ProgressBar;
 import android.widget.Toast;
+
 
 /**
  * Created by Lucas on 17/03/2017.
@@ -94,103 +94,11 @@ public abstract class CommonActivity extends AppCompatActivity{
         startActivity(intent);
     }
 
-    protected void callErroActivity(String erro){
-        Intent intent = new Intent(this, ErroActivity.class);
-        if (erro != null && !erro.isEmpty()){
-            intent.putExtra("erro",erro);
-        }
-        startActivity(intent);
-    }
-
     protected void callLoginActivity(){
         Intent intent = new Intent(this, LoginActivity.class);
         startActivity(intent);
         finish();
     }
-
-    protected void callCadastroInicialActivity(Bundle bundle){
-        Intent intent = new Intent(this, ConfiguracaoInicialActivity.class);
-        if (bundle != null){
-            intent.putExtras(bundle);
-        }
-        startActivity(intent);
-        finish();
-    }
-
-    protected void callConfiguracaoIncialActivity(Bundle bundle){
-        Intent intent = new Intent(this, ConfiguracaoInicialActivity.class);
-        if (bundle != null){
-            intent.putExtras(bundle);
-        }
-        startActivity(intent);
-        finish();
-    }
-
-    protected void callHomeActivity(Bundle bundle){
-        Intent intent = new Intent(this, HomeActivity.class);
-        if (bundle != null){
-            intent.putExtras(bundle);
-        }
-        startActivity(intent);
-        finish();
-    }
-
-    /*public void callLoginActivity() {
-        Intent intent = new Intent(this, LoginActivity.class);
-        startActivity(intent);
-        finish();
-    }*/
-
-   /* protected void callSignUpActivity(){
-        Intent intent = new Intent(this, SignUpActivity.class);
-        startActivity(intent);
-    }*/
-
-    /*public void callConfiguracaoIncialActivity(){
-        Log.i("teste","callConfiguracaoIncialActivity() ");
-        Intent intent = new Intent(this, TabsActivity.class);
-        startActivity(intent);
-        finish();
-    }*/
-
-   /* public void callConfiguracaoIncialActivity2(Bundle bundle){
-        Log.i("teste","callConfiguracaoIncialActivity() ");
-        Intent intent = new Intent(this, TabsActivity.class);
-        if (bundle != null){
-            intent.putExtras(bundle);
-        }
-        startActivity(intent);
-        finish();
-    }*/
-
-    /*public void callHomeActivity(Bundle bundle){
-        Intent intent = new Intent(this, HomeActivity.class);
-        if (bundle != null){
-            intent.putExtras(bundle);
-        }
-        startActivity(intent);
-        finish();
-    }*/
-
-    /*public void callErroBuscarOnlineActivity(Bundle bundle){
-        Intent intent = new Intent(this, ErroBuscarOnlineActivity.class);
-        if (bundle != null){
-            intent.putExtras(bundle);
-        }
-        startActivity(intent);
-        finish();
-    }*/
-
-    /*public void callSplashScreen2Activity(Bundle bundle){
-        Intent intent = new Intent(this, SplashScreen2Activity.class);
-        if (bundle != null){
-            intent.putExtras(bundle);
-        }
-        startActivity(intent);
-        finish();
-    }*/
-
-
 
     //SHAREDPREFERENCES
     protected void saveSPRefBoolean(Context context, String key, Boolean value ){

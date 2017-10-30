@@ -7,41 +7,30 @@
     android:paddingRight="@dimen/activity_horizontal_margin"
     android:paddingTop="@dimen/activity_vertical_margin">
 
-    <!-- Fragment cabeleireiros FloatingActionButton -->
-    <android.support.design.widget.FloatingActionButton
-        android:id="@+id/fab_fragment_profissionais"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
-        android:layout_alignParentRight="true"
-        android:layout_alignParentEnd="true"
-        android:layout_margin="@dimen/fab_margin"
-        android:src="@mipmap/ic_person_add_white_24dp"  />
+
 
     <!-- Fragment cabeleireiros progress -->
     <ProgressBar
-        android:layout_centerHorizontal="true"
         android:id="@+id/progress_fragment_profissionais"
+        android:layout_centerHorizontal="true"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_below="@+id/label_profissionais_adicionados"
-        android:layout_marginTop="25dp"/>
+        android:layout_height="match_parent"
+        android:layout_marginTop="30dp"
+        android:layout_below="@+id/label_profissionais_adicionados" />
 
     <TextView
         android:id="@+id/label_principal"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Insira os ID's dos profissionais do salão :"
-        android:layout_alignParentTop="true"
-        android:layout_centerHorizontal="true"
         android:layout_marginBottom="20dp"/>
 
     <TableRow
         android:id="@+id/form_codigo_unico"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_below="@+id/label_principal"
-        android:orientation="horizontal">
+        android:orientation="horizontal"
+        android:layout_below="@+id/label_principal">
 
         <TextView
             android:id="@+id/label_cod_unico_profissional"
@@ -64,16 +53,26 @@
             android:layout_marginEnd="4dp" />
     </TableRow>
 
-    <Button
-        android:id="@+id/adicionar_profissional"
+    <RelativeLayout
+        android:id="@+id/rl_form_btn_buscar"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="+"
-        android:onClick="adicionarProfissionalPorCodigoUnico"
-        android:layout_toRightOf="@+id/form_codigo_unico"
-        android:layout_toEndOf="@+id/form_codigo_unico"
-        android:layout_below="@+id/label_principal"
-        android:layout_alignBottom="@+id/form_codigo_unico" />
+        android:layout_below="@+id/form_codigo_unico">
+
+        <Button
+            android:id="@+id/btn_adicionar_profissional"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Adicionar"
+            android:layout_centerInParent="true"/>
+
+        <ProgressBar
+            android:layout_centerInParent="true"
+            android:id="@+id/progress_btn_add_prof__frag_profissionais"
+            android:layout_width="25dp"
+            android:layout_height="25dp" />
+
+    </RelativeLayout>
 
     <TextView
         android:id="@+id/label_adicionar_profissional_sem_codigo"
@@ -82,41 +81,43 @@
         android:text="não tenho um ID"
         android:textColor="#ffffff"
         android:onClick="adicionarProfissionalSemCodigoUnico"
-        android:layout_below="@+id/form_codigo_unico"
-        android:layout_alignRight="@+id/form_codigo_unico"
-        android:layout_alignEnd="@+id/form_codigo_unico"
-        android:layout_marginTop="3dp"/>
+        android:layout_marginTop="3dp"
+        android:layout_below="@+id/rl_form_btn_buscar"/>
 
     <TextView
         android:id="@+id/label_profissionais_adicionados"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Profissionais adicionados :"
-        android:layout_below="@+id/label_adicionar_profissional_sem_codigo"
         android:layout_marginTop="30dp"
-        android:layout_marginBottom="10dp"
-        android:layout_centerHorizontal="true"/>
+        android:layout_below="@id/label_adicionar_profissional_sem_codigo"/>
 
     <android.support.v7.widget.RecyclerView
         android:id="@+id/profissionais_recycler_view"
         android:scrollbars="vertical"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_below="@+id/label_profissionais_adicionados"
-        android:layout_above="@+id/gravar"/>
+        android:layout_below="@+id/label_profissionais_adicionados"/>
 
-    <Button
-        android:id="@+id/gravar"
+    <TextView
+        android:id="@+id/label_nao_ha_profissionais_adicionados"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:text="não ha profissionais adicionados !"
+        android:layout_centerHorizontal="true"
+        android:gravity="center"
+        android:layout_below="@+id/label_profissionais_adicionados"/>
+
+    <!-- Fragment cabeleireiros FloatingActionButton -->
+    <android.support.design.widget.FloatingActionButton
+        android:id="@+id/fab_fragment_profissionais"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="gravar"
-        android:onClick="addProf"
-        android:layout_above="@+id/buscar"/>
-    <Button
-        android:id="@+id/buscar"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="buscar"
-        android:onClick="buscarProf"
-        android:layout_alignParentBottom="true"/>
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentEnd="true"
+        android:layout_margin="@dimen/fab_margin"
+        android:src="@mipmap/ic_forward_white_48dp"
+        />
+
 </RelativeLayout>

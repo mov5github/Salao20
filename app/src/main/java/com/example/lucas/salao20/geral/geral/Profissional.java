@@ -1,6 +1,5 @@
 package com.example.lucas.salao20.geral.geral;
 
-import com.example.lucas.salao20.R;
 import com.example.lucas.salao20.geral.profissional.ExpedienteProfissional;
 import com.example.lucas.salao20.geral.profissional.ServicosProfissional;
 import com.google.firebase.database.Exclude;
@@ -13,10 +12,11 @@ import java.util.Map;
  */
 
 public class Profissional {
-    private String idProfissional;
     private Long dataInsercao;
-    private String uIDSalao;
-    private String uIDProfissional;
+    private String metadataUidSalao;
+    private String metadataUidProfissional;
+    private String nickProfissional;
+    private String nomeProfissional;
     private ServicosProfissional servicosProfissional;
     private ExpedienteProfissional expedienteProfissional;
     private CadastroComplementar cadastroComplementar;
@@ -29,6 +29,10 @@ public class Profissional {
     private static final String UID_SALÃO = "uidSalão";
     @Exclude
     private static final String UID_PROFISSIONAL = "uidProfissional";
+    @Exclude
+    private static final String NICK_PROFISSIONAL = "nickDoProfissional";
+    @Exclude
+    private static final String NOME_PROFISSIONAL = "nomeDoProfissional";
     @Exclude
     private static final String SERVICOS = "serviços";
     @Exclude
@@ -67,13 +71,6 @@ public class Profissional {
     }
 
     //GETTERS SETTERS
-    public String getIdProfissional() {
-        return idProfissional;
-    }
-    public void setIdProfissional(String idProfissional) {
-        this.idProfissional = idProfissional;
-    }
-
     public Long getDataInsercao() {
         return dataInsercao;
     }
@@ -81,18 +78,18 @@ public class Profissional {
         this.dataInsercao = dataInsercao;
     }
 
-    public String getuIDSalao() {
-        return uIDSalao;
+    public String getMetadataUidSalao() {
+        return metadataUidSalao;
     }
-    public void setuIDSalao(String uIDSalao) {
-        this.uIDSalao = uIDSalao;
+    public void setMetadataUidSalao(String metadataUidSalao) {
+        this.metadataUidSalao = metadataUidSalao;
     }
 
-    public String getuIDProfissional() {
-        return uIDProfissional;
+    public String getMetadataUidProfissional() {
+        return metadataUidProfissional;
     }
-    public void setuIDProfissional(String uIDProfissional) {
-        this.uIDProfissional = uIDProfissional;
+    public void setMetadataUidProfissional(String metadataUidProfissional) {
+        this.metadataUidProfissional = metadataUidProfissional;
     }
 
     public void setServicosProfissional(ServicosProfissional servicosProfissional) {
@@ -123,6 +120,20 @@ public class Profissional {
         this.cadastroBasico = cadastroBasico;
     }
 
+    public String getNickProfissional() {
+        return nickProfissional;
+    }
+    public void setNickProfissional(String nickProfissional) {
+        this.nickProfissional = nickProfissional;
+    }
+
+    public String getNomeProfissional() {
+        return nomeProfissional;
+    }
+    public void setNomeProfissional(String nomeProfissional) {
+        this.nomeProfissional = nomeProfissional;
+    }
+
     public static String getDataDeInsercao() {
         return DATA_DE_INSERCAO;
     }
@@ -141,5 +152,13 @@ public class Profissional {
 
     public static String getEXPEDIENTE() {
         return EXPEDIENTE;
+    }
+
+    public static String getNOMEPROFISSIONAL() {
+        return NOME_PROFISSIONAL;
+    }
+
+    public static String getNICKPROFISSIONAL() {
+        return NICK_PROFISSIONAL;
     }
 }

@@ -32,15 +32,15 @@ public class ProfissionaisSalao {
         if (this.profissionais == null){
             this.profissionais = new HashMap<String, Profissional>();
         }
-        if (profissionais.containsKey(profissional.getIdProfissional())){
-            this.profissionais.remove(profissional.getIdProfissional());
+        if (profissionais.containsKey(profissional.getMetadataUidProfissional())){
+            this.profissionais.remove(profissional.getMetadataUidProfissional());
         }
-        this.profissionais.put(profissional.getIdProfissional(),profissional);
+        this.profissionais.put(profissional.getMetadataUidProfissional(),profissional);
     }
 
-    public void removerProfissional(String idProfissional){
-        if (this.profissionais != null && this.profissionais.containsKey(idProfissional)){
-            this.profissionais.remove(idProfissional);
+    public void removerProfissional(String metadataUidProfissional){
+        if (this.profissionais != null && this.profissionais.containsKey(metadataUidProfissional)){
+            this.profissionais.remove(metadataUidProfissional);
         }
     }
 

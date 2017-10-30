@@ -7,14 +7,6 @@
     android:layout_height="match_parent"
     tools:context="com.example.lucas.salao20.activitys.SignUpActivity">
 
-    <ProgressBar
-        android:layout_alignParentBottom="true"
-        android:layout_centerHorizontal="true"
-        android:id="@+id/sign_up_progress"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:visibility="gone" />
-
     <android.support.v7.widget.Toolbar
         android:id="@+id/toolbar_sign_up"
         android:layout_width="match_parent"
@@ -36,6 +28,6 @@
         android:layout_alignParentRight="true"
         android:layout_alignParentEnd="true"
         android:layout_margin="@dimen/fab_margin"
-        app:srcCompat="@mipmap/ic_person_add_white_24dp" />
+        app:srcCompat="@mipmap/ic_person_add_white_48dp" />
 
 </RelativeLayout>

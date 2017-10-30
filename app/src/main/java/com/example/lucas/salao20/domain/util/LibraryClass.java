@@ -20,7 +20,7 @@ public class LibraryClass {
 
     public static DatabaseReference getFirebase(){
         if( firebase == null ){
-            FirebaseDatabase.getInstance().setPersistenceEnabled(true);
+            FirebaseDatabase.getInstance().setPersistenceEnabled(false);
             firebase = FirebaseDatabase.getInstance().getReference();
         }
 

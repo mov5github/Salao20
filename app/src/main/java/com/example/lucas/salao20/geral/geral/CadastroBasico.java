@@ -16,6 +16,9 @@ public class CadastroBasico {
     private Double nivelUsuario;
     private String tipoUsuario;
     private String codigoUnico;
+    private String userMetadataUid;
+    private String nome;
+    private String sobrenome;
 
 
     //ENUM
@@ -27,6 +30,14 @@ public class CadastroBasico {
     private static final String TIPO_USUARIO = "tipoUsuario";
     @Exclude
     private static final String CODIGO_UNICO = "codigoUnico";
+    @Exclude
+    private static final String USER_METADATA_UID = "userMetadataUid";
+    @Exclude
+    private static final String NOME = "nome";
+    @Exclude
+    private static final String SOBRENOME = "sobrenome";
+
+
 
 
     public CadastroBasico() {
@@ -48,6 +59,21 @@ public class CadastroBasico {
             this.codigoUnico = (String) map.get(CODIGO_UNICO);
         }else if (map.containsKey(CODIGO_UNICO) && map.get(CODIGO_UNICO) == null){
             this.codigoUnico = null;
+        }
+        if (map.containsKey(USER_METADATA_UID) && map.get(USER_METADATA_UID) != null){
+            this.userMetadataUid = (String) map.get(USER_METADATA_UID);
+        }else if (map.containsKey(USER_METADATA_UID) && map.get(USER_METADATA_UID) == null){
+            this.userMetadataUid = null;
+        }
+        if (map.containsKey(NOME) && map.get(NOME) != null){
+            this.nome = (String) map.get(NOME);
+        }else if (map.containsKey(NOME) && map.get(NOME) == null){
+            this.nome = null;
+        }
+        if (map.containsKey(SOBRENOME) && map.get(SOBRENOME) != null){
+            this.sobrenome = (String) map.get(SOBRENOME);
+        }else if (map.containsKey(SOBRENOME) && map.get(SOBRENOME) == null){
+            this.sobrenome = null;
         }
     }
 
@@ -74,6 +100,15 @@ public class CadastroBasico {
         if (codigoUnico != null && !codigoUnico.isEmpty()){
             result.put(CODIGO_UNICO, codigoUnico);
         }
+        if (userMetadataUid != null && !userMetadataUid.isEmpty()){
+            result.put(USER_METADATA_UID, userMetadataUid);
+        }
+        if (nome != null && !nome.isEmpty()){
+            result.put(NOME, nome);
+        }
+        if (sobrenome != null && !sobrenome.isEmpty()){
+            result.put(SOBRENOME, sobrenome);
+        }
         return result;
     }
 
@@ -99,6 +134,28 @@ public class CadastroBasico {
         this.codigoUnico = codigoUnico;
     }
 
+    public String getUserMetadataUid() {
+        return userMetadataUid;
+    }
+    public void setUserMetadataUid(String userMetadataUid) {
+        this.userMetadataUid = userMetadataUid;
+    }
+
+    public String getSobrenome() {
+        return sobrenome;
+    }
+    public void setSobrenome(String sobrenome) {
+        this.sobrenome = sobrenome;
+    }
+
+    public String getNome() {
+        return nome;
+    }
+    public void setNome(String nome) {
+        this.nome = nome;
+    }
+
+
     public static String getCADASTRO_BASICO() {
         return CADASTRO_BASICO;
     }
@@ -113,5 +170,17 @@ public class CadastroBasico {
 
     public static String getCODIGO_UNICO(){
         return CODIGO_UNICO;
+    }
+
+    public static String getUSER_METADATA_UID() {
+        return USER_METADATA_UID;
+    }
+
+    public static String getNOME() {
+        return NOME;
+    }
+
+    public static String getSOBRENOME() {
+        return SOBRENOME;
     }
 }

@@ -15,7 +15,7 @@ import com.example.lucas.salao20.R;
 
 public class FragmentHomeProfissionalDados extends Fragment {
     //ENUM
-    private static final String TITULO = "Agenda";
+    private static final String TITULO = "Dados";
 
     @Nullable
     @Override

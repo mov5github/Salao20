@@ -11,6 +11,8 @@ import java.util.Map;
 
 public class CadastroComplementar {
     private String nome;
+    private String nomeSalao;
+    private String apelidoProfissional;
     private int foto;
 
     //ENUM
@@ -20,6 +22,14 @@ public class CadastroComplementar {
     private static final String NOME = "nome";
     @Exclude
     private static final String FOTO = "foto";
+    @Exclude
+    private static final String NOME_SALAO = "nomeDoSalão";
+    @Exclude
+    private static final String NICK_PROFISSIONAL = "nickDoProfissional";
+    @Exclude
+    private static final String NOME_PROFISSIONAL = "nomeDoProfissional";
+
+
 
     public CadastroComplementar() {
     }
@@ -51,11 +61,33 @@ public class CadastroComplementar {
         this.foto = foto;
     }
 
+    public String getNomeSalao() {
+        return nomeSalao;
+    }
+    public void setNomeSalao(String nomeSalao) {
+        this.nomeSalao = nomeSalao;
+    }
+
+    public String getApelidoProfissional() {
+        return apelidoProfissional;
+    }
+    public void setApelidoProfissional(String apelidoProfissional) {
+        this.apelidoProfissional = apelidoProfissional;
+    }
+
     public static String getCADASTRO_COMPLEMENTAR() {
         return CADASTRO_COMPLEMENTAR;
     }
 
-    public static String getNOME() {
-        return NOME;
+    public static String getNOME_SALAO() {
+        return NOME_SALAO;
+    }
+
+    public static String getNICK_PROFISSIONAL() {
+        return NICK_PROFISSIONAL;
+    }
+
+    public static String getNOME_PROFISSIONAL() {
+        return NOME_PROFISSIONAL;
     }
 }

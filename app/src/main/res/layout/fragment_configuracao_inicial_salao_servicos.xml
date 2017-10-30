@@ -7,35 +7,23 @@
     android:paddingRight="@dimen/activity_horizontal_margin"
     android:paddingTop="@dimen/activity_vertical_margin">
 
-    <!-- Fragment servicos FloatingActionButton -->
-    <android.support.design.widget.FloatingActionButton
-        android:id="@+id/fab_fragment_servicos"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
-        android:layout_alignParentRight="true"
-        android:layout_alignParentEnd="true"
-        android:layout_margin="@dimen/fab_margin"
-        android:src="@mipmap/ic_person_add_white_24dp"
-        android:clickable="false"
-        android:visibility="invisible"/>
+
 
     <!-- Fragment servicos progress -->
     <ProgressBar
         android:id="@+id/progress_fragment_servicos"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="35dp"
-        android:visibility="visible"
+        android:layout_marginBottom="25dp"
         android:layout_alignParentBottom="true"
         android:layout_centerHorizontal="true"/>
 
     <LinearLayout
-        android:id="@+id/conteudo_servicos"
+        android:id="@+id/form_servicos"
         android:orientation="vertical"
         android:layout_height="wrap_content"
         android:layout_width="match_parent"
-        android:visibility="visible">
+        >
 
         <TextView
             android:id="@+id/label_titulo"
@@ -66,12 +54,26 @@
 
             </android.support.design.widget.TextInputLayout>
 
+            <TextView
+                android:id="@+id/label_icone"
+                android:text="Icone :"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="top"
+                android:layout_marginLeft="77dp"
+                android:layout_marginStart="7dp"
+                android:layout_marginRight="12dp"
+                android:layout_marginEnd="12dp"/>
+
             <Spinner
                 android:id="@+id/spinner_icones"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_gravity="bottom">
+                android:layout_gravity="bottom"
+                android:layout_marginRight="19dp"
+                android:layout_marginEnd="19dp">
             </Spinner>
+
         </TableRow>
 
         <RelativeLayout
@@ -163,28 +165,31 @@
                 android:maxLines="1" />
         </android.support.design.widget.TextInputLayout>
 
-        <RelativeLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+        <TableRow
+            android:id="@+id/tr_buttons"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="5dp"
+            android:layout_gravity="center_horizontal">
+
+            <Button
+                android:id="@+id/btn_descartar_servico"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Descartar"
+                android:onClick="descartarServico"
+                android:layout_marginRight="10dp"
+                android:layout_marginEnd="10dp"/>
+
             <Button
                 android:id="@+id/btn_adicionar_servico"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="add"
-                android:onClick="addServico"
-                android:layout_alignParentRight="true"
-                android:layout_alignParentEnd="true"
-                android:visibility="invisible"
-                android:clickable="false"/>
-            <Button
-                android:id="@+id/btn_remove_servico"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="add"
-                android:onClick="removerServico"
-                android:layout_alignParentLeft="true"
-                android:layout_alignParentStart="true" />
-        </RelativeLayout>
+                android:text="Salvar"
+                android:onClick="adicionarServico" />
+
+        </TableRow>
 
         <RelativeLayout
             android:layout_width="match_parent"
@@ -196,23 +201,49 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Serviços adicionados:"
-                android:layout_marginTop="10dp"
-                android:layout_marginBottom="5dp"
-                android:layout_centerHorizontal="true"
-                android:layout_alignParentTop="true"/>
+                android:layout_centerVertical="true"
+                android:layout_alignParentLeft="true"
+                android:layout_alignParentStart="true"
+                android:layout_marginRight="10dp"
+                android:layout_marginEnd="10dp"
+                android:textStyle="bold"/>
+
+            <TextView
+                android:id="@+id/label_nao_ha_servicos_adicionados"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Não há serviços adicionados."
+                android:layout_centerVertical="true"
+                android:layout_toRightOf="@+id/label_servicos_adicionados"
+                android:layout_toEndOf="@+id/label_servicos_adicionados"
+                android:visibility="invisible"/>
 
             <android.support.v7.widget.RecyclerView
                 android:id="@+id/servicos_recycler_view"
                 android:scrollbars="horizontal"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:layout_below="@+id/label_servicos_adicionados"/>
+                android:layout_centerVertical="true"
+                android:layout_toRightOf="@+id/label_servicos_adicionados"
+                android:layout_toEndOf="@+id/label_servicos_adicionados"
+                />
 
         </RelativeLayout>
 
     </LinearLayout>
 
-
+    <!-- Fragment servicos FloatingActionButton -->
+    <android.support.design.widget.FloatingActionButton
+        android:id="@+id/fab_fragment_servicos"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentEnd="true"
+        android:layout_margin="@dimen/fab_margin"
+        android:src="@mipmap/ic_forward_white_48dp"
+        android:visibility="invisible"
+        android:clickable="false"/>
 
 
 

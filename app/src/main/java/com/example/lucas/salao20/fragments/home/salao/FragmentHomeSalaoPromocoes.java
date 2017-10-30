@@ -15,7 +15,7 @@ import com.example.lucas.salao20.R;
 
 public class FragmentHomeSalaoPromocoes extends Fragment{
     //ENUM
-    private static final String TITULO = "Agenda";
+    private static final String TITULO = "Promoções";
 
     @Nullable
     @Override
@@ -25,12 +25,14 @@ public class FragmentHomeSalaoPromocoes extends Fragment{
         return view;
     }
 
-    public static String getTitulo() {
-        String titulo = "HOME SALAO PROMOCOES";
-        return titulo;
-    }
 
     private void initViews(View view){
 
+    }
+
+
+    //GETTERS SETTERS
+    public static String getTITULO() {
+        return TITULO;
     }
 }

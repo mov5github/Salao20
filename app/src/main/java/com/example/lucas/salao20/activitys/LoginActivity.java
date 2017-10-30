@@ -1,11 +1,13 @@
 package com.example.lucas.salao20.activitys;
 
 import android.app.ProgressDialog;
+import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
+import android.support.design.widget.TextInputEditText;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Menu;
@@ -35,6 +37,7 @@ import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
@@ -52,23 +55,20 @@ public class LoginActivity extends CommonActivity implements GoogleApiClient.OnC
     private ProgressDialog progressDialog;
 
     //CONTROLE
-    private boolean fabProcessando;
-    private static boolean loginActivityAtiva;
+    private static boolean loginActivityAtiva = false;
 
     //OBJETOS
-    private static CadastroBasico cadastroBasico;
+    private CadastroBasico cadastroBasico;
 
     //FIREBASE
     private FirebaseAuth mAuth;
-    private FirebaseAuth.AuthStateListener mAuthListener;
-    private static DatabaseReference refCadastroBasico;
-    private static ValueEventListener valueEventListenerCadastroBasico;
+    private  DatabaseReference refCadastroBasico;
+    private  ValueEventListener valueEventListenerCadastroBasico;
 
     //HANDLER
     private Handler handler;
     private Runnable runnableLimiteUsuarioLogado;
 
-    private ArrayList<Teste> arrayList = new ArrayList<>();
 
 
     @Override
@@ -78,10 +78,8 @@ public class LoginActivity extends CommonActivity implements GoogleApiClient.OnC
         setContentView(R.layout.activity_login);
 
         initFirebase();
-        initControles();
         initViews();
         initHandler();
-
         verifyLogged();
     }
 
@@ -100,16 +98,15 @@ public class LoginActivity extends CommonActivity implements GoogleApiClient.OnC
         super.onStart();
         Log.i("script","onStart() LOGIN");
         loginActivityAtiva = true;
-        mAuth.addAuthStateListener( mAuthListener );
+        if(mAuth.getCurrentUser()!= null && mAuth.getCurrentUser().getUid().isEmpty()){
+            mAuth.signOut();
+        }
     }
 
     @Override
     protected void onStop() {
         super.onStop();
         Log.i("script","onStop() LOGIN");
-        if( mAuthListener != null ){
-            mAuth.removeAuthStateListener( mAuthListener );
-        }
     }
 
     @Override
@@ -154,21 +151,17 @@ public class LoginActivity extends CommonActivity implements GoogleApiClient.OnC
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if (!fabProcessando){
-                    fabProcessando = true;
-                    progressDialog.show();
-                    fab.setClickable(false);
-                    fab.setVisibility(View.INVISIBLE);
-                    if (validaFormulario()){
-                        FirebaseCrash.log("LoginActivity:clickListener:button:sendLoginData()");
-                        initUser();
-                        verifyLogin();
-                    }else {
-                        fabProcessando = false;
-                        fab.setClickable(true);
-                        fab.setVisibility(View.VISIBLE);
-                        progressDialog.dismiss();
-                    }
+                fab.setClickable(false);
+                fab.setVisibility(View.INVISIBLE);
+                progressDialog.show();
+                if (validaFormulario()){
+                    FirebaseCrash.log("LoginActivity:clickListener:button:sendLoginData()");
+                    initUser();
+                    verifyLogin();
+                }else {
+                    fab.setClickable(true);
+                    fab.setVisibility(View.VISIBLE);
+                    progressDialog.dismiss();
                 }
 
             }
@@ -201,73 +194,60 @@ public class LoginActivity extends CommonActivity implements GoogleApiClient.OnC
         showSnackbar( connectionResult.getErrorMessage() );
     }
 
-    private void initControles(){
-        this.fabProcessando = false;
-    }
-
     private void initHandler(){
         this.handler = new Handler();
         this.runnableLimiteUsuarioLogado = new Runnable() {
             @Override
             public void run() {
                 Log.i("script","runnableLimiteUsuarioLogado()");
-                showSnackbar("Login falhou");
+                if (refCadastroBasico != null){
+                    refCadastroBasico.removeEventListener(valueEventListenerCadastroBasico);
+                }
                 mAuth.signOut();
+                progressDialog.dismiss();
+                showSnackbar("Login falhou");
+                fab.setClickable(true);
+                fab.setVisibility(View.VISIBLE);
             }
         };
     }
 
     private void initFirebase(){
         this.mAuth = FirebaseAuth.getInstance();
-        mAuthListener = getFirebaseAuthResultHandler();
         valueEventListenerCadastroBasico = new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
+                Log.i("script","valueEventListenerCadastroBasico -> "+dataSnapshot.toString());
                 if (dataSnapshot.exists() && dataSnapshot.getValue(CadastroBasico.class) != null){
+                    Log.i("script","valueEventListenerCadastroBasico -> dataSnapshot.exists()");
+
                     cadastroBasico = dataSnapshot.getValue(CadastroBasico.class);
+                    Log.i("script","receberBundle Splash\n"+"tiposuaser = " +cadastroBasico.getTipoUsuario()+"\nnome = "+ cadastroBasico.getNome()+ "\nsobrenome = "+cadastroBasico.getSobrenome());
+                    handler.removeCallbacks(runnableLimiteUsuarioLogado);
                     direcionarUsuario();
                 }else {
+                    Log.i("script","valueEventListenerCadastroBasico -> !dataSnapshot.exists()");
                     showSnackbar("Login falhou");
+                    progressDialog.dismiss();
+                    handler.removeCallbacks(runnableLimiteUsuarioLogado);
+                    fab.setClickable(true);
+                    fab.setVisibility(View.VISIBLE);
                     mAuth.signOut();
                 }
             }
 
             @Override
             public void onCancelled(DatabaseError databaseError) {
+                Log.i("script","valueEventListenerCadastroBasico -> onCancelled");
+
                 showSnackbar("Login falhou");
+                handler.removeCallbacks(runnableLimiteUsuarioLogado);
+                progressDialog.dismiss();
+                fab.setClickable(true);
+                fab.setVisibility(View.VISIBLE);
                 mAuth.signOut();
             }
         };
-    }
-
-    private FirebaseAuth.AuthStateListener getFirebaseAuthResultHandler(){
-        Log.i("script","getFirebaseAuthResultHandler() login ");
-
-        final FirebaseAuth.AuthStateListener callback = new FirebaseAuth.AuthStateListener() {
-            @Override
-            public void onAuthStateChanged(@NonNull FirebaseAuth firebaseAuth) {
-                Log.i("script","getFirebaseAuthResultHandler() onAuthStateChanged login");
-                if(mAuth.getCurrentUser() == null){
-                    Log.i("script","getFirebaseAuthResultHandler() getCurrentUser() == null login");
-                    progressDialog.dismiss();
-                    fab.setClickable(true);
-                    fab.setVisibility(View.VISIBLE);
-                    if (refCadastroBasico != null){
-                        refCadastroBasico.removeEventListener(valueEventListenerCadastroBasico);
-                    }
-                    handler.removeCallbacksAndMessages(null);
-                }else if (mAuth.getCurrentUser().getUid().isEmpty()){
-                    Log.i("script","getFirebaseAuthResultHandler() getCurrentUser() == null login");
-                    mAuth.signOut();
-                }else {
-                    Log.i("script","getFirebaseAuthResultHandler() uid != null");
-                    if (fabProcessando){
-                        callSplashScreenActivity();
-                    }
-                }
-            }
-        };
-        return( callback );
     }
 
     private void verifyLogged(){
@@ -281,72 +261,154 @@ public class LoginActivity extends CommonActivity implements GoogleApiClient.OnC
                 refCadastroBasico.addListenerForSingleValueEvent(valueEventListenerCadastroBasico);
                 handler.postDelayed(runnableLimiteUsuarioLogado,5000);
             }else{
-                showSnackbar("Login falhou");
                 mAuth.signOut();
             }
         }
     }
 
     private void direcionarUsuario(){
-        if (cadastroBasico != null && cadastroBasico.getNivelUsuario() != null) {
+        if (cadastroBasico != null && cadastroBasico.getNivelUsuario() != null && cadastroBasico.getNivelUsuario() != 0.0
+                && cadastroBasico.getNome() != null && !cadastroBasico.getNome().isEmpty() && cadastroBasico.getSobrenome() != null && !cadastroBasico.getSobrenome().isEmpty()) {
             Bundle bundle = new Bundle();
             Bundle auxBundle = new Bundle();
+            auxBundle.putDouble(CadastroBasico.getNIVEL_USUARIO(),cadastroBasico.getNivelUsuario());
+            auxBundle.putString(CadastroBasico.getNOME(),cadastroBasico.getNome());
+            auxBundle.putString(CadastroBasico.getSOBRENOME(),cadastroBasico.getSobrenome());
+
             if (cadastroBasico.getNivelUsuario() == 1.0){
-                auxBundle.putDouble(CadastroBasico.getNIVEL_USUARIO(),cadastroBasico.getNivelUsuario());
                 bundle.putBundle(CadastroBasico.getCADASTRO_BASICO(),auxBundle);
-                callCadastroInicialActivity(bundle);
+                callTipoUsuarioActivity(bundle);
             }else {
                 if (cadastroBasico.getTipoUsuario() != null && !cadastroBasico.getTipoUsuario().isEmpty()){
-                    auxBundle.putDouble(CadastroBasico.getNIVEL_USUARIO(),cadastroBasico.getNivelUsuario());
                     auxBundle.putString(CadastroBasico.getTIPO_USUARIO(),cadastroBasico.getTipoUsuario());
-                    if (cadastroBasico.getCodigoUnico() != null && !cadastroBasico.getCodigoUnico().isEmpty()){
-                        auxBundle.putString(CadastroBasico.getCODIGO_UNICO(),cadastroBasico.getCodigoUnico());
-                    }
-                    bundle.putBundle(CadastroBasico.getCADASTRO_BASICO(),auxBundle);
                     switch (cadastroBasico.getTipoUsuario()){
                         case TipoUsuarioENUM.SALAO:
                             if (cadastroBasico.getNivelUsuario() >= 2.0 && cadastroBasico.getNivelUsuario() < 3.0){
-                                callCadastroInicialActivity(bundle);
-                            }else if (cadastroBasico.getNivelUsuario() == 3.0){//configuracao inicial completa
-                                callHomeActivity(bundle);
+                                if (cadastroBasico.getCodigoUnico() != null && !cadastroBasico.getCodigoUnico().isEmpty() && cadastroBasico.getUserMetadataUid() != null && !cadastroBasico.getUserMetadataUid().isEmpty()){
+                                    auxBundle.putString(CadastroBasico.getCODIGO_UNICO(),cadastroBasico.getCodigoUnico());
+                                    auxBundle.putString(CadastroBasico.getUSER_METADATA_UID(),cadastroBasico.getUserMetadataUid());
+                                    bundle.putBundle(CadastroBasico.getCADASTRO_BASICO(),auxBundle);
+                                    callConfiguracaoInicial(bundle);
+                                }else {
+                                    mAuth.signOut();
+                                    showSnackbar("Login falhou");
+                                    progressDialog.dismiss();
+                                    fab.setClickable(true);
+                                    fab.setVisibility(View.VISIBLE);
+                                }
+                            }else if (cadastroBasico.getNivelUsuario() >= 3.0){//configuracao inicial completa
+                                if (cadastroBasico.getCodigoUnico() != null && !cadastroBasico.getCodigoUnico().isEmpty() && cadastroBasico.getUserMetadataUid() != null && !cadastroBasico.getUserMetadataUid().isEmpty()){
+                                    auxBundle.putString(CadastroBasico.getCODIGO_UNICO(),cadastroBasico.getCodigoUnico());
+                                    auxBundle.putString(CadastroBasico.getUSER_METADATA_UID(),cadastroBasico.getUserMetadataUid());
+                                    bundle.putBundle(CadastroBasico.getCADASTRO_BASICO(),auxBundle);
+                                    callHome(bundle);
+                                }else {
+                                    mAuth.signOut();
+                                    showSnackbar("Login falhou");
+                                    progressDialog.dismiss();
+                                    fab.setClickable(true);
+                                    fab.setVisibility(View.VISIBLE);
+                                }
                             }else{
-                                showSnackbar("Login falhou");
                                 mAuth.signOut();
+                                showSnackbar("Login falhou");
+                                progressDialog.dismiss();
+                                fab.setClickable(true);
+                                fab.setVisibility(View.VISIBLE);
                             }
                             break;
                         case TipoUsuarioENUM.PROFISSIONAl:
                             if (cadastroBasico.getNivelUsuario() >= 2.0 && cadastroBasico.getNivelUsuario() < 3.0){
-                                callConfiguracaoIncialActivity(bundle);
-                            }else if (cadastroBasico.getNivelUsuario() == 3.0){//configuracao inicial completa
-                                callHomeActivity(bundle);
+                                if (cadastroBasico.getCodigoUnico() != null && !cadastroBasico.getCodigoUnico().isEmpty() && cadastroBasico.getUserMetadataUid() != null && !cadastroBasico.getUserMetadataUid().isEmpty()){
+                                    auxBundle.putString(CadastroBasico.getCODIGO_UNICO(),cadastroBasico.getCodigoUnico());
+                                    auxBundle.putString(CadastroBasico.getUSER_METADATA_UID(),cadastroBasico.getUserMetadataUid());
+                                    bundle.putBundle(CadastroBasico.getCADASTRO_BASICO(),auxBundle);
+                                    callConfiguracaoInicial(bundle);
+                                }else {
+                                    mAuth.signOut();
+                                    showSnackbar("Login falhou");
+                                    progressDialog.dismiss();
+                                    fab.setClickable(true);
+                                    fab.setVisibility(View.VISIBLE);
+                                }
+                            }else if (cadastroBasico.getNivelUsuario() >= 3.0){//configuracao inicial completa
+                                if (cadastroBasico.getCodigoUnico() != null && !cadastroBasico.getCodigoUnico().isEmpty() && cadastroBasico.getUserMetadataUid() != null && !cadastroBasico.getUserMetadataUid().isEmpty()){
+                                    auxBundle.putString(CadastroBasico.getCODIGO_UNICO(),cadastroBasico.getCodigoUnico());
+                                    auxBundle.putString(CadastroBasico.getUSER_METADATA_UID(),cadastroBasico.getUserMetadataUid());
+                                    bundle.putBundle(CadastroBasico.getCADASTRO_BASICO(),auxBundle);
+                                    callHome(bundle);
+                                }else {
+                                    mAuth.signOut();
+                                    showSnackbar("Login falhou");
+                                    progressDialog.dismiss();
+                                    fab.setClickable(true);
+                                    fab.setVisibility(View.VISIBLE);
+                                }
                             }else{
-                                showSnackbar("Login falhou");
                                 mAuth.signOut();
+                                showSnackbar("Login falhou");
+                                progressDialog.dismiss();
+                                fab.setClickable(true);
+                                fab.setVisibility(View.VISIBLE);
                             }
                             break;
                         case TipoUsuarioENUM.CLIENTE:
                             if (cadastroBasico.getNivelUsuario() >= 2.0 && cadastroBasico.getNivelUsuario() < 3.0){
-                                callConfiguracaoIncialActivity(bundle);
-                            }else if (cadastroBasico.getNivelUsuario() == 3.0){//configuracao inicial completa
-                                callHomeActivity(bundle);
+                                if (cadastroBasico.getUserMetadataUid() != null && !cadastroBasico.getUserMetadataUid().isEmpty()){
+                                    auxBundle.putString(CadastroBasico.getUSER_METADATA_UID(),cadastroBasico.getUserMetadataUid());
+                                    bundle.putBundle(CadastroBasico.getCADASTRO_BASICO(),auxBundle);
+                                    callConfiguracaoInicial(bundle);
+                                }else{
+                                    mAuth.signOut();
+                                    showSnackbar("Login falhou");
+                                    progressDialog.dismiss();
+                                    fab.setClickable(true);
+                                    fab.setVisibility(View.VISIBLE);
+                                }
+                            }else if (cadastroBasico.getNivelUsuario() >= 3.0){//configuracao inicial completa
+                                if (cadastroBasico.getUserMetadataUid() != null && !cadastroBasico.getUserMetadataUid().isEmpty()){
+                                    auxBundle.putString(CadastroBasico.getUSER_METADATA_UID(),cadastroBasico.getUserMetadataUid());
+                                    bundle.putBundle(CadastroBasico.getCADASTRO_BASICO(),auxBundle);
+                                    callHome(bundle);
+                                }else{
+                                    mAuth.signOut();
+                                    showSnackbar("Login falhou");
+                                    progressDialog.dismiss();
+                                    fab.setClickable(true);
+                                    fab.setVisibility(View.VISIBLE);
+                                }
                             }else{
+                                this.mAuth.signOut();
                                 showSnackbar("Login falhou");
-                                mAuth.signOut();
+                                progressDialog.dismiss();
+                                fab.setClickable(true);
+                                fab.setVisibility(View.VISIBLE);
                             }
                             break;
                         default:
-                            showSnackbar("Login falhou");
                             this.mAuth.signOut();
+                            showSnackbar("Login falhou");
+                            progressDialog.dismiss();
+                            fab.setClickable(true);
+                            fab.setVisibility(View.VISIBLE);
                             break;
                     }
                 }else {
-                    showSnackbar("Login falhou");
                     this.mAuth.signOut();
+                    showSnackbar("Login falhou");
+                    progressDialog.dismiss();
+                    fab.setClickable(true);
+                    fab.setVisibility(View.VISIBLE);
                 }
             }
         }else {
-            showSnackbar("Login falhou");
+            Log.i("script","ERRO");
+
             this.mAuth.signOut();
+            showSnackbar("Login falhou");
+            progressDialog.dismiss();
+            fab.setClickable(true);
+            fab.setVisibility(View.VISIBLE);
         }
     }
 
@@ -366,9 +428,12 @@ public class LoginActivity extends CommonActivity implements GoogleApiClient.OnC
                             Log.i("script","verifyLogin() onComplete !task.isSuccessful()");
                             showSnackbar("Login falhou");
                             progressDialog.dismiss();
-                            fabProcessando = false;
                             fab.setClickable(true);
                             fab.setVisibility(View.VISIBLE);
+                        }else {
+                            refCadastroBasico = LibraryClass.getFirebase().child(GeralENUM.USERS).child(mAuth.getCurrentUser().getUid()).child(CadastroBasico.getCADASTRO_BASICO());
+                            refCadastroBasico.addListenerForSingleValueEvent(valueEventListenerCadastroBasico);
+                            handler.postDelayed(runnableLimiteUsuarioLogado,5000);
                         }
                     }
                 }).addOnFailureListener(new OnFailureListener() {
@@ -381,15 +446,93 @@ public class LoginActivity extends CommonActivity implements GoogleApiClient.OnC
     }
 
     private Boolean validaFormulario(){
-        if (emailIsValid() && passwordIsvalid()){
-            return true;
-        }else{
-            return false;
-        }
+        return emailIsValid() && passwordIsvalid();
     }
 
 
 
+    //CALL
+    private void callTipoUsuarioActivity(Bundle bundle){
+        Intent intent = new Intent(this, TipoUsuarioActivity.class);
+        if (bundle != null){
+            intent.putExtras(bundle);
+        }
+        progressDialog.dismiss();
+        startActivity(intent);
+        finish();
+    }
+
+    private void callHome(Bundle bundle){
+        Intent intent;
+        switch (cadastroBasico.getTipoUsuario()){
+            case TipoUsuarioENUM.SALAO:
+                intent = new Intent(this, HomeSalaoActivity.class);
+                if (bundle != null){
+                    intent.putExtras(bundle);
+                }
+                progressDialog.dismiss();
+                startActivity(intent);
+                finish();
+                break;
+            case TipoUsuarioENUM.PROFISSIONAl:
+                intent = new Intent(this, HomeProfissionalActivity.class);
+                if (bundle != null){
+                    intent.putExtras(bundle);
+                }
+                progressDialog.dismiss();
+                startActivity(intent);
+                finish();
+                break;
+            case TipoUsuarioENUM.CLIENTE:
+                intent = new Intent(this, HomeClienteActivity.class);
+                if (bundle != null){
+                    intent.putExtras(bundle);
+                }
+                progressDialog.dismiss();
+                startActivity(intent);
+                finish();
+                break;
+            default:
+                mAuth.signOut();
+                break;
+        }
+    }
+
+    private void callConfiguracaoInicial(Bundle bundle){
+        Intent intent;
+        switch (cadastroBasico.getTipoUsuario()){
+            case TipoUsuarioENUM.SALAO:
+                intent = new Intent(this, ConfiguracaoInicialSalaoActivity.class);
+                if (bundle != null){
+                    intent.putExtras(bundle);
+                }
+                progressDialog.dismiss();
+                startActivity(intent);
+                finish();
+                break;
+            case TipoUsuarioENUM.PROFISSIONAl:
+                intent = new Intent(this, ConfiguracaoInicialProfissionalActivity.class);
+                if (bundle != null){
+                    intent.putExtras(bundle);
+                }
+                progressDialog.dismiss();
+                startActivity(intent);
+                finish();
+                break;
+            case TipoUsuarioENUM.CLIENTE:
+                intent = new Intent(this, ConfiguracaoInicialClienteActivity.class);
+                if (bundle != null){
+                    intent.putExtras(bundle);
+                }
+                progressDialog.dismiss();
+                startActivity(intent);
+                finish();
+                break;
+            default:
+                mAuth.signOut();
+                break;
+        }
+    }
 
 
     //TEXT LINK
@@ -406,71 +549,5 @@ public class LoginActivity extends CommonActivity implements GoogleApiClient.OnC
     //GETTERS SETTERS
     public static boolean isLoginActivityAtiva() {
         return loginActivityAtiva;
-    }
-
-    private void teste(){
-        DatabaseReference ref = LibraryClass.getFirebase().child("testes");
-        ref.addChildEventListener(new ChildEventListener() {
-            @Override
-            public void onChildAdded(DataSnapshot dataSnapshot, String s) {
-                Log.i("logteste","onChildAdded");
-
-                if (dataSnapshot.exists()){
-                    Log.i("logteste","onChildAdded != null");
-                    /*for (DataSnapshot snap : dataSnapshot.getChildren()) {
-                        Log.i("logteste","dados recebidos : \n " + snap.toString());
-                    }*/
-
-                    Teste teste = dataSnapshot.getValue(Teste.class);
-                    arrayList.add(teste);
-                    Log.i("logteste","dados recebidos "+dataSnapshot.getKey()+" : \n " + teste.toString());
-                }else{
-                    Log.i("logteste","onChildAdded NULL");
-                }
-
-                Log.i("logteste","array size = "+arrayList.size());
-            }
-
-            @Override
-            public void onChildChanged(DataSnapshot dataSnapshot, String s) {
-                Log.i("logteste","onChildChanged");
-
-                if (dataSnapshot.exists()){
-                    Log.i("logteste","onChildChanged != null");
-                    /*for (DataSnapshot snap : dataSnapshot.getChildren()) {
-                        Log.i("logteste","dados recebidos : \n " + snap.toString());
-                    }*/
-
-                    Teste teste = dataSnapshot.getValue(Teste.class);
-                    Log.i("logteste","dados recebidos : \n " + teste.toString());
-                }else{
-                    Log.i("logteste","onChildChanged NULL");
-                }
-
-            }
-
-            @Override
-            public void onChildRemoved(DataSnapshot dataSnapshot) {
-                Log.i("logteste","onChildRemoved");
-
-                if (dataSnapshot.exists()){
-                    Log.i("logteste","onChildRemoved != null");
-                    Teste teste = dataSnapshot.getValue(Teste.class);
-                    Log.i("logteste","dados recebidos : \n " + teste.toString());
-                }else{
-                    Log.i("logteste","onChildRemoved NULL");
-                }
-            }
-
-            @Override
-            public void onChildMoved(DataSnapshot dataSnapshot, String s) {
-
-            }
-
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
-
-            }
-        });
     }
 }

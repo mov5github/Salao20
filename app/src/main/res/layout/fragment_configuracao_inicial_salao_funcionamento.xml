@@ -7,54 +7,22 @@
     android:paddingRight="@dimen/activity_horizontal_margin"
     android:paddingTop="@dimen/activity_vertical_margin">
 
-
-    <!-- Fragment funcionamento FloatingActionButton -->
-    <android.support.design.widget.FloatingActionButton
-        android:id="@+id/fab_fragment_funcionamento"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
-        android:layout_alignParentRight="true"
-        android:layout_alignParentEnd="true"
-        android:layout_margin="@dimen/fab_margin"
-        android:src="@mipmap/ic_person_add_white_24dp"
-        android:visibility="invisible"
-        android:clickable="false"/>
-
     <!-- Fragment funcionamento progress -->
     <ProgressBar
         android:layout_centerInParent="true"
         android:id="@+id/progress_fragment_funcionamento"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="8dp" />
-
-    <android.support.design.widget.TextInputLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:id="@+id/form_nome_salao"
-        android:layout_alignParentTop="true"
-        android:layout_marginTop="5dp">
-
-        <AutoCompleteTextView
-            android:id="@+id/nome_salao"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="@string/prompt_nome_salao"
-            android:inputType="none"
-            android:maxLines="1"
-            android:singleLine="true" />
-
-    </android.support.design.widget.TextInputLayout>
-
-
+        android:layout_marginBottom="8dp"
+        android:visibility="invisible"/>
 
     <ScrollView
         android:id="@+id/form_funcionamento"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_below="@+id/form_nome_salao"
-        android:layout_marginTop="15dp">
+        android:layout_marginTop="15dp"
+        android:clickable="false"
+        android:visibility="invisible">
 
         <TableLayout
             android:id="@+id/email_sign_up_form"
@@ -381,5 +349,17 @@
 
     </ScrollView>
 
+    <!-- Fragment funcionamento FloatingActionButton -->
+    <android.support.design.widget.FloatingActionButton
+        android:id="@+id/fab_fragment_funcionamento"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentEnd="true"
+        android:layout_margin="@dimen/fab_margin"
+        android:src="@mipmap/ic_forward_white_48dp"
+        android:clickable="false"
+        android:visibility="invisible"/>
 
 </RelativeLayout>

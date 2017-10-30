@@ -32,11 +32,13 @@
     <string name="prompt_nascimento_dia">Dia</string>
     <string name="prompt_nascimento_mes">Mês</string>
     <string name="prompt_nascimento_ano">Ano</string>
+    <string name="prompt_nome">Nome</string>
     <string name="prompt_nome_salao">Nome do Salão</string>
     <string name="prompt_password">Senha</string>
     <string name="prompt_password_again">Confirme a Senha</string>
     <string name="prompt_rg">RG</string>
     <string name="prompt_spinner_sexo">Sexo</string>
+    <string name="prompt_sobrenome">Sobrenome</string>
     <string name="prompt_telefone1">Telefone 1</string>
     <string name="prompt_telefone2">Telefone 2</string>
     <string name="prompt_unisex">Unisex</string>
@@ -58,10 +60,13 @@
     <string name="title_activity_sign_up2">SignUpActivity2</string>
     <string name="title_activity_login">LoginActivity</string>
     <string name="title_activity_catastro">CadastroActivity</string>
+    <string name="padrao_horario">--:--</string>
 
     <!-- Configuraçao Inical Activity  -->
     <string name="nome_servico_bold_html">Serviço :</string>
     <string name="preco_servico_bold_html">Preço :</string>
     <string name="duracao_servico_bold_html">Duração :</string>
     <string name="descricao_servico_bold_html">Descrição :</string>
+    <string name="title_activity_home_cliente">HomeClienteActivity</string>
+    <string name="title_activity_home_profissional">HomeProfissionalActivity</string>
 </resources>
